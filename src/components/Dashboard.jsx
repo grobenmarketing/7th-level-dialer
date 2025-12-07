@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import ContactDetailsModal from './ContactDetailsModal';
 
-function Dashboard({ onStartCalling, onViewContacts }) {
+function Dashboard({ onStartCalling, onViewContacts, onManageAvatars }) {
   const {
     contacts,
     getActiveContacts,
@@ -100,7 +100,7 @@ function Dashboard({ onStartCalling, onViewContacts }) {
             Quick Actions
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Start Calling Button */}
             <button
               onClick={onStartCalling}
@@ -127,6 +127,18 @@ function Dashboard({ onStartCalling, onViewContacts }) {
               <div className="text-2xl font-bold">View Contacts</div>
               <div className="text-sm mt-2 opacity-90">
                 Browse {contacts.length} contacts
+              </div>
+            </button>
+
+            {/* Manage Avatars */}
+            <button
+              onClick={onManageAvatars}
+              className="p-8 rounded-lg text-center bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer transition-all hover:shadow-xl transform hover:scale-105"
+            >
+              <div className="text-4xl mb-2">👤</div>
+              <div className="text-2xl font-bold">Avatars</div>
+              <div className="text-sm mt-2 opacity-90">
+                Manage buyer personas
               </div>
             </button>
 
