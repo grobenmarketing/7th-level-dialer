@@ -76,7 +76,7 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
             R7 Creative Dialer
           </h1>
           <p className="text-sm text-gray-600">
-            detach from the outcomes and your income will always increase
+            Detach from the outcomes and your income will always increase.
           </p>
         </div>
 
