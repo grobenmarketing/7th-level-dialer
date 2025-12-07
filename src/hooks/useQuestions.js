@@ -1,19 +1,45 @@
 import { useState, useEffect } from 'react';
-import { storage, KEYS } from '../lib/storage';
+import { storage, KEYS } from '../lib/cloudStorage';
 
 export function useQuestions() {
   const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load questions from localStorage on mount
+  // Load questions from storage on mount
   useEffect(() => {
-    const savedQuestions = storage.get(KEYS.QUESTIONS, []);
-    setQuestions(savedQuestions);
+    let mounted = true;
+
+    const loadQuestions = async () => {
+      try {
+        setLoading(true);
+        const savedQuestions = await storage.get(KEYS.QUESTIONS, []);
+
+        if (mounted) {
+          setQuestions(savedQuestions);
+        }
+      } catch (error) {
+        console.error('Error loading questions:', error);
+        if (mounted) {
+          setQuestions([]);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadQuestions();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Save questions to localStorage whenever they change
-  const saveQuestions = (updatedQuestions) => {
+  // Save questions to storage whenever they change
+  const saveQuestions = async (updatedQuestions) => {
     setQuestions(updatedQuestions);
-    storage.set(KEYS.QUESTIONS, updatedQuestions);
+    await storage.set(KEYS.QUESTIONS, updatedQuestions);
   };
 
   const addQuestion = (questionData) => {
@@ -133,6 +159,7 @@ export function useQuestions() {
     getQuestionsByProblemLevel,
     getQuestionsByAvatar,
     getContextualQuestions,
-    bulkImportQuestions
+    bulkImportQuestions,
+    loading
   };
 }

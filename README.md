@@ -58,8 +58,16 @@ A web-based sales calling system built for cold prospecting using Jeremy Miner's
   - Individual call durations in contact history
   - Duration trends by NEPQ phase progression
 
+### Phase 5 - Cloud Storage with Netlify Blob ✅ (COMPLETE!)
+- ☁️ **Netlify Blob Storage Integration** - Cloud-based data persistence
+- 🔄 **Automatic Migration** - Seamlessly migrates localStorage data to cloud on first production load
+- 🌐 **Multi-device Sync** - Access your data from any device
+- 💾 **Automatic Backup** - Data stored securely in the cloud
+- 🏠 **Smart Fallback** - Uses localStorage in development, cloud in production
+- 🔒 **Secure Storage** - Serverless functions with CORS protection
+- ⚡ **Zero Configuration** - Works automatically when deployed to Netlify
+
 ### Coming Soon
-- Phase 5: Cloud storage with Netlify Blob Storage
 - Phase 6: Team collaboration features
 
 ## 📋 Setup Instructions
@@ -217,9 +225,9 @@ Access the Analytics Dashboard to see:
 - **Frontend Framework:** React 18
 - **Build Tool:** Vite 6
 - **Styling:** Tailwind CSS 3
-- **Storage:** localStorage (Phase 1)
+- **Storage:** Netlify Blob Storage (Phase 5) with localStorage fallback
+- **Serverless Functions:** Netlify Functions
 - **Deployment:** Netlify
-- **Future:** Netlify Blob Storage (Phase 4)
 
 ## 📁 Project Structure
 
@@ -240,9 +248,11 @@ r7-nepq-dialer/
 │   │   ├── useContacts.js
 │   │   ├── useAvatars.js
 │   │   ├── useQuestions.js         # Phase 3: Question library
-│   │   └── useStats.js             # Phase 3: Analytics calculations
+│   │   ├── useStats.js             # Phase 3: Analytics calculations
+│   │   └── useCloudStorage.js      # Phase 5: Cloud storage hook
 │   ├── lib/                     # Utilities and helpers
-│   │   ├── storage.js
+│   │   ├── storage.js              # Legacy localStorage (dev)
+│   │   ├── cloudStorage.js         # Phase 5: Cloud storage service
 │   │   ├── constants.js
 │   │   ├── nepq.js
 │   │   └── seedQuestions.js        # Phase 3: 80+ NEPQ questions
@@ -250,26 +260,41 @@ r7-nepq-dialer/
 │   │   └── index.css
 │   ├── App.jsx                  # Root component
 │   └── main.jsx                 # Entry point
+├── netlify/
+│   └── functions/               # Phase 5: Serverless functions
+│       ├── get-data.js          # Retrieve data from blob storage
+│       ├── set-data.js          # Save data to blob storage
+│       └── sync-all.js          # Bulk sync operations
 ├── public/                      # Static assets
+├── .env                         # Environment variables (local)
+├── .env.example                 # Environment template
 ├── index.html                   # HTML template
 ├── package.json
 ├── vite.config.js
 ├── tailwind.config.js
-└── netlify.toml                # Netlify config
+└── netlify.toml                 # Netlify config
 ```
 
 ## 💾 Data Storage
 
-Phase 1 uses browser localStorage:
-- Data persists between sessions
-- Stored locally in your browser
-- Export regularly as backup
-- No account or login needed
+**Phase 5: Cloud Storage (ACTIVE!)**
 
-Phase 4+ will migrate to cloud storage for:
-- Multi-device sync
-- Team collaboration
-- Automatic backups
+In production (on Netlify):
+- ☁️ Data stored in Netlify Blob Storage
+- 🔄 Automatic sync across all your devices
+- 💾 Secure cloud backups
+- 🚀 Automatic migration from localStorage on first load
+- 🌐 Access from anywhere
+
+In development (localhost):
+- 🏠 Uses browser localStorage for faster development
+- 📁 Data persists between sessions
+- ⚡ No network latency
+
+**Migration Notes:**
+- First time you load the app in production, it automatically migrates your localStorage data to the cloud
+- LocalStorage is kept as a backup in production
+- Zero configuration needed - works automatically when deployed to Netlify!
 
 ## 🎨 Customization
 
