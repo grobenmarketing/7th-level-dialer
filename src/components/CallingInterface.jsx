@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import ContactCard from './ContactCard';
 import NEPQTracker from './NEPQTracker';
+import QuestionSuggester from './QuestionSuggester';
 import { OK_CODES, CALL_OUTCOMES, NEPQ_PHASES, PROBLEM_LEVELS } from '../lib/constants';
 
 function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
@@ -164,6 +165,12 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
           <div className="space-y-6">
             <ContactCard contact={currentContact} />
             {currentContact && <NEPQTracker contact={currentContact} />}
+            {currentContact && outcome === 'DM' && (
+              <QuestionSuggester
+                contact={currentContact}
+                currentPhase={nepqPhaseReached}
+              />
+            )}
           </div>
 
           {/* Right Column - Call Logging */}
