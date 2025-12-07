@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useContacts } from '../hooks/useContacts';
+import { useQuestions } from '../hooks/useQuestions';
+import { seedQuestions, SEED_QUESTIONS } from '../lib/seedQuestions';
 import ContactDetailsModal from './ContactDetailsModal';
 
-function Dashboard({ onStartCalling, onViewContacts, onManageAvatars }) {
+function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnalytics }) {
   const {
     contacts,
     getActiveContacts,
@@ -10,6 +12,8 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars }) {
     importFromCSV,
     exportToCSV
   } = useContacts();
+
+  const { questions, bulkImportQuestions } = useQuestions();
 
   const stats = getStats();
   const activeContacts = getActiveContacts();
@@ -48,6 +52,19 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars }) {
     a.download = `r7-contacts-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  const handleSeedQuestions = () => {
+    if (questions.length > 0) {
+      const confirm = window.confirm(
+        `You already have ${questions.length} questions in your library. ` +
+        `This will add ${SEED_QUESTIONS.length} more NEPQ questions. Continue?`
+      );
+      if (!confirm) return;
+    }
+
+    bulkImportQuestions(SEED_QUESTIONS);
+    alert(`Successfully loaded ${SEED_QUESTIONS.length} NEPQ questions into your library!`);
   };
 
   return (
@@ -100,7 +117,7 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars }) {
             Quick Actions
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Start Calling Button */}
             <button
               onClick={onStartCalling}
@@ -130,6 +147,18 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars }) {
               </div>
             </button>
 
+            {/* Analytics Dashboard */}
+            <button
+              onClick={onViewAnalytics}
+              className="p-8 rounded-lg text-center bg-orange-600 text-white hover:bg-orange-700 cursor-pointer transition-all hover:shadow-xl transform hover:scale-105"
+            >
+              <div className="text-4xl mb-2">📊</div>
+              <div className="text-2xl font-bold">Analytics</div>
+              <div className="text-sm mt-2 opacity-90">
+                NEPQ insights & metrics
+              </div>
+            </button>
+
             {/* Manage Avatars */}
             <button
               onClick={onManageAvatars}
@@ -139,6 +168,18 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars }) {
               <div className="text-2xl font-bold">Avatars</div>
               <div className="text-sm mt-2 opacity-90">
                 Manage buyer personas
+              </div>
+            </button>
+
+            {/* Seed Questions */}
+            <button
+              onClick={handleSeedQuestions}
+              className="p-8 rounded-lg text-center bg-teal-600 text-white hover:bg-teal-700 cursor-pointer transition-all hover:shadow-xl transform hover:scale-105"
+            >
+              <div className="text-4xl mb-2">💡</div>
+              <div className="text-2xl font-bold">Load Questions</div>
+              <div className="text-sm mt-2 opacity-90">
+                {questions.length > 0 ? `${questions.length} questions loaded` : 'Seed NEPQ questions'}
               </div>
             </button>
 

@@ -18,7 +18,7 @@ A web-based sales calling system built for cold prospecting using Jeremy Miner's
 - ✅ Mobile-responsive design
 - ✅ One-click deployment to Netlify
 
-### Phase 2 - NEPQ Foundation ✅ (COMPLETE!)
+### Phase 2 - NEPQ Foundation ✅
 - ✅ **NEPQ phase tracking** (Connection → Presentation)
 - ✅ **Problem discovery levels** (L1-L4)
 - ✅ **Visual NEPQ progress tracker** with phase indicators
@@ -28,10 +28,27 @@ A web-based sales calling system built for cold prospecting using Jeremy Miner's
 - ✅ **Problem statement capture** with level-based categorization
 - ✅ **NEPQ journey visualization** in contact cards and details
 
+### Phase 3 - Intelligence Layer ✅ (COMPLETE!)
+- ✅ **Question Library System** with 80+ pre-loaded NEPQ questions
+- ✅ **Context-aware Question Suggester** that shows relevant questions based on:
+  - Current NEPQ phase (Connection → Presentation)
+  - Contact's assigned avatar/ICP
+  - Current problem discovery level (L1-L4)
+- ✅ **Cold call hooks** for first-time contacts (pulled from avatar data)
+- ✅ **Quick-copy functionality** to grab questions during live calls
+- ✅ **Comprehensive Analytics Dashboard** with:
+  - NEPQ funnel visualization (phase progression rates)
+  - Problem depth distribution (L1-L4 breakdown)
+  - Avatar performance comparison metrics
+  - Phase-to-phase conversion rates
+  - OK code distribution analysis
+  - Top performing contacts by NEPQ progress
+- ✅ **One-click question library seeding** with expert NEPQ questions
+
 ### Coming Soon
-- Phase 3: Question suggester based on NEPQ phase & avatar
-- Phase 4: Analytics dashboard with NEPQ funnel visualization
+- Phase 4: Call timer and duration tracking
 - Phase 5: Cloud storage with Netlify Blob Storage
+- Phase 6: Team collaboration features
 
 ## 📋 Setup Instructions
 
@@ -133,7 +150,34 @@ Then:
 - **Click any contact** to view complete details and call history with notes
 - All interactions are tracked and accessible from the contact details modal
 
-### 4. Track Progress
+### 4. Use the Question Suggester (Phase 3)
+
+During Decision Maker calls:
+- The **Question Suggester** automatically appears in the left panel
+- Shows context-aware questions based on:
+  - Current NEPQ phase you're in
+  - Contact's avatar/ICP (if assigned)
+  - Current problem level discovered
+- **Cold call hooks** display for first-time contacts
+- Click the **copy icon** to quickly grab questions
+- Questions update as you progress through NEPQ phases
+
+To load the question library:
+- Click "Load Questions" button on Dashboard
+- 80+ expert NEPQ questions will be imported
+- Questions are organized by phase (Connection → Presentation) and problem level (L1-L4)
+
+### 5. View Analytics (Phase 3)
+
+Access the Analytics Dashboard to see:
+- **NEPQ Funnel** - Visual funnel showing contact progression through phases
+- **Problem Discovery** - Distribution of contacts at each problem level (L1-L4)
+- **Avatar Performance** - Compare which buyer personas convert best
+- **Conversion Rates** - Phase-to-phase progression and drop-off analysis
+- **Top Contacts** - Highest NEPQ progress ranked contacts
+- **OK Code Distribution** - See which outcomes are most common
+
+### 6. Track Progress
 
 - View stats on the Dashboard
 - Export data anytime with "Export to CSV"
@@ -170,28 +214,36 @@ Then:
 ```
 r7-nepq-dialer/
 ├── src/
-│   ├── components/          # React components
+│   ├── components/              # React components
 │   │   ├── Dashboard.jsx
 │   │   ├── CallingInterface.jsx
 │   │   ├── ContactCard.jsx
-│   │   ├── ContactsPage.jsx        # NEW: Full contact database view
-│   │   └── ContactDetailsModal.jsx  # NEW: Contact history modal
-│   ├── hooks/              # Custom React hooks
-│   │   └── useContacts.js
-│   ├── lib/                # Utilities and helpers
+│   │   ├── ContactsPage.jsx        # Full contact database view
+│   │   ├── ContactDetailsModal.jsx # Contact history modal
+│   │   ├── NEPQTracker.jsx         # NEPQ progress visualization
+│   │   ├── AvatarManager.jsx       # Avatar/ICP management
+│   │   ├── QuestionSuggester.jsx   # Phase 3: Context-aware questions
+│   │   └── Analytics.jsx           # Phase 3: Analytics dashboard
+│   ├── hooks/                   # Custom React hooks
+│   │   ├── useContacts.js
+│   │   ├── useAvatars.js
+│   │   ├── useQuestions.js         # Phase 3: Question library
+│   │   └── useStats.js             # Phase 3: Analytics calculations
+│   ├── lib/                     # Utilities and helpers
 │   │   ├── storage.js
 │   │   ├── constants.js
-│   │   └── nepq.js
-│   ├── styles/             # CSS files
+│   │   ├── nepq.js
+│   │   └── seedQuestions.js        # Phase 3: 80+ NEPQ questions
+│   ├── styles/                  # CSS files
 │   │   └── index.css
-│   ├── App.jsx             # Root component
-│   └── main.jsx            # Entry point
-├── public/                 # Static assets
-├── index.html              # HTML template
+│   ├── App.jsx                  # Root component
+│   └── main.jsx                 # Entry point
+├── public/                      # Static assets
+├── index.html                   # HTML template
 ├── package.json
 ├── vite.config.js
 ├── tailwind.config.js
-└── netlify.toml           # Netlify config
+└── netlify.toml                # Netlify config
 ```
 
 ## 💾 Data Storage
@@ -249,21 +301,30 @@ This dialer is built around the 7th Level NEPQ framework:
 
 1. **Connection** 🤝 - Build rapport
 2. **Situation** 📋 - Understand current state
-3. **Problem Awareness** 🔍 - Uncover pain points
+3. **Problem Awareness** 🔍 - Uncover pain points (L1-L4)
 4. **Solution Awareness** 💡 - Explore ideal criteria
 5. **Consequence** ⚠️ - Show cost of inaction
 6. **Commitment** 🤝 - Get agreement to proceed
 7. **Presentation** 📊 - Demo/proposal
 
-**Phase 2 Complete!** Track NEPQ phases and problem levels (L1-L4) for every Decision Maker call!
+### Problem Discovery Levels (L1-L4)
+
+The dialer tracks problem depth using the NEPQ framework:
+
+- **L1: Obvious** - Surface wants/not wants ("We want faster processing")
+- **L2: Common** - Lack of capabilities ("We're missing automation")
+- **L3: Specific** - Quantified impact ("Costing us $50K/year in lost productivity")
+- **L4: Mission Critical** - Cost of inaction ("If we don't fix this, we'll miss our annual targets")
+
+**Phase 3 Complete!** Get AI-powered question suggestions based on your current phase and problem level, plus comprehensive analytics to optimize your NEPQ performance!
 
 ## 🤝 Contributing
 
 This is a personal project for Jordan's sales operation. Future phases will add:
-- Avatar/ICP management
-- Question suggester based on NEPQ phase
-- Advanced analytics
-- Cloud storage
+- Call timer and duration tracking
+- Cloud storage with multi-device sync
+- Team collaboration features
+- Advanced reporting and exports
 
 ## 📝 License
 

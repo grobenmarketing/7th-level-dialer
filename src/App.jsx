@@ -3,6 +3,7 @@ import Dashboard from './components/Dashboard'
 import CallingInterface from './components/CallingInterface'
 import ContactsPage from './components/ContactsPage'
 import AvatarManager from './components/AvatarManager'
+import Analytics from './components/Analytics'
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard')
@@ -26,6 +27,10 @@ function App() {
     setCurrentView('avatars')
   }
 
+  const handleViewAnalytics = () => {
+    setCurrentView('analytics')
+  }
+
   const handleNextContact = () => {
     setCurrentContactIndex(prev => prev + 1)
   }
@@ -37,6 +42,7 @@ function App() {
           onStartCalling={handleStartCalling}
           onViewContacts={handleViewContacts}
           onManageAvatars={handleManageAvatars}
+          onViewAnalytics={handleViewAnalytics}
         />
       )}
       {currentView === 'calling' && (
@@ -51,6 +57,9 @@ function App() {
       )}
       {currentView === 'avatars' && (
         <AvatarManager onBack={handleBackToDashboard} />
+      )}
+      {currentView === 'analytics' && (
+        <Analytics onBackToDashboard={handleBackToDashboard} />
       )}
     </div>
   )
