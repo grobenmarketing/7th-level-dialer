@@ -1,8 +1,18 @@
 import NEPQTracker from './NEPQTracker';
 import { formatDuration } from '../lib/constants';
 
-function ContactDetailsModal({ contact, onClose }) {
+function ContactDetailsModal({ contact, onClose, onEdit, onDelete }) {
   if (!contact) return null;
+
+  const handleDelete = () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${contact.companyName}?\n\nThis will permanently remove all call history and cannot be undone.`
+    );
+    if (confirmed) {
+      onDelete(contact.id);
+      onClose();
+    }
+  };
 
   // Calculate total time spent on calls
   const totalCallTime = contact.callHistory?.reduce((sum, call) => sum + (call.duration || 0), 0) || 0;
@@ -244,12 +254,26 @@ function ContactDetailsModal({ contact, onClose }) {
 
         {/* Footer */}
         <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200">
-          <button
-            onClick={onClose}
-            className="btn-secondary w-full"
-          >
-            Close
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
+            <button
+              onClick={() => onEdit(contact)}
+              className="flex-1 btn-primary"
+            >
+              Edit Contact
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 btn-secondary"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>

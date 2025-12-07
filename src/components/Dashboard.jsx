@@ -3,10 +3,14 @@ import { useContacts } from '../hooks/useContacts';
 import { useQuestions } from '../hooks/useQuestions';
 import { seedQuestions, SEED_QUESTIONS } from '../lib/seedQuestions';
 import ContactDetailsModal from './ContactDetailsModal';
+import ContactFormModal from './ContactFormModal';
 
 function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnalytics }) {
   const {
     contacts,
+    addContact,
+    updateContact,
+    deleteContact,
     getActiveContacts,
     getStats,
     importFromCSV,
@@ -18,6 +22,7 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
   const stats = getStats();
   const activeContacts = getActiveContacts();
   const [selectedContact, setSelectedContact] = useState(null);
+  const [editingContact, setEditingContact] = useState(null);
 
   const handleImport = (e) => {
     const file = e.target.files[0];
@@ -65,6 +70,23 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
 
     bulkImportQuestions(SEED_QUESTIONS);
     alert(`Successfully loaded ${SEED_QUESTIONS.length} NEPQ questions into your library!`);
+  };
+
+  const handleEditContact = (formData) => {
+    if (editingContact) {
+      updateContact(editingContact.id, formData);
+      setEditingContact(null);
+      setSelectedContact(null);
+    }
+  };
+
+  const handleDeleteContact = (contactId) => {
+    deleteContact(contactId);
+  };
+
+  const handleEditClick = (contact) => {
+    setEditingContact(contact);
+    setSelectedContact(null);
   };
 
   return (
@@ -309,6 +331,17 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
         <ContactDetailsModal
           contact={selectedContact}
           onClose={() => setSelectedContact(null)}
+          onEdit={handleEditClick}
+          onDelete={handleDeleteContact}
+        />
+      )}
+
+      {/* Edit Contact Modal */}
+      {editingContact && (
+        <ContactFormModal
+          contact={editingContact}
+          onSave={handleEditContact}
+          onClose={() => setEditingContact(null)}
         />
       )}
     </div>
