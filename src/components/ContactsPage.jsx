@@ -248,88 +248,122 @@ function ContactsPage({ onBackToDashboard }) {
           </div>
         </div>
 
-        {/* Contacts Grid */}
+        {/* Contacts Table */}
         {filteredContacts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredContacts.map((contact) => (
-              <div
-                key={contact.id}
-                onClick={() => setSelectedContact(contact)}
-                className="card bg-white hover:shadow-xl cursor-pointer transition-all transform hover:scale-105"
-              >
-                {/* Company Name */}
-                <div className="mb-3">
-                  <h3 className="text-xl font-bold text-r7-blue mb-1 truncate">
-                    {contact.companyName || 'Unknown Company'}
-                  </h3>
-                  {contact.industry && (
-                    <span className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                      {contact.industry}
-                    </span>
-                  )}
-                </div>
-
-                {/* Contact Info */}
-                <div className="space-y-2 mb-4 text-sm">
-                  {contact.phone && (
-                    <div className="flex items-center text-gray-600">
-                      <span className="mr-2">📞</span>
-                      <span className="truncate">{contact.phone}</span>
-                    </div>
-                  )}
-                  {contact.website && (
-                    <div className="flex items-center text-gray-600">
-                      <span className="mr-2">🌐</span>
-                      <span className="truncate">{contact.website}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-gray-50 rounded">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-r7-blue">
-                      {contact.totalDials || 0}
-                    </div>
-                    <div className="text-xs text-gray-600">Dials</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-green-600">
-                      {contact.callHistory?.length || 0}
-                    </div>
-                    <div className="text-xs text-gray-600">Calls</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xs font-semibold text-gray-700 mt-1">
-                      {contact.currentOkCode || 'N/A'}
-                    </div>
-                    <div className="text-xs text-gray-600">OK Code</div>
-                  </div>
-                </div>
-
-                {/* Status Badge */}
-                <div className="flex justify-between items-center">
-                  <span
-                    className={`text-xs px-2 py-1 rounded ${
-                      contact.status === 'active'
-                        ? 'bg-green-100 text-green-700'
-                        : contact.status === 'closed-won'
-                        ? 'bg-blue-100 text-blue-700'
-                        : contact.status === 'closed-lost'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-gray-100 text-gray-700'
-                    }`}
+          <div className="card bg-white overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Company
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Phone
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Website
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Dials
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Calls
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    OK Code
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Last Call
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredContacts.map((contact) => (
+                  <tr
+                    key={contact.id}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => setSelectedContact(contact)}
                   >
-                    {contact.status}
-                  </span>
-                  {contact.lastCall && (
-                    <span className="text-xs text-gray-500">
-                      {new Date(contact.lastCall).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <div className="text-sm font-semibold text-r7-blue">
+                          {contact.companyName || 'Unknown Company'}
+                        </div>
+                        {contact.industry && (
+                          <span className="text-xs text-gray-500">
+                            {contact.industry}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                      {contact.phone || '-'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
+                      {contact.website ? (
+                        <a
+                          href={contact.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-r7-blue hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {contact.website}
+                        </a>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-medium text-r7-blue">
+                      {contact.totalDials || 0}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-medium text-green-600">
+                      {contact.callHistory?.length || 0}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-center text-xs text-gray-700">
+                      {contact.currentOkCode || 'N/A'}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-center">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${
+                          contact.status === 'active'
+                            ? 'bg-green-100 text-green-700'
+                            : contact.status === 'closed-won'
+                            ? 'bg-blue-100 text-blue-700'
+                            : contact.status === 'closed-lost'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {contact.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-500">
+                      {contact.lastCall
+                        ? new Date(contact.lastCall).toLocaleDateString()
+                        : '-'}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedContact(contact);
+                        }}
+                        className="text-r7-blue hover:text-r7-dark font-medium"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="card bg-white text-center py-12">

@@ -5,7 +5,7 @@ import { seedQuestions, SEED_QUESTIONS } from '../lib/seedQuestions';
 import ContactDetailsModal from './ContactDetailsModal';
 import ContactFormModal from './ContactFormModal';
 
-function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnalytics }) {
+function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnalytics, onViewHowToUse }) {
   const {
     contacts,
     addContact,
@@ -219,6 +219,18 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
                 Upload contact list
               </div>
             </label>
+
+            {/* How to Use */}
+            <button
+              onClick={onViewHowToUse}
+              className="p-8 rounded-lg text-center bg-yellow-600 text-white hover:bg-yellow-700 cursor-pointer transition-all hover:shadow-xl transform hover:scale-105"
+            >
+              <div className="text-4xl mb-2">📖</div>
+              <div className="text-2xl font-bold">How to Use</div>
+              <div className="text-sm mt-2 opacity-90">
+                Learn the system
+              </div>
+            </button>
           </div>
 
           {/* Export Button */}
