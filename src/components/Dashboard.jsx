@@ -72,11 +72,11 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-r7-blue mb-3">
-            📞 R7 NEPQ Dialer
+          <h1 className="text-3xl font-bold text-r7-blue mb-2">
+            R7 Creative Dialer
           </h1>
-          <p className="text-xl text-gray-600">
-            7th Level Sales Calling System
+          <p className="text-sm text-gray-600">
+            Detach from the outcomes and your income will always increase.
           </p>
         </div>
 
@@ -300,7 +300,7 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
 
         {/* Footer */}
         <div className="text-center mt-8 text-gray-500 text-sm">
-          <p>R7 NEPQ Dialer v1.0 | Built for 7th Level Sales</p>
+          <p>R7 Creative Dialer v1.0</p>
         </div>
       </div>
 
