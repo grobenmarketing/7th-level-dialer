@@ -3,6 +3,7 @@ import { useContacts } from '../hooks/useContacts';
 import ContactCard from './ContactCard';
 import NEPQTracker from './NEPQTracker';
 import QuestionSuggester from './QuestionSuggester';
+import CallTimer from './CallTimer';
 import { OK_CODES, CALL_OUTCOMES, NEPQ_PHASES, PROBLEM_LEVELS } from '../lib/constants';
 
 function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
@@ -15,6 +16,10 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
   const [okCode, setOkCode] = useState('');
   const [notes, setNotes] = useState('');
 
+  // Call timer state
+  const [callDuration, setCallDuration] = useState(0);
+  const [timerActive, setTimerActive] = useState(true); // Auto-start timer
+
   // NEPQ tracking state (only for Decision Maker calls)
   const [nepqPhaseReached, setNepqPhaseReached] = useState('connection');
   const [problemLevelReached, setProblemLevelReached] = useState(0);
@@ -26,6 +31,9 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
     setOutcome('');
     setOkCode('');
     setNotes('');
+    // Reset timer
+    setCallDuration(0);
+    setTimerActive(true);
     // Reset NEPQ state
     setNepqPhaseReached(currentContact?.nepqPhase || 'connection');
     setProblemLevelReached(0);
@@ -54,7 +62,7 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
       outcome,
       okCode,
       notes,
-      duration: 0, // Will add timer in future phase
+      duration: callDuration, // Call duration from timer
       // NEPQ tracking (only saved if DM call)
       nepqPhaseReached: outcome === 'DM' ? nepqPhaseReached : currentContact.nepqPhase,
       problemLevelReached: outcome === 'DM' ? problemLevelReached : 0,
@@ -165,6 +173,13 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
           <div className="space-y-6">
             <ContactCard contact={currentContact} />
             {currentContact && <NEPQTracker contact={currentContact} />}
+            {/* Call Timer */}
+            {currentContact && (
+              <CallTimer
+                isActive={timerActive}
+                onTimeUpdate={setCallDuration}
+              />
+            )}
             {currentContact && outcome === 'DM' && (
               <QuestionSuggester
                 contact={currentContact}

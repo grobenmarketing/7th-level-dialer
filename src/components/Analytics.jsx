@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStats } from '../hooks/useStats';
 import { useContacts } from '../hooks/useContacts';
-import { NEPQ_PHASES } from '../lib/constants';
+import { NEPQ_PHASES, formatDuration } from '../lib/constants';
 
 function Analytics({ onBackToDashboard }) {
   const {
@@ -11,7 +11,8 @@ function Analytics({ onBackToDashboard }) {
     getAvatarPerformanceStats,
     getPhaseConversionRates,
     getOKCodeDistribution,
-    getTopContacts
+    getTopContacts,
+    getDurationByPhase
   } = useStats();
 
   const activityStats = getActivityStats();
@@ -21,6 +22,7 @@ function Analytics({ onBackToDashboard }) {
   const phaseConversion = getPhaseConversionRates();
   const okCodeDistribution = getOKCodeDistribution();
   const topContacts = getTopContacts(5);
+  const durationByPhase = getDurationByPhase();
 
   const [selectedView, setSelectedView] = useState('overview');
 
@@ -107,6 +109,11 @@ function Analytics({ onBackToDashboard }) {
                       ? ((activityStats.dmCalls / activityStats.totalCalls) * 100).toFixed(1)
                       : 0}% of calls
                   </div>
+                  {activityStats.avgDmDuration > 0 && (
+                    <div className="text-xs text-purple-600 font-semibold mt-1">
+                      ⏱️ Avg: {formatDuration(activityStats.avgDmDuration)}
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -118,6 +125,11 @@ function Analytics({ onBackToDashboard }) {
                       ? ((activityStats.gkCalls / activityStats.totalCalls) * 100).toFixed(1)
                       : 0}% of calls
                   </div>
+                  {activityStats.avgGkDuration > 0 && (
+                    <div className="text-xs text-purple-600 font-semibold mt-1">
+                      ⏱️ Avg: {formatDuration(activityStats.avgGkDuration)}
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
@@ -129,9 +141,52 @@ function Analytics({ onBackToDashboard }) {
                       ? ((activityStats.naCalls / activityStats.totalCalls) * 100).toFixed(1)
                       : 0}% of calls
                   </div>
+                  {activityStats.avgNaDuration > 0 && (
+                    <div className="text-xs text-purple-600 font-semibold mt-1">
+                      ⏱️ Avg: {formatDuration(activityStats.avgNaDuration)}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
+
+            {/* Duration Statistics */}
+            {activityStats.totalDuration > 0 && (
+              <div className="card bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200">
+                <h3 className="text-xl font-bold text-gray-700 mb-4">⏱️ Call Duration Analytics</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-700">
+                      {formatDuration(activityStats.totalDuration)}
+                    </div>
+                    <div className="text-xs text-gray-600">Total Talk Time</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-indigo-700">
+                      {formatDuration(activityStats.avgDuration)}
+                    </div>
+                    <div className="text-xs text-gray-600">Average per Call</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-700">
+                      {formatDuration(activityStats.avgDmDuration)}
+                    </div>
+                    <div className="text-xs text-gray-600">Avg DM Call</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-700">
+                      {activityStats.avgDmDuration > 0 && activityStats.avgDuration > 0
+                        ? ((activityStats.avgDmDuration / activityStats.avgDuration) * 100).toFixed(0)
+                        : 0}%
+                    </div>
+                    <div className="text-xs text-gray-600">DM vs Avg</div>
+                  </div>
+                </div>
+                <div className="text-sm text-purple-800">
+                  💡 <strong>Insight:</strong> Longer DM calls often indicate deeper problem discovery and higher engagement.
+                </div>
+              </div>
+            )}
 
             {/* Top Performing Contacts */}
             {topContacts.length > 0 && (
@@ -211,6 +266,52 @@ function Analytics({ onBackToDashboard }) {
         {/* NEPQ Funnel Tab */}
         {selectedView === 'funnel' && (
           <div className="space-y-6">
+            {/* Duration by NEPQ Phase */}
+            {activityStats.totalDuration > 0 && (
+              <div className="card bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
+                <h3 className="text-xl font-bold text-gray-700 mb-4">⏱️ Average Call Duration by NEPQ Phase</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Shows how call duration varies based on NEPQ phase reached
+                </p>
+                <div className="space-y-3">
+                  {durationByPhase.filter(phase => phase.callCount > 0).map((phase, index) => (
+                    <div key={phase.phaseId}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{phase.icon}</span>
+                          <span className="font-semibold text-gray-700">{phase.phase}</span>
+                          <span className="text-xs text-gray-500">({phase.callCount} calls)</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-bold text-purple-600">{formatDuration(phase.avgDuration)}</span>
+                          <span className="text-gray-500 text-sm ml-2">avg</span>
+                        </div>
+                      </div>
+                      <div className="bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                        <div
+                          className={`h-4 rounded-full transition-all duration-500 ${
+                            index === 0 ? 'bg-gradient-to-r from-purple-400 to-purple-500' :
+                            index === 1 ? 'bg-gradient-to-r from-pink-400 to-pink-500' :
+                            index === 2 ? 'bg-gradient-to-r from-indigo-400 to-indigo-500' :
+                            index === 3 ? 'bg-gradient-to-r from-blue-400 to-blue-500' :
+                            index === 4 ? 'bg-gradient-to-r from-cyan-400 to-cyan-500' :
+                            index === 5 ? 'bg-gradient-to-r from-teal-400 to-teal-500' :
+                            'bg-gradient-to-r from-green-400 to-green-500'
+                          }`}
+                          style={{
+                            width: `${Math.min((phase.avgDuration / Math.max(...durationByPhase.map(p => p.avgDuration))) * 100, 100)}%`
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 pt-4 border-t border-purple-200 text-sm text-purple-800">
+                  💡 <strong>Insight:</strong> Later NEPQ phases typically have longer call durations as you dig deeper into problems.
+                </div>
+              </div>
+            )}
+
             {/* Funnel Visualization */}
             <div className="card bg-white">
               <h3 className="text-xl font-bold text-gray-700 mb-4">NEPQ Journey Funnel</h3>
