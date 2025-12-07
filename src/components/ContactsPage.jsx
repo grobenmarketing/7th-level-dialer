@@ -1,12 +1,15 @@
 import { useState, useMemo } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import ContactDetailsModal from './ContactDetailsModal';
+import ContactFormModal from './ContactFormModal';
 
 function ContactsPage({ onBackToDashboard }) {
-  const { contacts, getStats, exportToCSV } = useContacts();
+  const { contacts, addContact, updateContact, deleteContact, getStats, exportToCSV } = useContacts();
   const stats = getStats();
 
   const [selectedContact, setSelectedContact] = useState(null);
+  const [editingContact, setEditingContact] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('company');
@@ -65,6 +68,44 @@ function ContactsPage({ onBackToDashboard }) {
     a.download = `r7-contacts-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  const handleAddContact = (formData) => {
+    addContact(formData);
+  };
+
+  const handleEditContact = (formData) => {
+    if (editingContact) {
+      updateContact(editingContact.id, formData);
+      setEditingContact(null);
+      setSelectedContact(null);
+    }
+  };
+
+  const handleDeleteContact = (contactId) => {
+    deleteContact(contactId);
+  };
+
+  const handleDeleteAll = () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ALL ${contacts.length} contacts?\n\nThis will permanently remove all contacts and their call history. This action cannot be undone.`
+    );
+
+    if (confirmed) {
+      const doubleConfirm = window.confirm(
+        'This is your final warning. Click OK to permanently delete all contacts.'
+      );
+
+      if (doubleConfirm) {
+        contacts.forEach(contact => deleteContact(contact.id));
+        alert('All contacts have been deleted.');
+      }
+    }
+  };
+
+  const handleEditClick = (contact) => {
+    setEditingContact(contact);
+    setSelectedContact(null);
   };
 
   return (
@@ -171,20 +212,39 @@ function ContactsPage({ onBackToDashboard }) {
             </div>
           </div>
 
-          {/* Results Count */}
+          {/* Results Count and Actions */}
           <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
             <p className="text-sm text-gray-600">
               Showing <span className="font-semibold">{filteredContacts.length}</span> of{' '}
               <span className="font-semibold">{contacts.length}</span> contacts
             </p>
-            <button
-              onClick={handleExport}
-              disabled={contacts.length === 0}
-              className="btn-secondary text-sm"
-            >
-              <span className="mr-2">📤</span>
-              Export All to CSV
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="btn-primary text-sm"
+              >
+                + Add Contact
+              </button>
+              <button
+                onClick={handleExport}
+                disabled={contacts.length === 0}
+                className="btn-secondary text-sm"
+              >
+                <span className="mr-2">📤</span>
+                Export All
+              </button>
+              <button
+                onClick={handleDeleteAll}
+                disabled={contacts.length === 0}
+                className={`text-sm px-4 py-2 rounded-lg transition-colors ${
+                  contacts.length === 0
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-red-600 text-white hover:bg-red-700'
+                }`}
+              >
+                Delete All
+              </button>
+            </div>
           </div>
         </div>
 
@@ -290,6 +350,25 @@ function ContactsPage({ onBackToDashboard }) {
           <ContactDetailsModal
             contact={selectedContact}
             onClose={() => setSelectedContact(null)}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteContact}
+          />
+        )}
+
+        {/* Add Contact Modal */}
+        {showAddForm && (
+          <ContactFormModal
+            onSave={handleAddContact}
+            onClose={() => setShowAddForm(false)}
+          />
+        )}
+
+        {/* Edit Contact Modal */}
+        {editingContact && (
+          <ContactFormModal
+            contact={editingContact}
+            onSave={handleEditContact}
+            onClose={() => setEditingContact(null)}
           />
         )}
       </div>
