@@ -96,27 +96,61 @@ export function useContacts() {
 
   const importFromCSV = (csvText) => {
     try {
-      const lines = csvText.trim().split('\n');
+      // Handle different line endings (Windows \r\n, Unix \n, old Mac \r)
+      const lines = csvText.trim().split(/\r?\n/).filter(line => line.trim());
+
+      if (lines.length < 2) {
+        return { success: false, error: 'CSV file must have at least a header and one data row' };
+      }
+
       const headers = lines[0].split(',').map(h => h.trim());
+      const newContactsData = [];
 
-      const newContacts = [];
-
+      // Parse all contacts first
       for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
 
-        const contact = {
+        if (values.length < 2 || !values[0]) {
+          // Skip invalid rows (empty or missing company name)
+          continue;
+        }
+
+        const contactData = {
+          id: Date.now().toString() + '-' + i,
           companyName: values[0] || '',
           phone: values[1] || '',
           website: values[2] || '',
           industry: values[3] || '',
-          companySize: values[4] || ''
+          companySize: values[4] || '',
+
+          // NEPQ Journey Tracking (for Phase 2+)
+          nepqPhase: 'connection',
+          problemLevel: 0,
+          problemsIdentified: [],
+
+          // Deal Management
+          dealStage: 'prospect',
+
+          // Call History
+          callHistory: [],
+
+          // Metadata
+          totalDials: 0,
+          lastCall: null,
+          nextFollowUp: null,
+          currentOkCode: null,
+          status: 'active',
+          createdAt: new Date().toISOString()
         };
 
-        const addedContact = addContact(contact);
-        newContacts.push(addedContact);
+        newContactsData.push(contactData);
       }
 
-      return { success: true, count: newContacts.length };
+      // Batch add all contacts at once to avoid race conditions
+      const updatedContacts = [...contacts, ...newContactsData];
+      saveContacts(updatedContacts);
+
+      return { success: true, count: newContactsData.length };
     } catch (error) {
       console.error('CSV import error:', error);
       return { success: false, error: error.message };
