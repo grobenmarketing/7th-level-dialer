@@ -13,6 +13,8 @@ A web-based sales calling system built for cold prospecting using Jeremy Miner's
 - ✅ OK code system (12 predefined codes)
 - ✅ Call history and notes
 - ✅ Activity dashboard with stats
+- ✅ **Full contact database viewer with search & filters**
+- ✅ **Detailed contact history modal with all notes**
 - ✅ Mobile-responsive design
 - ✅ One-click deployment to Netlify
 
@@ -113,7 +115,16 @@ Then:
   3. Add notes
   4. Click "Save & Next"
 
-### 3. Track Progress
+### 3. View & Manage Contacts
+
+- Click "View Contacts" on the Dashboard to access your full contact database
+- **Search** by company name, phone, industry, or website
+- **Filter** by status (Active, Do Not Call, Closed Won, Closed Lost)
+- **Sort** by company name, total dials, last call date, or status
+- **Click any contact** to view complete details and call history with notes
+- All interactions are tracked and accessible from the contact details modal
+
+### 4. Track Progress
 
 - View stats on the Dashboard
 - Export data anytime with "Export to CSV"
@@ -153,7 +164,9 @@ r7-nepq-dialer/
 │   ├── components/          # React components
 │   │   ├── Dashboard.jsx
 │   │   ├── CallingInterface.jsx
-│   │   └── ContactCard.jsx
+│   │   ├── ContactCard.jsx
+│   │   ├── ContactsPage.jsx        # NEW: Full contact database view
+│   │   └── ContactDetailsModal.jsx  # NEW: Contact history modal
 │   ├── hooks/              # Custom React hooks
 │   │   └── useContacts.js
 │   ├── lib/                # Utilities and helpers

@@ -40,6 +40,8 @@ r7-nepq-dialer/
 │   │   ├── Dashboard.jsx
 │   │   ├── CallingInterface.jsx
 │   │   ├── ContactCard.jsx
+│   │   ├── ContactsPage.jsx         # ✅ Phase 1: Full contact database view
+│   │   ├── ContactDetailsModal.jsx  # ✅ Phase 1: Contact history modal
 │   │   ├── NEPQTracker.jsx
 │   │   ├── QuestionSuggester.jsx
 │   │   ├── AvatarManager.jsx
@@ -241,7 +243,17 @@ App.jsx (Root)
 │  ├─ Stats Overview
 │  ├─ Contact Count
 │  ├─ Import/Export
-│  └─ Start Calling Button
+│  ├─ Start Calling Button
+│  ├─ View Contacts Button
+│  └─ ContactDetailsModal (when clicking contact row)
+│
+├─ ContactsPage.jsx (Full database view) ✅ NEW
+│  ├─ Stats Overview
+│  ├─ Search Bar (company, phone, industry, website)
+│  ├─ Filter Dropdown (status)
+│  ├─ Sort Dropdown (company, dials, last call, status)
+│  ├─ Contact Grid/Cards (click to view details)
+│  └─ ContactDetailsModal (full history + notes)
 │
 └─ CallingInterface.jsx (Active calling)
    ├─ ContactCard.jsx (Contact info + history)
@@ -278,6 +290,26 @@ App.jsx (Root)
 - Lists previous call history
 - Shows NEPQ journey progress
 - Displays last problems discovered
+
+#### 3a. **ContactsPage.jsx** ✅ BUILT
+- Full contact database view with search and filters
+- Search by company name, phone, industry, website
+- Filter by status (active, do-not-call, closed-won, closed-lost)
+- Sort by company name, dials, last call date, status
+- Grid/card layout for contacts
+- Click to open ContactDetailsModal
+- Export to CSV functionality
+- Stats overview
+
+#### 3b. **ContactDetailsModal.jsx** ✅ BUILT
+- Modal/overlay displaying full contact details
+- Company information and metadata
+- Contact details (phone, website)
+- Call statistics (total dials, calls logged, last OK code)
+- Complete call history with all notes
+- Scrollable history view
+- Date/time stamps for each call
+- Visual indicators for call outcomes
 
 #### 4. **NEPQTracker.jsx**
 - Visual phase progress bar (Connection → Presentation)
@@ -320,8 +352,11 @@ App.jsx (Root)
 5. ✅ Contact storage (localStorage)
 6. ✅ OK code tracking
 7. ✅ CSV import/export
+8. ✅ **ContactsPage with search, filter, and sort**
+9. ✅ **ContactDetailsModal for full history view**
+10. ✅ **Clickable contact lists on Dashboard**
 
-**Deliverable:** Working dialer that tracks basic call data
+**Deliverable:** Working dialer that tracks basic call data + full CRM contact viewing capabilities
 
 ---
 

@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useContacts } from '../hooks/useContacts';
+import ContactDetailsModal from './ContactDetailsModal';
 
-function Dashboard({ onStartCalling }) {
+function Dashboard({ onStartCalling, onViewContacts }) {
   const {
     contacts,
     getActiveContacts,
@@ -11,6 +13,7 @@ function Dashboard({ onStartCalling }) {
 
   const stats = getStats();
   const activeContacts = getActiveContacts();
+  const [selectedContact, setSelectedContact] = useState(null);
 
   const handleImport = (e) => {
     const file = e.target.files[0];
@@ -97,7 +100,7 @@ function Dashboard({ onStartCalling }) {
             Quick Actions
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Start Calling Button */}
             <button
               onClick={onStartCalling}
@@ -112,6 +115,18 @@ function Dashboard({ onStartCalling }) {
               <div className="text-2xl font-bold">Start Calling</div>
               <div className="text-sm mt-2 opacity-90">
                 {activeContacts.length} contacts ready
+              </div>
+            </button>
+
+            {/* View All Contacts */}
+            <button
+              onClick={onViewContacts}
+              className="p-8 rounded-lg text-center bg-purple-600 text-white hover:bg-purple-700 cursor-pointer transition-all hover:shadow-xl transform hover:scale-105"
+            >
+              <div className="text-4xl mb-2">📇</div>
+              <div className="text-2xl font-bold">View Contacts</div>
+              <div className="text-sm mt-2 opacity-90">
+                Browse {contacts.length} contacts
               </div>
             </button>
 
@@ -149,9 +164,14 @@ function Dashboard({ onStartCalling }) {
         {/* Recent Contacts Preview */}
         {contacts.length > 0 && (
           <div className="card bg-white">
-            <h2 className="text-2xl font-bold text-r7-blue mb-4">
-              Recent Contacts
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-r7-blue">
+                Recent Contacts
+              </h2>
+              <p className="text-sm text-gray-500">
+                Click any contact to view details and call history
+              </p>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -167,7 +187,8 @@ function Dashboard({ onStartCalling }) {
                   {contacts.slice(0, 10).map((contact) => (
                     <tr
                       key={contact.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
+                      onClick={() => setSelectedContact(contact)}
+                      className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
                     >
                       <td className="py-3 px-4 font-medium">
                         {contact.companyName}
@@ -229,6 +250,14 @@ function Dashboard({ onStartCalling }) {
           <p>R7 NEPQ Dialer v1.0 | Built for 7th Level Sales</p>
         </div>
       </div>
+
+      {/* Contact Details Modal */}
+      {selectedContact && (
+        <ContactDetailsModal
+          contact={selectedContact}
+          onClose={() => setSelectedContact(null)}
+        />
+      )}
     </div>
   );
 }
