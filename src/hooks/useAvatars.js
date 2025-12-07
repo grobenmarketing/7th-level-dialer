@@ -1,19 +1,45 @@
 import { useState, useEffect } from 'react';
-import { storage, KEYS } from '../lib/storage';
+import { storage, KEYS } from '../lib/cloudStorage';
 
 export function useAvatars() {
   const [avatars, setAvatars] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load avatars from localStorage on mount
+  // Load avatars from storage on mount
   useEffect(() => {
-    const savedAvatars = storage.get(KEYS.AVATARS, []);
-    setAvatars(savedAvatars);
+    let mounted = true;
+
+    const loadAvatars = async () => {
+      try {
+        setLoading(true);
+        const savedAvatars = await storage.get(KEYS.AVATARS, []);
+
+        if (mounted) {
+          setAvatars(savedAvatars);
+        }
+      } catch (error) {
+        console.error('Error loading avatars:', error);
+        if (mounted) {
+          setAvatars([]);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadAvatars();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Save avatars to localStorage whenever they change
-  const saveAvatars = (updatedAvatars) => {
+  // Save avatars to storage whenever they change
+  const saveAvatars = async (updatedAvatars) => {
     setAvatars(updatedAvatars);
-    storage.set(KEYS.AVATARS, updatedAvatars);
+    await storage.set(KEYS.AVATARS, updatedAvatars);
   };
 
   const addAvatar = (avatarData) => {
@@ -91,6 +117,7 @@ export function useAvatars() {
     deleteAvatar,
     getAvatarById,
     getAvatarsByPosition,
-    getDecisionMakerAvatars
+    getDecisionMakerAvatars,
+    loading
   };
 }

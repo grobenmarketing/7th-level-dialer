@@ -1,19 +1,52 @@
 import { useState, useEffect } from 'react';
-import { storage, KEYS } from '../lib/storage';
+import { storage, KEYS, migrateToCloud, isCloudStorageAvailable } from '../lib/cloudStorage';
 
 export function useContacts() {
   const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load contacts from localStorage on mount
+  // Load contacts from storage on mount (with automatic migration to cloud)
   useEffect(() => {
-    const savedContacts = storage.get(KEYS.CONTACTS, []);
-    setContacts(savedContacts);
+    let mounted = true;
+
+    const loadContacts = async () => {
+      try {
+        setLoading(true);
+
+        // Run migration once if in production
+        if (isCloudStorageAvailable()) {
+          await migrateToCloud();
+        }
+
+        // Load contacts
+        const savedContacts = await storage.get(KEYS.CONTACTS, []);
+
+        if (mounted) {
+          setContacts(savedContacts);
+        }
+      } catch (error) {
+        console.error('Error loading contacts:', error);
+        if (mounted) {
+          setContacts([]);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadContacts();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Save contacts to localStorage whenever they change
-  const saveContacts = (updatedContacts) => {
+  // Save contacts to storage whenever they change
+  const saveContacts = async (updatedContacts) => {
     setContacts(updatedContacts);
-    storage.set(KEYS.CONTACTS, updatedContacts);
+    await storage.set(KEYS.CONTACTS, updatedContacts);
   };
 
   const addContact = (contact) => {
@@ -214,6 +247,7 @@ export function useContacts() {
     importFromCSV,
     exportToCSV,
     getActiveContacts,
-    getStats
+    getStats,
+    loading
   };
 }
