@@ -34,6 +34,19 @@ export function useStats() {
     const contactRate = totalDials > 0 ? ((dmCalls.length / totalDials) * 100).toFixed(1) : 0;
     const meetingRate = dmCalls.length > 0 ? ((meetingsBooked / dmCalls.length) * 100).toFixed(1) : 0;
 
+    // Calculate duration stats
+    const totalDuration = allCalls.reduce((sum, call) => sum + (call.duration || 0), 0);
+    const avgDuration = allCalls.length > 0 ? Math.round(totalDuration / allCalls.length) : 0;
+
+    const dmDuration = dmCalls.reduce((sum, call) => sum + (call.duration || 0), 0);
+    const avgDmDuration = dmCalls.length > 0 ? Math.round(dmDuration / dmCalls.length) : 0;
+
+    const gkDuration = gkCalls.reduce((sum, call) => sum + (call.duration || 0), 0);
+    const avgGkDuration = gkCalls.length > 0 ? Math.round(gkDuration / gkCalls.length) : 0;
+
+    const naDuration = naCalls.reduce((sum, call) => sum + (call.duration || 0), 0);
+    const avgNaDuration = naCalls.length > 0 ? Math.round(naDuration / naCalls.length) : 0;
+
     return {
       totalContacts: contacts.length,
       activeContacts: activeContacts.length,
@@ -44,7 +57,13 @@ export function useStats() {
       naCalls: naCalls.length,
       meetingsBooked,
       contactRate: parseFloat(contactRate),
-      meetingRate: parseFloat(meetingRate)
+      meetingRate: parseFloat(meetingRate),
+      // Duration stats
+      totalDuration,
+      avgDuration,
+      avgDmDuration,
+      avgGkDuration,
+      avgNaDuration
     };
   };
 
@@ -261,6 +280,26 @@ export function useStats() {
       .slice(0, limit);
   };
 
+  // Duration stats by NEPQ Phase
+  const getDurationByPhase = () => {
+    const allCalls = getAllCallRecords();
+
+    return NEPQ_PHASES.map(phase => {
+      const phaseCalls = allCalls.filter(call => call.nepqPhaseReached === phase.id);
+      const totalDuration = phaseCalls.reduce((sum, call) => sum + (call.duration || 0), 0);
+      const avgDuration = phaseCalls.length > 0 ? Math.round(totalDuration / phaseCalls.length) : 0;
+
+      return {
+        phase: phase.name,
+        phaseId: phase.id,
+        icon: phase.icon,
+        callCount: phaseCalls.length,
+        totalDuration,
+        avgDuration
+      };
+    });
+  };
+
   return {
     getActivityStats,
     getNEPQFunnelStats,
@@ -270,6 +309,7 @@ export function useStats() {
     getActivityTrends,
     getOKCodeDistribution,
     getTopContacts,
-    getAllCallRecords
+    getAllCallRecords,
+    getDurationByPhase
   };
 }

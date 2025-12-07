@@ -1,7 +1,14 @@
 import NEPQTracker from './NEPQTracker';
+import { formatDuration } from '../lib/constants';
 
 function ContactDetailsModal({ contact, onClose }) {
   if (!contact) return null;
+
+  // Calculate total time spent on calls
+  const totalCallTime = contact.callHistory?.reduce((sum, call) => sum + (call.duration || 0), 0) || 0;
+  const avgCallTime = contact.callHistory?.length > 0
+    ? Math.round(totalCallTime / contact.callHistory.length)
+    : 0;
 
   return (
     <div
@@ -94,7 +101,7 @@ function ContactDetailsModal({ contact, onClose }) {
             <h3 className="text-lg font-bold text-gray-700 mb-3">
               Call Statistics
             </h3>
-            <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
               <div className="text-center">
                 <div className="text-2xl font-bold text-r7-blue">
                   {contact.totalDials || 0}
@@ -108,12 +115,24 @@ function ContactDetailsModal({ contact, onClose }) {
                 <div className="text-xs text-gray-600">Calls Logged</div>
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-700 mt-1">
-                  {contact.currentOkCode || 'N/A'}
+                <div className="text-lg font-semibold text-purple-600">
+                  {formatDuration(totalCallTime)}
                 </div>
-                <div className="text-xs text-gray-600">Last OK Code</div>
+                <div className="text-xs text-gray-600">Total Talk Time</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-orange-600">
+                  {formatDuration(avgCallTime)}
+                </div>
+                <div className="text-xs text-gray-600">Avg Call Duration</div>
               </div>
             </div>
+            {contact.currentOkCode && (
+              <div className="mt-3 p-3 bg-white rounded border border-gray-200 text-center">
+                <span className="text-xs text-gray-500 mr-2">Last OK Code:</span>
+                <span className="text-sm font-semibold text-gray-700">{contact.currentOkCode}</span>
+              </div>
+            )}
           </div>
 
           {/* NEPQ Journey Progress */}
@@ -136,11 +155,18 @@ function ContactDetailsModal({ contact, onClose }) {
                     className="p-4 bg-gray-50 rounded-lg border-l-4 border-blue-400"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <span className="text-base font-semibold text-gray-700">
-                        {call.outcome === 'DM' && '👤 Decision Maker'}
-                        {call.outcome === 'GK' && '🚪 Gatekeeper'}
-                        {call.outcome === 'NA' && '📵 No Answer'}
-                      </span>
+                      <div>
+                        <span className="text-base font-semibold text-gray-700 block">
+                          {call.outcome === 'DM' && '👤 Decision Maker'}
+                          {call.outcome === 'GK' && '🚪 Gatekeeper'}
+                          {call.outcome === 'NA' && '📵 No Answer'}
+                        </span>
+                        {call.duration > 0 && (
+                          <span className="text-xs text-purple-600 font-semibold">
+                            ⏱️ {formatDuration(call.duration)}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-sm text-gray-500">
                         {new Date(call.date).toLocaleDateString()} {new Date(call.date).toLocaleTimeString()}
                       </span>
