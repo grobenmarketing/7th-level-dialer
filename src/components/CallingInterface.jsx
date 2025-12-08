@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import { useKPI } from '../hooks/useKPI';
 import ContactCard from './ContactCard';
 import CallTimer from './CallTimer';
 import { OK_CODES, CALL_OUTCOMES } from '../lib/constants';
+import { generatePhoneURL } from '../lib/phoneUtils';
 
 function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
   const { getActiveContacts, addCallToHistory, updateContact } = useContacts();
@@ -22,6 +23,12 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
   // Call timer state
   const [callDuration, setCallDuration] = useState(0);
   const [timerActive, setTimerActive] = useState(false); // Start timer when call button is clicked
+
+  // Generate phone URL based on device (iOS uses OpenPhone deep link, others use tel:)
+  const phoneURL = useMemo(() => {
+    if (!currentContact?.phone) return '#';
+    return generatePhoneURL(currentContact.phone);
+  }, [currentContact?.phone]);
 
   // Reset form when contact changes
   useEffect(() => {
@@ -186,7 +193,7 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
             {currentContact && (
               <div className="card bg-gradient-to-r from-r7-blue to-r7-dark text-white">
                 <a
-                  href={`tel:${currentContact.phone}`}
+                  href={phoneURL}
                   onClick={handleStartCall}
                   className="block text-center py-8 hover:opacity-90 transition-opacity"
                 >
