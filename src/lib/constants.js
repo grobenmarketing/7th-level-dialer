@@ -1,6 +1,7 @@
 export const OK_CODES = [
   { code: 'OK-01', label: 'Interested - Follow Up', color: 'green' },
   { code: 'OK-02', label: 'Not Interested', color: 'red' },
+  { code: 'OK-11', label: 'Sent Email', color: 'blue' },
   { code: 'OK-03', label: 'Wrong Contact', color: 'gray' },
   { code: 'OK-04', label: 'Do Not Call', color: 'red' },
   { code: 'OK-05', label: 'Callback Requested', color: 'blue' },
