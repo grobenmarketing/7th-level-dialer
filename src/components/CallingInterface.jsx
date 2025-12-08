@@ -6,10 +6,11 @@ import CallTimer from './CallTimer';
 import { OK_CODES, CALL_OUTCOMES } from '../lib/constants';
 import { generatePhoneURL } from '../lib/phoneUtils';
 
-function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
+function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, onNextContact }) {
   const { getActiveContacts, addCallToHistory, updateContact } = useContacts();
   const { incrementMetric, addObjection, getTodayDials, dailyDialGoal, saveDailyDialGoal } = useKPI();
-  const activeContacts = getActiveContacts();
+  // Use filtered contacts if provided, otherwise use all active contacts
+  const activeContacts = filteredContacts || getActiveContacts();
   const currentContact = activeContacts[contactIndex];
 
   // Daily goal state
@@ -165,10 +166,11 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-r7-blue">
-              Calling Session
+              {filteredContacts ? '🎯 Filtered Calling Session' : 'Calling Session'}
             </h1>
             <p className="text-gray-600">
               Contact {contactIndex + 1} of {activeContacts.length}
+              {filteredContacts && ' (filtered)'}
             </p>
           </div>
           <button
