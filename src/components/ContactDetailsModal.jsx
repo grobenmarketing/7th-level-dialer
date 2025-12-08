@@ -1,4 +1,3 @@
-import NEPQTracker from './NEPQTracker';
 import { formatDuration } from '../lib/constants';
 
 function ContactDetailsModal({ contact, onClose, onEdit, onDelete }) {
@@ -145,13 +144,6 @@ function ContactDetailsModal({ contact, onClose, onEdit, onDelete }) {
             )}
           </div>
 
-          {/* NEPQ Journey Progress */}
-          {(contact.nepqPhase && contact.nepqPhase !== 'connection') || contact.problemLevel > 0 ? (
-            <div className="mb-6">
-              <NEPQTracker contact={contact} />
-            </div>
-          ) : null}
-
           {/* Call History */}
           {contact.callHistory && contact.callHistory.length > 0 ? (
             <div>
@@ -187,49 +179,6 @@ function ContactDetailsModal({ contact, onClose, onEdit, onDelete }) {
                         <span className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">
                           {call.okCode}
                         </span>
-                      </div>
-                    )}
-                    {/* NEPQ Data for Decision Maker calls */}
-                    {call.outcome === 'DM' && (call.nepqPhaseReached || call.problemLevelReached > 0) && (
-                      <div className="mb-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded border border-blue-200">
-                        <div className="text-xs font-semibold text-gray-700 mb-2">NEPQ Tracking:</div>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {call.nepqPhaseReached && (
-                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                              Phase: {call.nepqPhaseReached}
-                            </span>
-                          )}
-                          {call.problemLevelReached > 0 && (
-                            <span className={`text-xs px-2 py-1 rounded ${
-                              call.problemLevelReached === 1 ? 'bg-blue-100 text-blue-700' :
-                              call.problemLevelReached === 2 ? 'bg-green-100 text-green-700' :
-                              call.problemLevelReached === 3 ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-red-100 text-red-700'
-                            }`}>
-                              Problem Level: L{call.problemLevelReached}
-                            </span>
-                          )}
-                        </div>
-                        {call.problemsDiscovered && call.problemsDiscovered.length > 0 && (
-                          <div className="mt-2">
-                            <div className="text-xs font-semibold text-gray-600 mb-1">Problems Discovered:</div>
-                            <div className="space-y-1">
-                              {call.problemsDiscovered.map((problem, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`text-xs p-2 rounded border-l-2 ${
-                                    problem.level === 1 ? 'border-blue-500 bg-blue-50' :
-                                    problem.level === 2 ? 'border-green-500 bg-green-50' :
-                                    problem.level === 3 ? 'border-yellow-500 bg-yellow-50' :
-                                    'border-red-500 bg-red-50'
-                                  }`}
-                                >
-                                  <span className="font-semibold">L{problem.level}:</span> {problem.statement}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )}
                     {call.notes && (
