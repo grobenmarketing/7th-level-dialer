@@ -1,13 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useStats } from '../hooks/useStats';
 import { useKPI } from '../hooks/useKPI';
+import { useContacts } from '../hooks/useContacts';
 import { formatDuration } from '../lib/constants';
 
 function Analytics({ onBackToDashboard }) {
   const {
     getActivityStats,
-    getOKCodeDistribution
+    getOKCodeDistribution,
+    getAllCallRecords
   } = useStats();
+
+  const { contacts } = useContacts();
 
   const {
     getWeekData,
@@ -17,6 +21,8 @@ function Analytics({ onBackToDashboard }) {
     updateKPIForDate,
     weeklyTargets,
     updateWeeklyTargets,
+    rebuildFromCallHistory,
+    kpiData,
     getWeekStart
   } = useKPI();
 
@@ -25,6 +31,8 @@ function Analytics({ onBackToDashboard }) {
   const [editingTargets, setEditingTargets] = useState(false);
   const [tempTargets, setTempTargets] = useState(weeklyTargets);
   const [view, setView] = useState('kpi'); // 'kpi' or 'overview'
+  const [syncing, setSyncing] = useState(false);
+  const hasAutoSynced = useRef(false);
 
   const activityStats = getActivityStats();
   const okCodeDistribution = getOKCodeDistribution();
@@ -32,6 +40,38 @@ function Analytics({ onBackToDashboard }) {
   const weeklyTotals = getWeeklyTotals(currentWeekStart);
   const performanceRatios = getPerformanceRatios(currentWeekStart);
   const objectionFrequency = getObjectionFrequency(currentWeekStart);
+
+  // Auto-sync historical data on first load if needed
+  useEffect(() => {
+    const autoSyncIfNeeded = async () => {
+      // Only run once
+      if (hasAutoSynced.current) return;
+
+      // Check if we have call history but no KPI data
+      const allCalls = getAllCallRecords();
+      const hasCallHistory = allCalls.length > 0;
+      const hasKPIData = Object.keys(kpiData).length > 0;
+
+      // If we have call history but no KPI data, auto-sync
+      if (hasCallHistory && !hasKPIData && contacts.length > 0) {
+        console.log('Auto-syncing historical call data to KPI tracker...');
+        hasAutoSynced.current = true;
+        setSyncing(true);
+        try {
+          await rebuildFromCallHistory(contacts);
+          console.log('Auto-sync complete!');
+          // Reload to show updated data
+          window.location.reload();
+        } catch (error) {
+          console.error('Auto-sync failed:', error);
+        } finally {
+          setSyncing(false);
+        }
+      }
+    };
+
+    autoSyncIfNeeded();
+  }, [contacts, kpiData, getAllCallRecords, rebuildFromCallHistory]);
 
   const handleEditDay = async (date, field, value) => {
     await updateKPIForDate(date, { [field]: parseInt(value) || 0 });
@@ -58,9 +98,41 @@ function Analytics({ onBackToDashboard }) {
     setCurrentWeekStart(getWeekStart());
   };
 
+  const handleSyncFromCallHistory = async () => {
+    if (!confirm('This will rebuild all KPI data from your contact call history. Continue?')) {
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      await rebuildFromCallHistory(contacts);
+      alert('KPI data successfully synced from call history!');
+      // Force page reload to show updated data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error syncing KPI data:', error);
+      alert('Error syncing data. Please try again.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Auto-sync loading overlay */}
+        {syncing && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-8 max-w-md text-center">
+              <div className="text-6xl mb-4">⏳</div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Syncing Data...</h2>
+              <p className="text-gray-600">
+                Building KPI metrics from your call history. This will only take a moment.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -79,7 +151,7 @@ function Analytics({ onBackToDashboard }) {
         </div>
 
         {/* View Toggle */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap items-center">
           <button
             onClick={() => setView('kpi')}
             className={`px-6 py-2 rounded-lg font-semibold transition-all ${
@@ -99,6 +171,14 @@ function Analytics({ onBackToDashboard }) {
             }`}
           >
             📈 Overall Analytics
+          </button>
+          <button
+            onClick={handleSyncFromCallHistory}
+            disabled={syncing}
+            className="ml-auto px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+            title="Manually rebuild all KPI data from contact call history (usually not needed - auto-syncs on first load)"
+          >
+            {syncing ? '⏳ Syncing...' : '🔄 Re-sync All Data'}
           </button>
         </div>
 

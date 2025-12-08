@@ -27,7 +27,7 @@ export function useStats() {
     const naCalls = allCalls.filter(call => call.outcome === 'NA');
 
     const meetingsBooked = contacts.filter(c =>
-      c.currentOkCode === 'OK-11' || c.currentOkCode === 'OK-12'
+      c.currentOkCode === 'OK-09'
     ).length;
 
     const contactRate = totalDials > 0 ? ((dmCalls.length / totalDials) * 100).toFixed(1) : 0;

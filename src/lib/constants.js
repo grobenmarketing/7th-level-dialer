@@ -1,16 +1,14 @@
 export const OK_CODES = [
   { code: 'OK-01', label: 'Interested - Follow Up', color: 'green' },
-  { code: 'OK-02', label: 'Not Interested - Budget', color: 'red' },
-  { code: 'OK-03', label: 'Not Interested - No Need', color: 'red' },
-  { code: 'OK-04', label: 'Already Using Competitor', color: 'yellow' },
-  { code: 'OK-05', label: 'Wrong Contact', color: 'gray' },
-  { code: 'OK-06', label: 'Do Not Call', color: 'red' },
-  { code: 'OK-07', label: 'Callback Requested', color: 'blue' },
-  { code: 'OK-08', label: 'Gatekeeper Block', color: 'yellow' },
-  { code: 'OK-09', label: 'Voicemail - Left Message', color: 'blue' },
-  { code: 'OK-10', label: 'No Answer - Try Again', color: 'gray' },
-  { code: 'OK-11', label: 'Meeting Scheduled', color: 'green' },
-  { code: 'OK-12', label: 'Qualified Lead - Hot', color: 'green' }
+  { code: 'OK-02', label: 'Not Interested', color: 'red' },
+  { code: 'OK-03', label: 'Wrong Contact', color: 'gray' },
+  { code: 'OK-04', label: 'Do Not Call', color: 'red' },
+  { code: 'OK-05', label: 'Callback Requested', color: 'blue' },
+  { code: 'OK-06', label: 'Gatekeeper Block', color: 'yellow' },
+  { code: 'OK-07', label: 'Voicemail - Left Message', color: 'blue' },
+  { code: 'OK-08', label: 'No Answer - Try Again', color: 'gray' },
+  { code: 'OK-09', label: 'Meeting Scheduled / Qualified Lead', color: 'green' },
+  { code: 'OK-10', label: 'Hung Up', color: 'red' }
 ];
 
 export const CALL_OUTCOMES = [

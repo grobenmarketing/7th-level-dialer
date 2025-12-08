@@ -146,17 +146,15 @@ src/
 ### OK Codes
 Pre-defined outcome codes for categorizing calls:
 - **OK-01:** Interested - Follow Up
-- **OK-02:** Not Interested - Budget
-- **OK-03:** Not Interested - No Need
-- **OK-04:** Already Using Competitor
-- **OK-05:** Wrong Contact
-- **OK-06:** Do Not Call
-- **OK-07:** Callback Requested
-- **OK-08:** Gatekeeper Block
-- **OK-09:** Voicemail - Left Message
-- **OK-10:** No Answer - Try Again
-- **OK-11:** Meeting Scheduled ✅
-- **OK-12:** Qualified Lead - Hot ✅
+- **OK-02:** Not Interested
+- **OK-03:** Wrong Contact
+- **OK-04:** Do Not Call
+- **OK-05:** Callback Requested
+- **OK-06:** Gatekeeper Block
+- **OK-07:** Voicemail - Left Message
+- **OK-08:** No Answer - Try Again
+- **OK-09:** Meeting Scheduled / Qualified Lead ✅
+- **OK-10:** Hung Up
 
 ### Call Outcomes
 - **NA (No Answer):** Voicemail, busy, or no response

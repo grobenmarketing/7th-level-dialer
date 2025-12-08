@@ -199,6 +199,62 @@ export function useKPI() {
     await saveKPI({});
   };
 
+  // Rebuild KPI data from contact call history
+  const rebuildFromCallHistory = async (contacts) => {
+    const newKPIData = {};
+
+    contacts.forEach(contact => {
+      if (!contact.callHistory || contact.callHistory.length === 0) return;
+
+      contact.callHistory.forEach(call => {
+        const dateStr = new Date(call.date).toISOString().split('T')[0];
+
+        if (!newKPIData[dateStr]) {
+          newKPIData[dateStr] = {
+            dials: 0,
+            pickups: 0,
+            conversations: 0,
+            triage: 0,
+            bookedMeetings: 0,
+            meetingsRan: 0,
+            objections: []
+          };
+        }
+
+        // Count dials
+        newKPIData[dateStr].dials += 1;
+
+        // Count pickups (DM only)
+        if (call.outcome === 'DM') {
+          newKPIData[dateStr].pickups += 1;
+        }
+
+        // Count conversations
+        if (call.hadConversation) {
+          newKPIData[dateStr].conversations += 1;
+        }
+
+        // Count triage
+        if (call.hadTriage) {
+          newKPIData[dateStr].triage += 1;
+        }
+
+        // Count booked meetings (OK-09)
+        if (call.okCode === 'OK-09') {
+          newKPIData[dateStr].bookedMeetings += 1;
+        }
+
+        // Add objections
+        if (call.objection && call.objection.trim()) {
+          newKPIData[dateStr].objections.push(call.objection.trim());
+        }
+      });
+    });
+
+    await saveKPI(newKPIData);
+    return newKPIData;
+  };
+
   return {
     kpiData,
     weeklyTargets,
@@ -213,6 +269,7 @@ export function useKPI() {
     getObjectionFrequency,
     updateWeeklyTargets,
     resetAllKPI,
+    rebuildFromCallHistory,
     getWeekStart
   };
 }
