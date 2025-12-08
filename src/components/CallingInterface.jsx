@@ -130,7 +130,7 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
       );
     } else if (outcome === 'GK') {
       return OK_CODES.filter(code =>
-        ['OK-03', 'OK-06', 'OK-07'].includes(code.code)
+        ['OK-03', 'OK-06', 'OK-07', 'OK-11'].includes(code.code)
       );
     } else if (outcome === 'DM') {
       return OK_CODES; // All codes available for decision makers

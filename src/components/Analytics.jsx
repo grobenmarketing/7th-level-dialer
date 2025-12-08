@@ -60,8 +60,6 @@ function Analytics({ onBackToDashboard }) {
         try {
           await rebuildFromCallHistory(contacts);
           console.log('Auto-sync complete!');
-          // Reload to show updated data
-          window.location.reload();
         } catch (error) {
           console.error('Auto-sync failed:', error);
         } finally {
@@ -107,8 +105,6 @@ function Analytics({ onBackToDashboard }) {
     try {
       await rebuildFromCallHistory(contacts);
       alert('KPI data successfully synced from call history!');
-      // Force page reload to show updated data
-      window.location.reload();
     } catch (error) {
       console.error('Error syncing KPI data:', error);
       alert('Error syncing data. Please try again.');

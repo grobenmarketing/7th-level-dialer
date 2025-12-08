@@ -98,7 +98,10 @@ export function useContacts() {
       outcome: callData.outcome || 'NA',
       okCode: callData.okCode || null,
       notes: callData.notes || '',
-      duration: callData.duration || 0
+      duration: callData.duration || 0,
+      hadConversation: callData.hadConversation || false,
+      hadTriage: callData.hadTriage || false,
+      objection: callData.objection || ''
     };
 
     const updatedContact = {
