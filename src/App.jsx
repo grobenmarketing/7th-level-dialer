@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Dashboard from './components/Dashboard'
 import CallingInterface from './components/CallingInterface'
 import ContactsPage from './components/ContactsPage'
@@ -7,9 +7,29 @@ import Analytics from './components/Analytics'
 import HowToUse from './components/HowToUse'
 import Settings from './components/Settings'
 
+const VIEW_STATE_KEY = 'r7_current_view'
+const CONTACT_INDEX_KEY = 'r7_contact_index'
+
 function App() {
-  const [currentView, setCurrentView] = useState('dashboard')
-  const [currentContactIndex, setCurrentContactIndex] = useState(0)
+  // Initialize state from localStorage if available
+  const [currentView, setCurrentView] = useState(() => {
+    const saved = localStorage.getItem(VIEW_STATE_KEY)
+    return saved || 'dashboard'
+  })
+  const [currentContactIndex, setCurrentContactIndex] = useState(() => {
+    const saved = localStorage.getItem(CONTACT_INDEX_KEY)
+    return saved ? parseInt(saved, 10) : 0
+  })
+
+  // Persist view state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(VIEW_STATE_KEY, currentView)
+  }, [currentView])
+
+  // Persist contact index to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(CONTACT_INDEX_KEY, currentContactIndex.toString())
+  }, [currentContactIndex])
 
   const handleStartCalling = () => {
     setCurrentContactIndex(0)
