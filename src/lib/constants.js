@@ -9,7 +9,8 @@ export const OK_CODES = [
   { code: 'OK-07', label: 'Voicemail - Left Message', color: 'blue' },
   { code: 'OK-08', label: 'No Answer - Try Again', color: 'gray' },
   { code: 'OK-09', label: 'Meeting Scheduled / Qualified Lead', color: 'green' },
-  { code: 'OK-10', label: 'Hung Up', color: 'red' }
+  { code: 'OK-10', label: 'Hung Up', color: 'red' },
+  { code: 'OK-12', label: 'Not a Fit', color: 'yellow' }
 ];
 
 export const CALL_OUTCOMES = [
