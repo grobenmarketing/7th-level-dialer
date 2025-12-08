@@ -1,5 +1,3 @@
-import NEPQTracker from './NEPQTracker';
-
 function ContactCard({ contact }) {
   if (!contact) {
     return (
@@ -93,13 +91,6 @@ function ContactCard({ contact }) {
         </div>
       </div>
 
-      {/* NEPQ Progress */}
-      {contact.nepqPhase && contact.nepqPhase !== 'connection' || contact.problemLevel > 0 ? (
-        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-          <NEPQTracker contact={contact} compact={true} />
-        </div>
-      ) : null}
-
       {/* Call History */}
       {contact.callHistory && contact.callHistory.length > 0 && (
         <div className="mt-6">
@@ -125,24 +116,6 @@ function ContactCard({ contact }) {
                 {call.okCode && (
                   <div className="text-xs text-blue-600 mb-1">
                     {call.okCode}
-                  </div>
-                )}
-                {/* NEPQ Data for DM calls */}
-                {call.outcome === 'DM' && call.nepqPhaseReached && (
-                  <div className="flex items-center gap-2 mt-2 text-xs">
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                      Phase: {call.nepqPhaseReached}
-                    </span>
-                    {call.problemLevelReached > 0 && (
-                      <span className={`px-2 py-0.5 rounded ${
-                        call.problemLevelReached === 1 ? 'bg-blue-100 text-blue-700' :
-                        call.problemLevelReached === 2 ? 'bg-green-100 text-green-700' :
-                        call.problemLevelReached === 3 ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        L{call.problemLevelReached}
-                      </span>
-                    )}
                   </div>
                 )}
                 {call.notes && (
