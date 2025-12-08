@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useStats } from '../hooks/useStats';
 import { useKPI } from '../hooks/useKPI';
+import { useContacts } from '../hooks/useContacts';
 import { formatDuration } from '../lib/constants';
 
 function Analytics({ onBackToDashboard }) {
@@ -8,6 +9,8 @@ function Analytics({ onBackToDashboard }) {
     getActivityStats,
     getOKCodeDistribution
   } = useStats();
+
+  const { contacts } = useContacts();
 
   const {
     getWeekData,
@@ -17,6 +20,7 @@ function Analytics({ onBackToDashboard }) {
     updateKPIForDate,
     weeklyTargets,
     updateWeeklyTargets,
+    rebuildFromCallHistory,
     getWeekStart
   } = useKPI();
 
@@ -25,6 +29,7 @@ function Analytics({ onBackToDashboard }) {
   const [editingTargets, setEditingTargets] = useState(false);
   const [tempTargets, setTempTargets] = useState(weeklyTargets);
   const [view, setView] = useState('kpi'); // 'kpi' or 'overview'
+  const [syncing, setSyncing] = useState(false);
 
   const activityStats = getActivityStats();
   const okCodeDistribution = getOKCodeDistribution();
@@ -58,6 +63,25 @@ function Analytics({ onBackToDashboard }) {
     setCurrentWeekStart(getWeekStart());
   };
 
+  const handleSyncFromCallHistory = async () => {
+    if (!confirm('This will rebuild all KPI data from your contact call history. Continue?')) {
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      await rebuildFromCallHistory(contacts);
+      alert('KPI data successfully synced from call history!');
+      // Force page reload to show updated data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error syncing KPI data:', error);
+      alert('Error syncing data. Please try again.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -79,7 +103,7 @@ function Analytics({ onBackToDashboard }) {
         </div>
 
         {/* View Toggle */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap items-center">
           <button
             onClick={() => setView('kpi')}
             className={`px-6 py-2 rounded-lg font-semibold transition-all ${
@@ -99,6 +123,14 @@ function Analytics({ onBackToDashboard }) {
             }`}
           >
             📈 Overall Analytics
+          </button>
+          <button
+            onClick={handleSyncFromCallHistory}
+            disabled={syncing}
+            className="ml-auto px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+            title="Rebuild KPI data from all contact call history"
+          >
+            {syncing ? '⏳ Syncing...' : '🔄 Sync from Call History'}
           </button>
         </div>
 
