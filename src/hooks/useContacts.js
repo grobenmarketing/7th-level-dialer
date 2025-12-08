@@ -215,6 +215,18 @@ export function useContacts() {
     };
   };
 
+  const resetAllStats = async () => {
+    const resetContacts = contacts.map(contact => ({
+      ...contact,
+      callHistory: [],
+      totalDials: 0,
+      lastCall: null,
+      nextFollowUp: null,
+      currentOkCode: null
+    }));
+    await saveContacts(resetContacts);
+  };
+
   return {
     contacts,
     addContact,
@@ -225,6 +237,7 @@ export function useContacts() {
     exportToCSV,
     getActiveContacts,
     getStats,
+    resetAllStats,
     loading
   };
 }
