@@ -43,6 +43,13 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
     setTimerActive(false);
   }, [contactIndex]);
 
+  // Auto-select OK-02 (Not Interested) when Decision Maker is selected
+  useEffect(() => {
+    if (outcome === 'DM') {
+      setOkCode('OK-02'); // Not Interested = "not a fit"
+    }
+  }, [outcome]);
+
   const handleStartCall = () => {
     setTimerActive(true);
   };
