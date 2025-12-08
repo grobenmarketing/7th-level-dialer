@@ -3,7 +3,7 @@ import { useContacts } from '../hooks/useContacts';
 import ContactDetailsModal from './ContactDetailsModal';
 import ContactFormModal from './ContactFormModal';
 
-function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnalytics, onViewHowToUse, onViewSettings }) {
+function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onManageAvatars, onViewAnalytics, onViewHowToUse, onViewSettings }) {
   const {
     contacts,
     addContact,
@@ -137,6 +137,23 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
               <div className="text-2xl font-bold">Start Calling</div>
               <div className="text-sm mt-2 opacity-90">
                 {activeContacts.length} contacts ready
+              </div>
+            </button>
+
+            {/* Start Filtered Session Button */}
+            <button
+              onClick={onStartFilteredSession}
+              disabled={contacts.length === 0}
+              className={`p-8 rounded-lg text-center transition-all ${
+                contacts.length === 0
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-br from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 hover:shadow-xl transform hover:scale-105'
+              }`}
+            >
+              <div className="text-4xl mb-2">🎯</div>
+              <div className="text-2xl font-bold">Filtered Session</div>
+              <div className="text-sm mt-2 opacity-90">
+                Call by OK code & date
               </div>
             </button>
 

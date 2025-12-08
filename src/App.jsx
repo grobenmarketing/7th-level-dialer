@@ -6,9 +6,12 @@ import AvatarManager from './components/AvatarManager'
 import Analytics from './components/Analytics'
 import HowToUse from './components/HowToUse'
 import Settings from './components/Settings'
+import FilteredSessionPage from './components/FilteredSessionPage'
+import SessionReviewPage from './components/SessionReviewPage'
 
 const VIEW_STATE_KEY = 'r7_current_view'
 const CONTACT_INDEX_KEY = 'r7_contact_index'
+const FILTERED_SESSION_KEY = 'r7_filtered_session'
 
 function App() {
   // Initialize state from localStorage if available
@@ -20,6 +23,11 @@ function App() {
     const saved = localStorage.getItem(CONTACT_INDEX_KEY)
     return saved ? parseInt(saved, 10) : 0
   })
+  const [filteredSession, setFilteredSession] = useState(() => {
+    const saved = localStorage.getItem(FILTERED_SESSION_KEY)
+    return saved ? JSON.parse(saved) : null
+  })
+  const [filterCriteria, setFilterCriteria] = useState(null)
 
   // Persist view state to localStorage whenever it changes
   useEffect(() => {
@@ -31,14 +39,47 @@ function App() {
     localStorage.setItem(CONTACT_INDEX_KEY, currentContactIndex.toString())
   }, [currentContactIndex])
 
+  // Persist filtered session to localStorage whenever it changes
+  useEffect(() => {
+    if (filteredSession) {
+      localStorage.setItem(FILTERED_SESSION_KEY, JSON.stringify(filteredSession))
+    } else {
+      localStorage.removeItem(FILTERED_SESSION_KEY)
+    }
+  }, [filteredSession])
+
   const handleStartCalling = () => {
     setCurrentContactIndex(0)
+    setFilteredSession(null) // Clear any filtered session
     setCurrentView('calling')
+  }
+
+  const handleStartFilteredSession = () => {
+    setCurrentView('filteredSession')
+  }
+
+  const handleReviewFilters = (criteria) => {
+    setFilterCriteria(criteria)
+    setCurrentView('sessionReview')
+  }
+
+  const handleStartFilteredCalling = () => {
+    if (filterCriteria && filterCriteria.contacts) {
+      setFilteredSession(filterCriteria.contacts)
+      setCurrentContactIndex(0)
+      setCurrentView('calling')
+    }
+  }
+
+  const handleBackToFilters = () => {
+    setCurrentView('filteredSession')
   }
 
   const handleBackToDashboard = () => {
     setCurrentView('dashboard')
     setCurrentContactIndex(0)
+    setFilteredSession(null) // Clear filtered session when returning to dashboard
+    setFilterCriteria(null)
   }
 
   const handleViewContacts = () => {
@@ -70,6 +111,7 @@ function App() {
       {currentView === 'dashboard' && (
         <Dashboard
           onStartCalling={handleStartCalling}
+          onStartFilteredSession={handleStartFilteredSession}
           onViewContacts={handleViewContacts}
           onManageAvatars={handleManageAvatars}
           onViewAnalytics={handleViewAnalytics}
@@ -77,9 +119,23 @@ function App() {
           onViewSettings={handleViewSettings}
         />
       )}
+      {currentView === 'filteredSession' && (
+        <FilteredSessionPage
+          onBackToDashboard={handleBackToDashboard}
+          onReview={handleReviewFilters}
+        />
+      )}
+      {currentView === 'sessionReview' && filterCriteria && (
+        <SessionReviewPage
+          filterCriteria={filterCriteria}
+          onBackToFilters={handleBackToFilters}
+          onStartSession={handleStartFilteredCalling}
+        />
+      )}
       {currentView === 'calling' && (
         <CallingInterface
           contactIndex={currentContactIndex}
+          filteredContacts={filteredSession}
           onBackToDashboard={handleBackToDashboard}
           onNextContact={handleNextContact}
         />
