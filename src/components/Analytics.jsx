@@ -178,6 +178,7 @@ function Analytics({ onBackToDashboard }) {
                 </div>
               </div>
             )}
+        </div>
       </div>
     </div>
   );
