@@ -14,6 +14,7 @@ export function useKPI() {
   const [weeklyTargets, setWeeklyTargets] = useState({
     dials: 350 // Default weekly dial target
   });
+  const [dailyDialGoal, setDailyDialGoal] = useState(70); // Default daily dial goal
   const [loading, setLoading] = useState(true);
 
   // Load KPI data and targets from storage
@@ -25,10 +26,12 @@ export function useKPI() {
         setLoading(true);
         const savedKPI = await storage.get(KEYS.KPI_DATA, {});
         const savedTargets = await storage.get(KEYS.WEEKLY_TARGETS, { dials: 350 });
+        const savedDailyGoal = await storage.get(KEYS.DAILY_DIAL_GOAL, 70);
 
         if (mounted) {
           setKpiData(savedKPI);
           setWeeklyTargets(savedTargets);
+          setDailyDialGoal(savedDailyGoal);
         }
       } catch (error) {
         console.error('Error loading KPI data:', error);
@@ -56,6 +59,19 @@ export function useKPI() {
   const saveTargets = async (updatedTargets) => {
     setWeeklyTargets(updatedTargets);
     await storage.set(KEYS.WEEKLY_TARGETS, updatedTargets);
+  };
+
+  // Save daily dial goal
+  const saveDailyDialGoal = async (goal) => {
+    setDailyDialGoal(goal);
+    await storage.set(KEYS.DAILY_DIAL_GOAL, goal);
+  };
+
+  // Get today's dials count
+  const getTodayDials = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayKPI = getKPIForDate(today);
+    return todayKPI.dials || 0;
   };
 
   // Get or create KPI entry for a specific date
@@ -108,18 +124,19 @@ export function useKPI() {
     });
   };
 
-  // Get week data (Mon-Sun)
+  // Get week data (Mon-Fri only)
   const getWeekData = (weekStart = getWeekStart()) => {
     const weekData = [];
     const startDate = new Date(weekStart);
 
-    for (let i = 0; i < 7; i++) {
+    // Only return Mon-Fri (5 days, not 7)
+    for (let i = 0; i < 5; i++) {
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];
       weekData.push({
         date: dateStr,
-        dayName: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
+        dayName: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][i],
         ...getKPIForDate(dateStr)
       });
     }
@@ -152,6 +169,39 @@ export function useKPI() {
     });
 
     return totals;
+  };
+
+  // Get daily averages based on days actually worked
+  const getDailyAverages = (weekStart = getWeekStart()) => {
+    const weekData = getWeekData(weekStart);
+    const totals = getWeeklyTotals(weekStart);
+
+    // Count days that have at least one dial (days actually worked)
+    const daysWorked = weekData.filter(day => (day.dials || 0) > 0).length;
+
+    // If no days worked, return zeros
+    if (daysWorked === 0) {
+      return {
+        dials: 0,
+        pickups: 0,
+        conversations: 0,
+        triage: 0,
+        bookedMeetings: 0,
+        meetingsRan: 0,
+        daysWorked: 0
+      };
+    }
+
+    // Calculate averages based on days worked
+    return {
+      dials: totals.dials / daysWorked,
+      pickups: totals.pickups / daysWorked,
+      conversations: totals.conversations / daysWorked,
+      triage: totals.triage / daysWorked,
+      bookedMeetings: totals.bookedMeetings / daysWorked,
+      meetingsRan: totals.meetingsRan / daysWorked,
+      daysWorked
+    };
   };
 
   // Calculate performance ratios
@@ -258,6 +308,7 @@ export function useKPI() {
   return {
     kpiData,
     weeklyTargets,
+    dailyDialGoal,
     loading,
     getKPIForDate,
     updateKPIForDate,
@@ -265,9 +316,12 @@ export function useKPI() {
     addObjection,
     getWeekData,
     getWeeklyTotals,
+    getDailyAverages,
     getPerformanceRatios,
     getObjectionFrequency,
     updateWeeklyTargets,
+    saveDailyDialGoal,
+    getTodayDials,
     resetAllKPI,
     rebuildFromCallHistory,
     getWeekStart
