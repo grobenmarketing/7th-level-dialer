@@ -203,7 +203,7 @@ export function useContacts() {
     const totalCalls = contacts.reduce((sum, c) => sum + (c.callHistory?.length || 0), 0);
 
     const meetingsBooked = contacts.filter(c =>
-      c.currentOkCode === 'OK-11' || c.currentOkCode === 'OK-12'
+      c.currentOkCode === 'OK-09'
     ).length;
 
     return {

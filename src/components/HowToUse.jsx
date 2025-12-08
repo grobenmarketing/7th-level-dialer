@@ -100,13 +100,15 @@ function HowToUse({ onBackToDashboard }) {
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-700">
                   <div><span className="font-semibold">OK-01:</span> Interested - Follow Up</div>
-                  <div><span className="font-semibold">OK-02:</span> Not Interested - Budget</div>
-                  <div><span className="font-semibold">OK-03:</span> Not Interested - No Need</div>
-                  <div><span className="font-semibold">OK-04:</span> Already Using Competitor</div>
-                  <div><span className="font-semibold">OK-07:</span> Callback Requested</div>
-                  <div><span className="font-semibold">OK-09:</span> Voicemail - Left Message</div>
-                  <div><span className="font-semibold">OK-11:</span> Meeting Scheduled</div>
-                  <div><span className="font-semibold">OK-12:</span> Qualified Lead - Hot</div>
+                  <div><span className="font-semibold">OK-02:</span> Not Interested</div>
+                  <div><span className="font-semibold">OK-03:</span> Wrong Contact</div>
+                  <div><span className="font-semibold">OK-04:</span> Do Not Call</div>
+                  <div><span className="font-semibold">OK-05:</span> Callback Requested</div>
+                  <div><span className="font-semibold">OK-06:</span> Gatekeeper Block</div>
+                  <div><span className="font-semibold">OK-07:</span> Voicemail - Left Message</div>
+                  <div><span className="font-semibold">OK-08:</span> No Answer - Try Again</div>
+                  <div><span className="font-semibold">OK-09:</span> Meeting Scheduled / Qualified Lead</div>
+                  <div><span className="font-semibold">OK-10:</span> Hung Up</div>
                 </div>
               </div>
 
