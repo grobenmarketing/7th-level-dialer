@@ -8,9 +8,14 @@ import { generatePhoneURL } from '../lib/phoneUtils';
 
 function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
   const { getActiveContacts, addCallToHistory, updateContact } = useContacts();
-  const { incrementMetric, addObjection } = useKPI();
+  const { incrementMetric, addObjection, getTodayDials, dailyDialGoal, saveDailyDialGoal } = useKPI();
   const activeContacts = getActiveContacts();
   const currentContact = activeContacts[contactIndex];
+
+  // Daily goal state
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [tempGoal, setTempGoal] = useState(dailyDialGoal);
+  const todayDials = getTodayDials();
 
   // Form state
   const [outcome, setOutcome] = useState('');
@@ -30,6 +35,11 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
     return generatePhoneURL(currentContact.phone);
   }, [currentContact?.phone]);
 
+  // Sync temp goal with loaded daily goal
+  useEffect(() => {
+    setTempGoal(dailyDialGoal);
+  }, [dailyDialGoal]);
+
   // Reset form when contact changes
   useEffect(() => {
     setOutcome('');
@@ -42,6 +52,11 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
     setCallDuration(0);
     setTimerActive(false);
   }, [contactIndex]);
+
+  const handleSaveGoal = async () => {
+    await saveDailyDialGoal(tempGoal);
+    setEditingGoal(false);
+  };
 
   const handleStartCall = () => {
     setTimerActive(true);
@@ -170,6 +185,69 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
                 width: `${((contactIndex + 1) / activeContacts.length) * 100}%`
               }}
             ></div>
+          </div>
+        </div>
+
+        {/* Daily Dial Goal Tracker */}
+        <div className="mb-6">
+          <div className="card bg-gradient-to-r from-green-500 to-green-600 text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="text-sm font-semibold opacity-90 mb-1">
+                  Today's Progress
+                </div>
+                <div className="text-4xl font-bold">
+                  {todayDials} / {dailyDialGoal} dials
+                </div>
+                <div className="mt-2 bg-white bg-opacity-30 rounded-full h-3 overflow-hidden">
+                  <div
+                    className="bg-white h-3 transition-all duration-300"
+                    style={{
+                      width: `${Math.min((todayDials / dailyDialGoal) * 100, 100)}%`
+                    }}
+                  ></div>
+                </div>
+                <div className="text-sm opacity-90 mt-2">
+                  {dailyDialGoal - todayDials > 0
+                    ? `${dailyDialGoal - todayDials} dials remaining`
+                    : '🎉 Goal achieved!'}
+                </div>
+              </div>
+              <div className="ml-4">
+                {!editingGoal ? (
+                  <button
+                    onClick={() => setEditingGoal(true)}
+                    className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg font-semibold transition-all"
+                  >
+                    ⚙️ Edit Goal
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="number"
+                      value={tempGoal}
+                      onChange={(e) => setTempGoal(parseInt(e.target.value) || 0)}
+                      className="w-24 px-3 py-2 text-gray-800 rounded-lg text-center font-bold"
+                      min="1"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditingGoal(false)}
+                        className="px-3 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-sm"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveGoal}
+                        className="px-3 py-1 bg-white text-green-600 rounded text-sm font-semibold"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

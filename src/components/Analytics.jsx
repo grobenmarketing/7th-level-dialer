@@ -16,6 +16,7 @@ function Analytics({ onBackToDashboard }) {
   const {
     getWeekData,
     getWeeklyTotals,
+    getDailyAverages,
     getPerformanceRatios,
     getObjectionFrequency,
     updateKPIForDate,
@@ -38,6 +39,7 @@ function Analytics({ onBackToDashboard }) {
   const okCodeDistribution = getOKCodeDistribution();
   const weekData = getWeekData(currentWeekStart);
   const weeklyTotals = getWeeklyTotals(currentWeekStart);
+  const dailyAverages = getDailyAverages(currentWeekStart);
   const performanceRatios = getPerformanceRatios(currentWeekStart);
   const objectionFrequency = getObjectionFrequency(currentWeekStart);
 
@@ -363,13 +365,19 @@ function Analytics({ onBackToDashboard }) {
                   </tr>
                   {/* Daily Average Row */}
                   <tr className="bg-green-50 font-semibold">
-                    <td className="py-3 px-2">Daily Avg</td>
-                    <td className="text-center py-3 px-2">{(weeklyTotals.dials / 5).toFixed(1)}</td>
-                    <td className="text-center py-3 px-2">{(weeklyTotals.pickups / 5).toFixed(1)}</td>
-                    <td className="text-center py-3 px-2">{(weeklyTotals.conversations / 5).toFixed(1)}</td>
-                    <td className="text-center py-3 px-2">{(weeklyTotals.triage / 5).toFixed(1)}</td>
-                    <td className="text-center py-3 px-2">{(weeklyTotals.bookedMeetings / 5).toFixed(1)}</td>
-                    <td className="text-center py-3 px-2">{(weeklyTotals.meetingsRan / 5).toFixed(1)}</td>
+                    <td className="py-3 px-2">
+                      Daily Avg
+                      <br/>
+                      <span className="text-xs font-normal text-gray-600">
+                        ({dailyAverages.daysWorked} {dailyAverages.daysWorked === 1 ? 'day' : 'days'} worked)
+                      </span>
+                    </td>
+                    <td className="text-center py-3 px-2">{dailyAverages.dials.toFixed(1)}</td>
+                    <td className="text-center py-3 px-2">{dailyAverages.pickups.toFixed(1)}</td>
+                    <td className="text-center py-3 px-2">{dailyAverages.conversations.toFixed(1)}</td>
+                    <td className="text-center py-3 px-2">{dailyAverages.triage.toFixed(1)}</td>
+                    <td className="text-center py-3 px-2">{dailyAverages.bookedMeetings.toFixed(1)}</td>
+                    <td className="text-center py-3 px-2">{dailyAverages.meetingsRan.toFixed(1)}</td>
                   </tr>
                 </tbody>
               </table>
