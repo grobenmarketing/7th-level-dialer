@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useContacts } from '../hooks/useContacts';
+import { useKPI } from '../hooks/useKPI';
 import ContactCard from './ContactCard';
 import CallTimer from './CallTimer';
 import { OK_CODES, CALL_OUTCOMES } from '../lib/constants';
 
 function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
   const { getActiveContacts, addCallToHistory, updateContact } = useContacts();
+  const { incrementMetric, addObjection } = useKPI();
   const activeContacts = getActiveContacts();
   const currentContact = activeContacts[contactIndex];
 
@@ -13,6 +15,9 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
   const [outcome, setOutcome] = useState('');
   const [okCode, setOkCode] = useState('');
   const [notes, setNotes] = useState('');
+  const [hadConversation, setHadConversation] = useState(false);
+  const [hadTriage, setHadTriage] = useState(false);
+  const [objection, setObjection] = useState('');
 
   // Call timer state
   const [callDuration, setCallDuration] = useState(0);
@@ -23,6 +28,9 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
     setOutcome('');
     setOkCode('');
     setNotes('');
+    setHadConversation(false);
+    setHadTriage(false);
+    setObjection('');
     // Reset timer
     setCallDuration(0);
     setTimerActive(false);
@@ -32,7 +40,7 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
     setTimerActive(true);
   };
 
-  const handleSaveAndNext = () => {
+  const handleSaveAndNext = async () => {
     if (!currentContact) {
       onBackToDashboard();
       return;
@@ -48,13 +56,47 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
       return;
     }
 
-    // Save call to history
+    // Save call to history with new fields
     addCallToHistory(currentContact.id, {
       outcome,
       okCode,
       notes,
-      duration: callDuration
+      duration: callDuration,
+      hadConversation,
+      hadTriage,
+      objection: objection.trim()
     });
+
+    // Update KPI metrics for today
+    const today = new Date();
+
+    // Always increment dials
+    await incrementMetric(today, 'dials', 1);
+
+    // Pickup = when DM picks up
+    if (outcome === 'DM') {
+      await incrementMetric(today, 'pickups', 1);
+    }
+
+    // Conversations
+    if (hadConversation) {
+      await incrementMetric(today, 'conversations', 1);
+    }
+
+    // Triage (getting into specifics)
+    if (hadTriage) {
+      await incrementMetric(today, 'triage', 1);
+    }
+
+    // Booked meetings (OK-11 or OK-12)
+    if (okCode === 'OK-11' || okCode === 'OK-12') {
+      await incrementMetric(today, 'bookedMeetings', 1);
+    }
+
+    // Add objection if present
+    if (objection.trim()) {
+      await addObjection(today, objection.trim());
+    }
 
     // Move to next contact or finish
     if (contactIndex < activeContacts.length - 1) {
@@ -224,18 +266,72 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
               )}
             </div>
 
-            {/* Notes */}
+            {/* Call Quality Tracking */}
             <div className="card bg-white">
               <h3 className="text-xl font-bold text-gray-700 mb-4">
-                3️⃣ Call Notes
+                3️⃣ Call Quality & Details
               </h3>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add notes about this call..."
-                rows="5"
-                className="input-field resize-none"
-              ></textarea>
+
+              {/* Conversation & Triage Checkboxes */}
+              <div className="space-y-3 mb-4">
+                <label className="flex items-center p-3 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={hadConversation}
+                    onChange={(e) => setHadConversation(e.target.checked)}
+                    className="w-5 h-5 text-r7-blue rounded focus:ring-r7-blue"
+                  />
+                  <span className="ml-3 font-semibold text-gray-700">
+                    💬 Had Conversation
+                  </span>
+                  <span className="ml-2 text-sm text-gray-500">
+                    (Meaningful discussion occurred)
+                  </span>
+                </label>
+
+                <label className="flex items-center p-3 bg-purple-50 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={hadTriage}
+                    onChange={(e) => setHadTriage(e.target.checked)}
+                    className="w-5 h-5 text-purple-600 rounded focus:ring-purple-600"
+                  />
+                  <span className="ml-3 font-semibold text-gray-700">
+                    🎯 Triage Completed
+                  </span>
+                  <span className="ml-2 text-sm text-gray-500">
+                    (Got specific details about their situation)
+                  </span>
+                </label>
+              </div>
+
+              {/* Objection Input */}
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  ⚠️ Objection (if any)
+                </label>
+                <input
+                  type="text"
+                  value={objection}
+                  onChange={(e) => setObjection(e.target.value)}
+                  placeholder="e.g., Not interested, No budget, Wrong timing..."
+                  className="input-field"
+                />
+              </div>
+
+              {/* Notes Textarea */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  📝 Call Notes
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add notes about this call..."
+                  rows="4"
+                  className="input-field resize-none"
+                ></textarea>
+              </div>
             </div>
 
             {/* Action Buttons */}

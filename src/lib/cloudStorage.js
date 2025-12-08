@@ -7,6 +7,8 @@ const KEYS = {
   STATS: 'r7_stats',
   USER: 'r7_user',
   BADGES: 'r7_badges',
+  KPI_DATA: 'r7_kpi_data',
+  WEEKLY_TARGETS: 'r7_weekly_targets',
   MIGRATION_STATUS: 'r7_migration_status'
 };
 
@@ -165,7 +167,9 @@ export const migrateToCloud = async () => {
       KEYS.AVATARS,
       KEYS.STATS,
       KEYS.USER,
-      KEYS.BADGES
+      KEYS.BADGES,
+      KEYS.KPI_DATA,
+      KEYS.WEEKLY_TARGETS
     ];
 
     const items = [];

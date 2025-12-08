@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useStats } from '../hooks/useStats';
+import { useKPI } from '../hooks/useKPI';
 import { formatDuration } from '../lib/constants';
 
 function Analytics({ onBackToDashboard }) {
@@ -7,8 +9,54 @@ function Analytics({ onBackToDashboard }) {
     getOKCodeDistribution
   } = useStats();
 
+  const {
+    getWeekData,
+    getWeeklyTotals,
+    getPerformanceRatios,
+    getObjectionFrequency,
+    updateKPIForDate,
+    weeklyTargets,
+    updateWeeklyTargets,
+    getWeekStart
+  } = useKPI();
+
+  const [currentWeekStart, setCurrentWeekStart] = useState(getWeekStart());
+  const [editingDate, setEditingDate] = useState(null);
+  const [editingTargets, setEditingTargets] = useState(false);
+  const [tempTargets, setTempTargets] = useState(weeklyTargets);
+  const [view, setView] = useState('kpi'); // 'kpi' or 'overview'
+
   const activityStats = getActivityStats();
   const okCodeDistribution = getOKCodeDistribution();
+  const weekData = getWeekData(currentWeekStart);
+  const weeklyTotals = getWeeklyTotals(currentWeekStart);
+  const performanceRatios = getPerformanceRatios(currentWeekStart);
+  const objectionFrequency = getObjectionFrequency(currentWeekStart);
+
+  const handleEditDay = async (date, field, value) => {
+    await updateKPIForDate(date, { [field]: parseInt(value) || 0 });
+  };
+
+  const handleSaveTargets = async () => {
+    await updateWeeklyTargets(tempTargets);
+    setEditingTargets(false);
+  };
+
+  const handlePreviousWeek = () => {
+    const date = new Date(currentWeekStart);
+    date.setDate(date.getDate() - 7);
+    setCurrentWeekStart(date.toISOString().split('T')[0]);
+  };
+
+  const handleNextWeek = () => {
+    const date = new Date(currentWeekStart);
+    date.setDate(date.getDate() + 7);
+    setCurrentWeekStart(date.toISOString().split('T')[0]);
+  };
+
+  const handleThisWeek = () => {
+    setCurrentWeekStart(getWeekStart());
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
@@ -18,9 +66,9 @@ function Analytics({ onBackToDashboard }) {
           <div>
             <h1 className="text-3xl font-bold text-r7-blue flex items-center">
               <span className="mr-3">📊</span>
-              Analytics Dashboard
+              Analytics & KPI Tracker
             </h1>
-            <p className="text-gray-600">Performance insights and call metrics</p>
+            <p className="text-gray-600">Performance insights and weekly activity tracking</p>
           </div>
           <button
             onClick={onBackToDashboard}
@@ -30,7 +78,286 @@ function Analytics({ onBackToDashboard }) {
           </button>
         </div>
 
-        <div className="space-y-6">
+        {/* View Toggle */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setView('kpi')}
+            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+              view === 'kpi'
+                ? 'bg-r7-blue text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            📅 Weekly KPI Tracker
+          </button>
+          <button
+            onClick={() => setView('overview')}
+            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+              view === 'overview'
+                ? 'bg-r7-blue text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            📈 Overall Analytics
+          </button>
+        </div>
+
+        {view === 'kpi' ? (
+          <div className="space-y-6">
+            {/* Week Navigation */}
+            <div className="card bg-white">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={handlePreviousWeek}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+                >
+                  ← Previous Week
+                </button>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-gray-800">
+                    Week of {new Date(currentWeekStart).toLocaleDateString()}
+                  </div>
+                  <button
+                    onClick={handleThisWeek}
+                    className="text-sm text-r7-blue hover:underline"
+                  >
+                    Jump to This Week
+                  </button>
+                </div>
+                <button
+                  onClick={handleNextWeek}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold"
+                >
+                  Next Week →
+                </button>
+              </div>
+            </div>
+
+            {/* Weekly Targets & Progress */}
+            <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-700">
+                  🎯 Weekly Targets & Progress
+                </h3>
+                {!editingTargets ? (
+                  <button
+                    onClick={() => {
+                      setTempTargets(weeklyTargets);
+                      setEditingTargets(true);
+                    }}
+                    className="px-4 py-2 bg-r7-blue text-white rounded-lg hover:bg-r7-dark"
+                  >
+                    ⚙️ Edit Targets
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditingTargets(false)}
+                      className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveTargets}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                      💾 Save
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                {/* Dials Progress */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold text-gray-700">📞 Dials</span>
+                    {editingTargets ? (
+                      <input
+                        type="number"
+                        value={tempTargets.dials}
+                        onChange={(e) => setTempTargets({ ...tempTargets, dials: parseInt(e.target.value) || 0 })}
+                        className="w-24 px-2 py-1 border border-gray-300 rounded"
+                      />
+                    ) : (
+                      <span className="font-bold text-gray-800">
+                        {weeklyTotals.dials} / {weeklyTargets.dials}
+                      </span>
+                    )}
+                  </div>
+                  <div className="bg-gray-200 rounded-full h-8">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-full h-8 flex items-center justify-center text-white font-bold text-sm"
+                      style={{ width: `${Math.min((weeklyTotals.dials / weeklyTargets.dials) * 100, 100)}%` }}
+                    >
+                      {((weeklyTotals.dials / weeklyTargets.dials) * 100).toFixed(0)}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Weekly KPI Table */}
+            <div className="card bg-white overflow-x-auto">
+              <h3 className="text-xl font-bold text-gray-700 mb-4">📋 Daily Activity Log</h3>
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-gray-300">
+                    <th className="text-left py-2 px-2 font-bold">Day</th>
+                    <th className="text-center py-2 px-2 font-bold">📞 Dials</th>
+                    <th className="text-center py-2 px-2 font-bold">✅ Pickups<br/><span className="text-xs font-normal">(DM only)</span></th>
+                    <th className="text-center py-2 px-2 font-bold">💬 Convos</th>
+                    <th className="text-center py-2 px-2 font-bold">🎯 Triage</th>
+                    <th className="text-center py-2 px-2 font-bold">📅 Meetings<br/><span className="text-xs font-normal">Booked</span></th>
+                    <th className="text-center py-2 px-2 font-bold">✔️ Meetings<br/><span className="text-xs font-normal">Ran</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {weekData.map((day) => (
+                    <tr key={day.date} className="border-b border-gray-200 hover:bg-blue-50">
+                      <td className="py-3 px-2 font-semibold">
+                        {day.dayName}<br/>
+                        <span className="text-xs text-gray-500">{new Date(day.date).toLocaleDateString()}</span>
+                      </td>
+                      <td className="text-center py-3 px-2">
+                        <input
+                          type="number"
+                          value={day.dials || 0}
+                          onChange={(e) => handleEditDay(day.date, 'dials', e.target.value)}
+                          className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                          min="0"
+                        />
+                      </td>
+                      <td className="text-center py-3 px-2">
+                        <input
+                          type="number"
+                          value={day.pickups || 0}
+                          onChange={(e) => handleEditDay(day.date, 'pickups', e.target.value)}
+                          className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                          min="0"
+                        />
+                      </td>
+                      <td className="text-center py-3 px-2">
+                        <input
+                          type="number"
+                          value={day.conversations || 0}
+                          onChange={(e) => handleEditDay(day.date, 'conversations', e.target.value)}
+                          className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                          min="0"
+                        />
+                      </td>
+                      <td className="text-center py-3 px-2">
+                        <input
+                          type="number"
+                          value={day.triage || 0}
+                          onChange={(e) => handleEditDay(day.date, 'triage', e.target.value)}
+                          className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                          min="0"
+                        />
+                      </td>
+                      <td className="text-center py-3 px-2">
+                        <input
+                          type="number"
+                          value={day.bookedMeetings || 0}
+                          onChange={(e) => handleEditDay(day.date, 'bookedMeetings', e.target.value)}
+                          className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                          min="0"
+                        />
+                      </td>
+                      <td className="text-center py-3 px-2">
+                        <input
+                          type="number"
+                          value={day.meetingsRan || 0}
+                          onChange={(e) => handleEditDay(day.date, 'meetingsRan', e.target.value)}
+                          className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                          min="0"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                  {/* Totals Row */}
+                  <tr className="bg-blue-100 font-bold border-t-2 border-blue-300">
+                    <td className="py-3 px-2">TOTAL</td>
+                    <td className="text-center py-3 px-2">{weeklyTotals.dials}</td>
+                    <td className="text-center py-3 px-2">{weeklyTotals.pickups}</td>
+                    <td className="text-center py-3 px-2">{weeklyTotals.conversations}</td>
+                    <td className="text-center py-3 px-2">{weeklyTotals.triage}</td>
+                    <td className="text-center py-3 px-2">{weeklyTotals.bookedMeetings}</td>
+                    <td className="text-center py-3 px-2">{weeklyTotals.meetingsRan}</td>
+                  </tr>
+                  {/* Daily Average Row */}
+                  <tr className="bg-green-50 font-semibold">
+                    <td className="py-3 px-2">Daily Avg</td>
+                    <td className="text-center py-3 px-2">{(weeklyTotals.dials / 5).toFixed(1)}</td>
+                    <td className="text-center py-3 px-2">{(weeklyTotals.pickups / 5).toFixed(1)}</td>
+                    <td className="text-center py-3 px-2">{(weeklyTotals.conversations / 5).toFixed(1)}</td>
+                    <td className="text-center py-3 px-2">{(weeklyTotals.triage / 5).toFixed(1)}</td>
+                    <td className="text-center py-3 px-2">{(weeklyTotals.bookedMeetings / 5).toFixed(1)}</td>
+                    <td className="text-center py-3 px-2">{(weeklyTotals.meetingsRan / 5).toFixed(1)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Performance Ratios */}
+            <div className="card bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
+              <h3 className="text-xl font-bold text-gray-700 mb-4">📈 Your Performance Ratios</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-white rounded-lg">
+                  <div className="text-3xl font-bold text-purple-700">
+                    {(performanceRatios.meetingsShowedRatio * 100).toFixed(0)}%
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">Meetings Showed</div>
+                  <div className="text-xs text-gray-500 mt-1">Ran / Booked</div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg">
+                  <div className="text-3xl font-bold text-blue-700">
+                    {(performanceRatios.conversationsToMeetings * 100).toFixed(0)}%
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">Convos to Meetings</div>
+                  <div className="text-xs text-gray-500 mt-1">Booked / Convos</div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg">
+                  <div className="text-3xl font-bold text-green-700">
+                    {(performanceRatios.triageToConversations * 100).toFixed(0)}%
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">Triage Rate</div>
+                  <div className="text-xs text-gray-500 mt-1">Triage / Convos</div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg">
+                  <div className="text-3xl font-bold text-orange-700">
+                    {(performanceRatios.pickupsToConversations * 100).toFixed(0)}%
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">Pickup to Convo</div>
+                  <div className="text-xs text-gray-500 mt-1">Convos / Pickups</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Objection Frequency */}
+            {objectionFrequency.length > 0 && (
+              <div className="card bg-white">
+                <h3 className="text-xl font-bold text-gray-700 mb-4">⚠️ Most Common Objections This Week</h3>
+                <div className="space-y-2">
+                  {objectionFrequency.slice(0, 10).map((item, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-red-100 text-red-700 rounded-full flex items-center justify-center font-bold">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1 font-semibold text-gray-700 capitalize">
+                        {item.objection}
+                      </div>
+                      <div className="w-16 text-right font-bold text-gray-700">
+                        {item.count}x
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-6">
             {/* Key Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
@@ -178,7 +505,8 @@ function Analytics({ onBackToDashboard }) {
                 </div>
               </div>
             )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
