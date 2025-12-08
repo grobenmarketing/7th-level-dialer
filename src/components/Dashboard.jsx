@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useContacts } from '../hooks/useContacts';
-import { useQuestions } from '../hooks/useQuestions';
-import { seedQuestions, SEED_QUESTIONS } from '../lib/seedQuestions';
 import ContactDetailsModal from './ContactDetailsModal';
 import ContactFormModal from './ContactFormModal';
 
@@ -16,8 +14,6 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
     importFromCSV,
     exportToCSV
   } = useContacts();
-
-  const { questions, bulkImportQuestions } = useQuestions();
 
   const stats = getStats();
   const activeContacts = getActiveContacts();
@@ -57,19 +53,6 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
     a.download = `r7-contacts-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-  };
-
-  const handleSeedQuestions = () => {
-    if (questions.length > 0) {
-      const confirm = window.confirm(
-        `You already have ${questions.length} questions in your library. ` +
-        `This will add ${SEED_QUESTIONS.length} more NEPQ questions. Continue?`
-      );
-      if (!confirm) return;
-    }
-
-    bulkImportQuestions(SEED_QUESTIONS);
-    alert(`Successfully loaded ${SEED_QUESTIONS.length} NEPQ questions into your library!`);
   };
 
   const handleEditContact = (formData) => {
@@ -190,18 +173,6 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
               <div className="text-2xl font-bold">Avatars</div>
               <div className="text-sm mt-2 opacity-90">
                 Manage buyer personas
-              </div>
-            </button>
-
-            {/* Seed Questions */}
-            <button
-              onClick={handleSeedQuestions}
-              className="p-8 rounded-lg text-center bg-teal-600 text-white hover:bg-teal-700 cursor-pointer transition-all hover:shadow-xl transform hover:scale-105"
-            >
-              <div className="text-4xl mb-2">💡</div>
-              <div className="text-2xl font-bold">Load Questions</div>
-              <div className="text-sm mt-2 opacity-90">
-                {questions.length > 0 ? `${questions.length} questions loaded` : 'Seed NEPQ questions'}
               </div>
             </button>
 

@@ -58,14 +58,6 @@ export function useContacts() {
       industry: contact.industry || '',
       companySize: contact.companySize || '',
 
-      // NEPQ Journey Tracking (for Phase 2+)
-      nepqPhase: 'connection',
-      problemLevel: 0,
-      problemsIdentified: [],
-
-      // Deal Management
-      dealStage: 'prospect',
-
       // Call History
       callHistory: [],
 
@@ -106,13 +98,7 @@ export function useContacts() {
       outcome: callData.outcome || 'NA',
       okCode: callData.okCode || null,
       notes: callData.notes || '',
-
-      // NEPQ tracking per call (for Phase 2+)
-      nepqPhaseReached: callData.nepqPhaseReached || 'connection',
-      problemLevelReached: callData.problemLevelReached || 0,
-      problemsDiscovered: callData.problemsDiscovered || [],
-      duration: callData.duration || 0,
-      nextSteps: callData.nextSteps || ''
+      duration: callData.duration || 0
     };
 
     const updatedContact = {
@@ -120,8 +106,7 @@ export function useContacts() {
       callHistory: [...contact.callHistory, callRecord],
       totalDials: contact.totalDials + 1,
       lastCall: callRecord.date,
-      currentOkCode: callData.okCode || contact.currentOkCode,
-      dealStage: callData.dealStage || contact.dealStage
+      currentOkCode: callData.okCode || contact.currentOkCode
     };
 
     updateContact(contactId, updatedContact);
@@ -155,14 +140,6 @@ export function useContacts() {
           website: values[2] || '',
           industry: values[3] || '',
           companySize: values[4] || '',
-
-          // NEPQ Journey Tracking (for Phase 2+)
-          nepqPhase: 'connection',
-          problemLevel: 0,
-          problemsIdentified: [],
-
-          // Deal Management
-          dealStage: 'prospect',
 
           // Call History
           callHistory: [],

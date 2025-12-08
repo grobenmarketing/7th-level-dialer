@@ -1,6 +1,5 @@
 import { useContacts } from './useContacts';
 import { useAvatars } from './useAvatars';
-import { NEPQ_PHASES, PROBLEM_LEVELS } from '../lib/constants';
 
 export function useStats() {
   const { contacts } = useContacts();
@@ -67,150 +66,6 @@ export function useStats() {
     };
   };
 
-  // NEPQ Funnel Analysis
-  const getNEPQFunnelStats = () => {
-    const funnelData = NEPQ_PHASES.map(phase => {
-      const contactsAtPhase = contacts.filter(c => c.nepqPhase === phase.id);
-      const contactsReachedPhase = contacts.filter(c => {
-        const currentPhaseIndex = NEPQ_PHASES.findIndex(p => p.id === c.nepqPhase);
-        const targetPhaseIndex = NEPQ_PHASES.findIndex(p => p.id === phase.id);
-        return currentPhaseIndex >= targetPhaseIndex;
-      });
-
-      return {
-        phase: phase.name,
-        phaseId: phase.id,
-        icon: phase.icon,
-        order: phase.order,
-        contactsAtPhase: contactsAtPhase.length,
-        contactsReachedPhase: contactsReachedPhase.length,
-        percentage: contacts.length > 0
-          ? ((contactsReachedPhase.length / contacts.length) * 100).toFixed(1)
-          : 0
-      };
-    });
-
-    return funnelData;
-  };
-
-  // Problem Level Distribution
-  const getProblemLevelDistribution = () => {
-    const distribution = PROBLEM_LEVELS.map(level => {
-      const contactsAtLevel = contacts.filter(c => c.problemLevel === level.level);
-      const contactsReachedLevel = contacts.filter(c => c.problemLevel >= level.level);
-
-      return {
-        level: level.level,
-        name: level.name,
-        description: level.description,
-        color: level.color,
-        contactsAtLevel: contactsAtLevel.length,
-        contactsReachedLevel: contactsReachedLevel.length,
-        percentage: contacts.length > 0
-          ? ((contactsAtLevel.length / contacts.length) * 100).toFixed(1)
-          : 0
-      };
-    });
-
-    // Add "None" category for contacts with no problem level
-    const noProblemContacts = contacts.filter(c => !c.problemLevel || c.problemLevel === 0);
-    distribution.unshift({
-      level: 0,
-      name: 'No Problem Identified',
-      description: 'Not yet discovered',
-      color: 'gray',
-      contactsAtLevel: noProblemContacts.length,
-      contactsReachedLevel: noProblemContacts.length,
-      percentage: contacts.length > 0
-        ? ((noProblemContacts.length / contacts.length) * 100).toFixed(1)
-        : 0
-    });
-
-    return distribution;
-  };
-
-  // Avatar Performance Analysis
-  const getAvatarPerformanceStats = () => {
-    return avatars.map(avatar => {
-      const avatarContacts = contacts.filter(c => c.avatarId === avatar.id);
-      const avatarCalls = getAllCallRecords().filter(call => call.contact.avatarId === avatar.id);
-      const dmCalls = avatarCalls.filter(call => call.outcome === 'DM');
-
-      const meetingsBooked = avatarContacts.filter(c =>
-        c.currentOkCode === 'OK-11' || c.currentOkCode === 'OK-12'
-      ).length;
-
-      // Calculate average problem level reached
-      const contactsWithProblems = avatarContacts.filter(c => c.problemLevel > 0);
-      const avgProblemLevel = contactsWithProblems.length > 0
-        ? (contactsWithProblems.reduce((sum, c) => sum + c.problemLevel, 0) / contactsWithProblems.length).toFixed(1)
-        : 0;
-
-      // Calculate NEPQ progression
-      const avgPhaseOrder = avatarContacts.length > 0
-        ? (avatarContacts.reduce((sum, c) => {
-            const phase = NEPQ_PHASES.find(p => p.id === c.nepqPhase);
-            return sum + (phase?.order || 1);
-          }, 0) / avatarContacts.length).toFixed(1)
-        : 0;
-
-      const conversionRate = dmCalls.length > 0
-        ? ((meetingsBooked / dmCalls.length) * 100).toFixed(1)
-        : 0;
-
-      return {
-        avatarId: avatar.id,
-        avatarName: avatar.name || 'Unnamed Avatar',
-        position: avatar.position || '',
-        totalContacts: avatarContacts.length,
-        totalCalls: avatarCalls.length,
-        dmCalls: dmCalls.length,
-        meetingsBooked,
-        conversionRate: parseFloat(conversionRate),
-        avgProblemLevel: parseFloat(avgProblemLevel),
-        avgPhaseOrder: parseFloat(avgPhaseOrder),
-        contactRate: avatarCalls.length > 0
-          ? ((dmCalls.length / avatarCalls.length) * 100).toFixed(1)
-          : 0
-      };
-    }).sort((a, b) => b.conversionRate - a.conversionRate);
-  };
-
-  // Conversion Funnel by Phase
-  const getPhaseConversionRates = () => {
-    const phases = NEPQ_PHASES.map((phase, index) => {
-      const contactsAtPhase = contacts.filter(c => {
-        const phaseIndex = NEPQ_PHASES.findIndex(p => p.id === c.nepqPhase);
-        return phaseIndex >= index;
-      });
-
-      const nextPhase = NEPQ_PHASES[index + 1];
-      const contactsAtNextPhase = nextPhase
-        ? contacts.filter(c => {
-            const phaseIndex = NEPQ_PHASES.findIndex(p => p.id === c.nepqPhase);
-            return phaseIndex >= index + 1;
-          })
-        : [];
-
-      const dropOff = contactsAtPhase.length - contactsAtNextPhase.length;
-      const conversionRate = contactsAtPhase.length > 0 && nextPhase
-        ? ((contactsAtNextPhase.length / contactsAtPhase.length) * 100).toFixed(1)
-        : 0;
-
-      return {
-        phase: phase.name,
-        phaseId: phase.id,
-        icon: phase.icon,
-        contactsIn: contactsAtPhase.length,
-        contactsOut: contactsAtNextPhase.length,
-        dropOff,
-        conversionRate: parseFloat(conversionRate)
-      };
-    });
-
-    return phases.slice(0, -1); // Remove last phase (no next phase to convert to)
-  };
-
   // Time-based Activity Trends
   const getActivityTrends = (days = 30) => {
     const allCalls = getAllCallRecords();
@@ -263,53 +118,10 @@ export function useStats() {
     })).sort((a, b) => b.count - a.count);
   };
 
-  // Top Performing Contacts (by NEPQ progress)
-  const getTopContacts = (limit = 10) => {
-    return [...contacts]
-      .filter(c => c.totalDials > 0)
-      .sort((a, b) => {
-        const aPhaseIndex = NEPQ_PHASES.findIndex(p => p.id === a.nepqPhase);
-        const bPhaseIndex = NEPQ_PHASES.findIndex(p => p.id === b.nepqPhase);
-
-        if (bPhaseIndex !== aPhaseIndex) {
-          return bPhaseIndex - aPhaseIndex;
-        }
-
-        return (b.problemLevel || 0) - (a.problemLevel || 0);
-      })
-      .slice(0, limit);
-  };
-
-  // Duration stats by NEPQ Phase
-  const getDurationByPhase = () => {
-    const allCalls = getAllCallRecords();
-
-    return NEPQ_PHASES.map(phase => {
-      const phaseCalls = allCalls.filter(call => call.nepqPhaseReached === phase.id);
-      const totalDuration = phaseCalls.reduce((sum, call) => sum + (call.duration || 0), 0);
-      const avgDuration = phaseCalls.length > 0 ? Math.round(totalDuration / phaseCalls.length) : 0;
-
-      return {
-        phase: phase.name,
-        phaseId: phase.id,
-        icon: phase.icon,
-        callCount: phaseCalls.length,
-        totalDuration,
-        avgDuration
-      };
-    });
-  };
-
   return {
     getActivityStats,
-    getNEPQFunnelStats,
-    getProblemLevelDistribution,
-    getAvatarPerformanceStats,
-    getPhaseConversionRates,
     getActivityTrends,
     getOKCodeDistribution,
-    getTopContacts,
-    getAllCallRecords,
-    getDurationByPhase
+    getAllCallRecords
   };
 }

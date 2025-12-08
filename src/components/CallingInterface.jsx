@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import ContactCard from './ContactCard';
-import NEPQTracker from './NEPQTracker';
-import QuestionSuggester from './QuestionSuggester';
 import CallTimer from './CallTimer';
-import { OK_CODES, CALL_OUTCOMES, NEPQ_PHASES, PROBLEM_LEVELS } from '../lib/constants';
+import { OK_CODES, CALL_OUTCOMES } from '../lib/constants';
 
 function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
   const { getActiveContacts, addCallToHistory, updateContact } = useContacts();
@@ -20,12 +18,6 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
   const [callDuration, setCallDuration] = useState(0);
   const [timerActive, setTimerActive] = useState(true); // Auto-start timer
 
-  // NEPQ tracking state (only for Decision Maker calls)
-  const [nepqPhaseReached, setNepqPhaseReached] = useState('connection');
-  const [problemLevelReached, setProblemLevelReached] = useState(0);
-  const [problemStatement, setProblemStatement] = useState('');
-  const [problemsDiscovered, setProblemsDiscovered] = useState([]);
-
   // Reset form when contact changes
   useEffect(() => {
     setOutcome('');
@@ -34,12 +26,7 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
     // Reset timer
     setCallDuration(0);
     setTimerActive(true);
-    // Reset NEPQ state
-    setNepqPhaseReached(currentContact?.nepqPhase || 'connection');
-    setProblemLevelReached(0);
-    setProblemStatement('');
-    setProblemsDiscovered([]);
-  }, [contactIndex, currentContact]);
+  }, [contactIndex]);
 
   const handleSaveAndNext = () => {
     if (!currentContact) {
@@ -57,31 +44,13 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
       return;
     }
 
-    // Save call to history with NEPQ data
+    // Save call to history
     addCallToHistory(currentContact.id, {
       outcome,
       okCode,
       notes,
-      duration: callDuration, // Call duration from timer
-      // NEPQ tracking (only saved if DM call)
-      nepqPhaseReached: outcome === 'DM' ? nepqPhaseReached : currentContact.nepqPhase,
-      problemLevelReached: outcome === 'DM' ? problemLevelReached : 0,
-      problemsDiscovered: outcome === 'DM' ? problemsDiscovered : []
+      duration: callDuration
     });
-
-    // Update contact's overall NEPQ progress (if this was a DM call)
-    if (outcome === 'DM') {
-      const updatedProblems = [
-        ...(currentContact.problemsIdentified || []),
-        ...problemsDiscovered
-      ];
-
-      updateContact(currentContact.id, {
-        nepqPhase: nepqPhaseReached,
-        problemLevel: Math.max(currentContact.problemLevel || 0, problemLevelReached),
-        problemsIdentified: updatedProblems
-      });
-    }
 
     // Move to next contact or finish
     if (contactIndex < activeContacts.length - 1) {
@@ -90,23 +59,6 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
       alert('All contacts completed! Great work!');
       onBackToDashboard();
     }
-  };
-
-  // Add problem to the discovered list
-  const handleAddProblem = () => {
-    if (!problemStatement.trim() || problemLevelReached === 0) {
-      alert('Please enter a problem statement and select a problem level');
-      return;
-    }
-
-    const newProblem = {
-      level: problemLevelReached,
-      statement: problemStatement.trim(),
-      date: new Date().toISOString()
-    };
-
-    setProblemsDiscovered([...problemsDiscovered, newProblem]);
-    setProblemStatement('');
   };
 
   const handleSkip = () => {
@@ -169,21 +121,14 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column - Contact Info & NEPQ Progress */}
+          {/* Left Column - Contact Info */}
           <div className="space-y-6">
             <ContactCard contact={currentContact} />
-            {currentContact && <NEPQTracker contact={currentContact} />}
             {/* Call Timer */}
             {currentContact && (
               <CallTimer
                 isActive={timerActive}
                 onTimeUpdate={setCallDuration}
-              />
-            )}
-            {currentContact && outcome === 'DM' && (
-              <QuestionSuggester
-                contact={currentContact}
-                currentPhase={nepqPhaseReached}
               />
             )}
           </div>
@@ -274,143 +219,10 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
               )}
             </div>
 
-            {/* NEPQ Phase Selector (Only for Decision Maker calls) */}
-            {outcome === 'DM' && (
-              <div className="card bg-white border-2 border-r7-blue">
-                <h3 className="text-xl font-bold text-gray-700 mb-4">
-                  3️⃣ NEPQ Phase Reached
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {NEPQ_PHASES.map((phase) => (
-                    <button
-                      key={phase.id}
-                      onClick={() => setNepqPhaseReached(phase.id)}
-                      className={`p-3 rounded-lg border-2 transition-all ${
-                        nepqPhaseReached === phase.id
-                          ? 'border-r7-blue bg-blue-50 shadow-md'
-                          : 'border-gray-200 hover:border-r7-blue hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="text-2xl mb-1">{phase.icon}</div>
-                      <div className="text-xs font-semibold">
-                        {phase.name}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Problem Discovery Tracker (Only for Decision Maker calls) */}
-            {outcome === 'DM' && (
-              <div className="card bg-white border-2 border-r7-blue">
-                <h3 className="text-xl font-bold text-gray-700 mb-4">
-                  4️⃣ Problem Discovery (L1-L4)
-                </h3>
-
-                {/* Problem Level Selector */}
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
-                    Problem Level
-                  </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {PROBLEM_LEVELS.map((level) => (
-                      <button
-                        key={level.level}
-                        onClick={() => setProblemLevelReached(level.level)}
-                        className={`p-2 rounded-lg border-2 transition-all ${
-                          problemLevelReached === level.level
-                            ? `border-${level.color}-500 bg-${level.color}-50`
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className={`text-lg font-bold ${
-                          problemLevelReached === level.level
-                            ? level.color === 'blue' ? 'text-blue-700' :
-                              level.color === 'green' ? 'text-green-700' :
-                              level.color === 'yellow' ? 'text-yellow-700' :
-                              level.color === 'red' ? 'text-red-700' :
-                              'text-gray-700'
-                            : 'text-gray-400'
-                        }`}>
-                          L{level.level}
-                        </div>
-                        <div className="text-xs">{level.name}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Problem Statement Input */}
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">
-                    Problem Statement
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={problemStatement}
-                      onChange={(e) => setProblemStatement(e.target.value)}
-                      placeholder="Enter problem discovered..."
-                      className="input-field flex-1"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleAddProblem();
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={handleAddProblem}
-                      className="btn-primary px-4"
-                      disabled={!problemStatement.trim() || problemLevelReached === 0}
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-
-                {/* Problems Discovered This Call */}
-                {problemsDiscovered.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">
-                      Problems Discovered This Call
-                    </label>
-                    <div className="space-y-2">
-                      {problemsDiscovered.map((problem, index) => (
-                        <div
-                          key={index}
-                          className={`p-2 rounded border-l-4 flex items-start ${
-                            problem.level === 1 ? 'border-blue-500 bg-blue-50' :
-                            problem.level === 2 ? 'border-green-500 bg-green-50' :
-                            problem.level === 3 ? 'border-yellow-500 bg-yellow-50' :
-                            problem.level === 4 ? 'border-red-500 bg-red-50' :
-                            'border-gray-500 bg-gray-50'
-                          }`}
-                        >
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white text-xs font-bold mr-2 flex-shrink-0">
-                            L{problem.level}
-                          </span>
-                          <p className="text-sm text-gray-800 flex-1">{problem.statement}</p>
-                          <button
-                            onClick={() => {
-                              setProblemsDiscovered(problemsDiscovered.filter((_, i) => i !== index));
-                            }}
-                            className="text-red-600 hover:text-red-800 ml-2"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Notes */}
             <div className="card bg-white">
               <h3 className="text-xl font-bold text-gray-700 mb-4">
-                {outcome === 'DM' ? '5️⃣' : '3️⃣'} Call Notes
+                3️⃣ Call Notes
               </h3>
               <textarea
                 value={notes}
@@ -445,12 +257,6 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>• Click the phone number to dial automatically</li>
                 <li>• Select outcome first, then OK code</li>
-                {outcome === 'DM' && (
-                  <>
-                    <li>• Track NEPQ phase and problem levels for DM calls</li>
-                    <li>• Aim for L3-L4 problems for better close rates</li>
-                  </>
-                )}
                 <li>• Add detailed notes for follow-ups</li>
                 <li>• Use Save & Next to move efficiently</li>
               </ul>

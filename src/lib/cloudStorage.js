@@ -7,7 +7,6 @@ const KEYS = {
   STATS: 'r7_stats',
   USER: 'r7_user',
   BADGES: 'r7_badges',
-  QUESTIONS: 'r7_questions',
   MIGRATION_STATUS: 'r7_migration_status'
 };
 
@@ -164,7 +163,6 @@ export const migrateToCloud = async () => {
     const allKeys = [
       KEYS.CONTACTS,
       KEYS.AVATARS,
-      KEYS.QUESTIONS,
       KEYS.STATS,
       KEYS.USER,
       KEYS.BADGES
