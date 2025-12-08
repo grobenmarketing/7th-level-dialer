@@ -16,7 +16,7 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
 
   // Call timer state
   const [callDuration, setCallDuration] = useState(0);
-  const [timerActive, setTimerActive] = useState(true); // Auto-start timer
+  const [timerActive, setTimerActive] = useState(false); // Start timer when call button is clicked
 
   // Reset form when contact changes
   useEffect(() => {
@@ -25,8 +25,12 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
     setNotes('');
     // Reset timer
     setCallDuration(0);
-    setTimerActive(true);
+    setTimerActive(false);
   }, [contactIndex]);
+
+  const handleStartCall = () => {
+    setTimerActive(true);
+  };
 
   const handleSaveAndNext = () => {
     if (!currentContact) {
@@ -140,6 +144,7 @@ function CallingInterface({ contactIndex, onBackToDashboard, onNextContact }) {
               <div className="card bg-gradient-to-r from-r7-blue to-r7-dark text-white">
                 <a
                   href={`tel:${currentContact.phone}`}
+                  onClick={handleStartCall}
                   className="block text-center py-8 hover:opacity-90 transition-opacity"
                 >
                   <div className="text-6xl mb-3">📞</div>

@@ -3,7 +3,7 @@ import { useContacts } from '../hooks/useContacts';
 import ContactDetailsModal from './ContactDetailsModal';
 import ContactFormModal from './ContactFormModal';
 
-function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnalytics, onViewHowToUse }) {
+function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnalytics, onViewHowToUse, onViewSettings }) {
   const {
     contacts,
     addContact,
@@ -200,6 +200,18 @@ function Dashboard({ onStartCalling, onViewContacts, onManageAvatars, onViewAnal
               <div className="text-2xl font-bold">How to Use</div>
               <div className="text-sm mt-2 opacity-90">
                 Learn the system
+              </div>
+            </button>
+
+            {/* Settings */}
+            <button
+              onClick={onViewSettings}
+              className="p-8 rounded-lg text-center bg-gray-600 text-white hover:bg-gray-700 cursor-pointer transition-all hover:shadow-xl transform hover:scale-105"
+            >
+              <div className="text-4xl mb-2">⚙️</div>
+              <div className="text-2xl font-bold">Settings</div>
+              <div className="text-sm mt-2 opacity-90">
+                Admin controls
               </div>
             </button>
           </div>
