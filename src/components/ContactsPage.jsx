@@ -30,7 +30,9 @@ function ContactsPage({ onBackToDashboard }) {
         c.companyName?.toLowerCase().includes(search) ||
         c.phone?.includes(search) ||
         c.industry?.toLowerCase().includes(search) ||
-        c.website?.toLowerCase().includes(search)
+        c.website?.toLowerCase().includes(search) ||
+        c.address?.toLowerCase().includes(search) ||
+        c.linkedin?.toLowerCase().includes(search)
       );
     }
 
