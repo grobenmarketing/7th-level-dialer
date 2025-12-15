@@ -7,6 +7,8 @@ function ContactFormModal({ contact, onSave, onClose }) {
     companyName: '',
     phone: '',
     website: '',
+    address: '',
+    linkedin: '',
     industry: '',
     companySize: '',
     status: 'active'
@@ -19,6 +21,8 @@ function ContactFormModal({ contact, onSave, onClose }) {
         companyName: contact.companyName || '',
         phone: contact.phone || '',
         website: contact.website || '',
+        address: contact.address || '',
+        linkedin: contact.linkedin || '',
         industry: contact.industry || '',
         companySize: contact.companySize || '',
         status: contact.status || 'active'
@@ -120,6 +124,36 @@ function ContactFormModal({ contact, onSave, onClose }) {
                 value={formData.website}
                 onChange={handleChange}
                 placeholder="https://example.com"
+                className="input-field"
+              />
+            </div>
+
+            {/* Address */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Address
+              </label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="123 Main St, City, State, ZIP"
+                className="input-field"
+              />
+            </div>
+
+            {/* LinkedIn */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                LinkedIn
+              </label>
+              <input
+                type="url"
+                name="linkedin"
+                value={formData.linkedin}
+                onChange={handleChange}
+                placeholder="https://linkedin.com/company/..."
                 className="input-field"
               />
             </div>

@@ -67,6 +67,35 @@ function ContactCard({ contact }) {
             </div>
           </div>
         )}
+
+        {contact.address && (
+          <div className="flex items-center">
+            <span className="text-2xl mr-3">📍</span>
+            <div>
+              <div className="text-sm text-gray-500">Address</div>
+              <div className="text-lg font-semibold text-gray-700">
+                {contact.address}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {contact.linkedin && (
+          <div className="flex items-center">
+            <span className="text-2xl mr-3">💼</span>
+            <div>
+              <div className="text-sm text-gray-500">LinkedIn</div>
+              <a
+                href={contact.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-lg font-semibold text-r7-blue hover:underline"
+              >
+                {contact.linkedin}
+              </a>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Call Stats */}

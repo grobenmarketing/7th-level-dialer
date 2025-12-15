@@ -55,6 +55,8 @@ export function useContacts() {
       companyName: contact.companyName || '',
       phone: contact.phone || '',
       website: contact.website || '',
+      address: contact.address || '',
+      linkedin: contact.linkedin || '',
       industry: contact.industry || '',
       companySize: contact.companySize || '',
 
@@ -141,8 +143,10 @@ export function useContacts() {
           companyName: values[0] || '',
           phone: values[1] || '',
           website: values[2] || '',
-          industry: values[3] || '',
-          companySize: values[4] || '',
+          address: values[3] || '',
+          linkedin: values[4] || '',
+          industry: values[5] || '',
+          companySize: values[6] || '',
 
           // Call History
           callHistory: [],
@@ -175,11 +179,13 @@ export function useContacts() {
       return 'No contacts to export';
     }
 
-    const headers = ['Company Name', 'Phone', 'Website', 'Industry', 'Company Size', 'Total Dials', 'Last Call', 'OK Code', 'Status'];
+    const headers = ['Company Name', 'Phone', 'Website', 'Address', 'LinkedIn', 'Industry', 'Company Size', 'Total Dials', 'Last Call', 'OK Code', 'Status'];
     const rows = contacts.map(contact => [
       contact.companyName || '',
       contact.phone || '',
       contact.website || '',
+      contact.address || '',
+      contact.linkedin || '',
       contact.industry || '',
       contact.companySize || '',
       contact.totalDials || 0,
