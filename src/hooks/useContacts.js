@@ -91,6 +91,10 @@ export function useContacts() {
     await saveContacts(updatedContacts);
   };
 
+  const deleteAllContacts = async () => {
+    await saveContacts([]);
+  };
+
   const addCallToHistory = async (contactId, callData) => {
     const contact = contacts.find(c => c.id === contactId);
     if (!contact) return;
@@ -240,6 +244,7 @@ export function useContacts() {
     addContact,
     updateContact,
     deleteContact,
+    deleteAllContacts,
     addCallToHistory,
     importFromCSV,
     exportToCSV,
