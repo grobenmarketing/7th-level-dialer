@@ -10,7 +10,6 @@ function ContactFormModal({ contact, onSave, onClose }) {
     address: '',
     linkedin: '',
     industry: '',
-    companySize: '',
     status: 'active'
   });
 
@@ -24,7 +23,6 @@ function ContactFormModal({ contact, onSave, onClose }) {
         address: contact.address || '',
         linkedin: contact.linkedin || '',
         industry: contact.industry || '',
-        companySize: contact.companySize || '',
         status: contact.status || 'active'
       });
     }
@@ -171,27 +169,6 @@ function ContactFormModal({ contact, onSave, onClose }) {
                 placeholder="Technology, Healthcare, Finance, etc."
                 className="input-field"
               />
-            </div>
-
-            {/* Company Size */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Company Size
-              </label>
-              <select
-                name="companySize"
-                value={formData.companySize}
-                onChange={handleChange}
-                className="input-field"
-              >
-                <option value="">Select size...</option>
-                <option value="1-10">1-10</option>
-                <option value="11-50">11-50</option>
-                <option value="51-200">51-200</option>
-                <option value="201-500">201-500</option>
-                <option value="501-1000">501-1000</option>
-                <option value="1000+">1000+</option>
-              </select>
             </div>
 
             {/* Status */}

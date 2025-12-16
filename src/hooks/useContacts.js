@@ -58,7 +58,6 @@ export function useContacts() {
       address: contact.address || '',
       linkedin: contact.linkedin || '',
       industry: contact.industry || '',
-      companySize: contact.companySize || '',
 
       // Call History
       callHistory: [],
@@ -149,7 +148,6 @@ export function useContacts() {
           address: values[3] || '',
           linkedin: values[4] || '',
           industry: values[5] || '',
-          companySize: values[6] || '',
 
           // Call History
           callHistory: [],
@@ -182,7 +180,7 @@ export function useContacts() {
       return 'No contacts to export';
     }
 
-    const headers = ['Company Name', 'Phone', 'Website', 'Address', 'LinkedIn', 'Industry', 'Company Size', 'Total Dials', 'Last Call', 'OK Code', 'Status'];
+    const headers = ['Company Name', 'Phone', 'Website', 'Address', 'LinkedIn', 'Industry', 'Total Dials', 'Last Call', 'OK Code', 'Status'];
     const rows = contacts.map(contact => [
       contact.companyName || '',
       contact.phone || '',
@@ -190,7 +188,6 @@ export function useContacts() {
       contact.address || '',
       contact.linkedin || '',
       contact.industry || '',
-      contact.companySize || '',
       contact.totalDials || 0,
       contact.lastCall ? new Date(contact.lastCall).toLocaleDateString() : '',
       contact.currentOkCode || '',
