@@ -42,7 +42,7 @@ export function useAvatars() {
     await storage.set(KEYS.AVATARS, updatedAvatars);
   };
 
-  const addAvatar = (avatarData) => {
+  const addAvatar = async (avatarData) => {
     const newAvatar = {
       id: Date.now().toString(),
       name: avatarData.name || '',
@@ -74,11 +74,11 @@ export function useAvatars() {
     };
 
     const updatedAvatars = [...avatars, newAvatar];
-    saveAvatars(updatedAvatars);
+    await saveAvatars(updatedAvatars);
     return newAvatar;
   };
 
-  const updateAvatar = (avatarId, updates) => {
+  const updateAvatar = async (avatarId, updates) => {
     const updatedAvatars = avatars.map(avatar =>
       avatar.id === avatarId
         ? {
@@ -88,12 +88,12 @@ export function useAvatars() {
           }
         : avatar
     );
-    saveAvatars(updatedAvatars);
+    await saveAvatars(updatedAvatars);
   };
 
-  const deleteAvatar = (avatarId) => {
+  const deleteAvatar = async (avatarId) => {
     const updatedAvatars = avatars.filter(avatar => avatar.id !== avatarId);
-    saveAvatars(updatedAvatars);
+    await saveAvatars(updatedAvatars);
   };
 
   const getAvatarById = (avatarId) => {

@@ -72,23 +72,24 @@ function ContactsPage({ onBackToDashboard }) {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleAddContact = (formData) => {
-    addContact(formData);
+  const handleAddContact = async (formData) => {
+    await addContact(formData);
   };
 
-  const handleEditContact = (formData) => {
+  const handleEditContact = async (formData) => {
     if (editingContact) {
-      updateContact(editingContact.id, formData);
+      await updateContact(editingContact.id, formData);
       setEditingContact(null);
       setSelectedContact(null);
     }
   };
 
-  const handleDeleteContact = (contactId) => {
-    deleteContact(contactId);
+  const handleDeleteContact = async (contactId) => {
+    await deleteContact(contactId);
+    setSelectedContact(null);
   };
 
-  const handleDeleteAll = () => {
+  const handleDeleteAll = async () => {
     const confirmed = window.confirm(
       `Are you sure you want to delete ALL ${contacts.length} contacts?\n\nThis will permanently remove all contacts and their call history. This action cannot be undone.`
     );
@@ -99,7 +100,10 @@ function ContactsPage({ onBackToDashboard }) {
       );
 
       if (doubleConfirm) {
-        contacts.forEach(contact => deleteContact(contact.id));
+        // Delete all contacts sequentially
+        for (const contact of contacts) {
+          await deleteContact(contact.id);
+        }
         alert('All contacts have been deleted.');
       }
     }

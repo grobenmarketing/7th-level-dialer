@@ -49,7 +49,7 @@ export function useContacts() {
     await storage.set(KEYS.CONTACTS, updatedContacts);
   };
 
-  const addContact = (contact) => {
+  const addContact = async (contact) => {
     const newContact = {
       id: Date.now().toString(),
       companyName: contact.companyName || '',
@@ -73,25 +73,25 @@ export function useContacts() {
     };
 
     const updatedContacts = [...contacts, newContact];
-    saveContacts(updatedContacts);
+    await saveContacts(updatedContacts);
     return newContact;
   };
 
-  const updateContact = (contactId, updates) => {
+  const updateContact = async (contactId, updates) => {
     const updatedContacts = contacts.map(contact =>
       contact.id === contactId
         ? { ...contact, ...updates }
         : contact
     );
-    saveContacts(updatedContacts);
+    await saveContacts(updatedContacts);
   };
 
-  const deleteContact = (contactId) => {
+  const deleteContact = async (contactId) => {
     const updatedContacts = contacts.filter(contact => contact.id !== contactId);
-    saveContacts(updatedContacts);
+    await saveContacts(updatedContacts);
   };
 
-  const addCallToHistory = (contactId, callData) => {
+  const addCallToHistory = async (contactId, callData) => {
     const contact = contacts.find(c => c.id === contactId);
     if (!contact) return;
 
@@ -106,18 +106,17 @@ export function useContacts() {
       objection: callData.objection || ''
     };
 
-    const updatedContact = {
-      ...contact,
+    const updates = {
       callHistory: [...contact.callHistory, callRecord],
       totalDials: contact.totalDials + 1,
       lastCall: callRecord.date,
       currentOkCode: callData.okCode || contact.currentOkCode
     };
 
-    updateContact(contactId, updatedContact);
+    await updateContact(contactId, updates);
   };
 
-  const importFromCSV = (csvText) => {
+  const importFromCSV = async (csvText) => {
     try {
       // Handle different line endings (Windows \r\n, Unix \n, old Mac \r)
       const lines = csvText.trim().split(/\r?\n/).filter(line => line.trim());
@@ -165,7 +164,7 @@ export function useContacts() {
 
       // Batch add all contacts at once to avoid race conditions
       const updatedContacts = [...contacts, ...newContactsData];
-      saveContacts(updatedContacts);
+      await saveContacts(updatedContacts);
 
       return { success: true, count: newContactsData.length };
     } catch (error) {
