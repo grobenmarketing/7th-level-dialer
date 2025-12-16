@@ -27,11 +27,6 @@ function ContactCard({ contact }) {
             {contact.industry}
           </span>
         )}
-        {contact.companySize && (
-          <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm ml-2">
-            {contact.companySize} employees
-          </span>
-        )}
       </div>
 
       {/* Contact Info */}

@@ -40,11 +40,6 @@ function ContactDetailsModal({ contact, onClose, onEdit, onDelete }) {
                   {contact.industry}
                 </span>
               )}
-              {contact.companySize && (
-                <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
-                  {contact.companySize} employees
-                </span>
-              )}
               <span className={`inline-block px-3 py-1 rounded-full text-sm ${
                 contact.status === 'active' ? 'bg-green-100 text-green-700' :
                 contact.status === 'closed-won' ? 'bg-blue-100 text-blue-700' :

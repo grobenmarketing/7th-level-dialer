@@ -4,7 +4,7 @@ import ContactDetailsModal from './ContactDetailsModal';
 import ContactFormModal from './ContactFormModal';
 
 function ContactsPage({ onBackToDashboard }) {
-  const { contacts, addContact, updateContact, deleteContact, getStats, exportToCSV } = useContacts();
+  const { contacts, addContact, updateContact, deleteContact, deleteAllContacts, getStats, exportToCSV } = useContacts();
   const stats = getStats();
 
   const [selectedContact, setSelectedContact] = useState(null);
@@ -100,10 +100,8 @@ function ContactsPage({ onBackToDashboard }) {
       );
 
       if (doubleConfirm) {
-        // Delete all contacts sequentially
-        for (const contact of contacts) {
-          await deleteContact(contact.id);
-        }
+        // Delete all contacts in one operation
+        await deleteAllContacts();
         alert('All contacts have been deleted.');
       }
     }
