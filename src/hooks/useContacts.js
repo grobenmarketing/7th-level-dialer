@@ -67,6 +67,7 @@ export function useContacts() {
       lastCall: null,
       nextFollowUp: null,
       currentOkCode: null,
+      needsEmail: false,
       status: 'active',
       createdAt: new Date().toISOString()
     };
@@ -157,6 +158,7 @@ export function useContacts() {
           lastCall: null,
           nextFollowUp: null,
           currentOkCode: null,
+          needsEmail: false,
           status: 'active',
           createdAt: new Date().toISOString()
         };
@@ -180,7 +182,7 @@ export function useContacts() {
       return 'No contacts to export';
     }
 
-    const headers = ['Company Name', 'Phone', 'Website', 'Address', 'LinkedIn', 'Industry', 'Total Dials', 'Last Call', 'OK Code', 'Status'];
+    const headers = ['Company Name', 'Phone', 'Website', 'Address', 'LinkedIn', 'Industry', 'Total Dials', 'Last Call', 'OK Code', 'Needs Email', 'Status'];
     const rows = contacts.map(contact => [
       contact.companyName || '',
       contact.phone || '',
@@ -191,6 +193,7 @@ export function useContacts() {
       contact.totalDials || 0,
       contact.lastCall ? new Date(contact.lastCall).toLocaleDateString() : '',
       contact.currentOkCode || '',
+      contact.needsEmail ? 'Yes' : 'No',
       contact.status || 'active'
     ]);
 

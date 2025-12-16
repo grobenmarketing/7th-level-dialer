@@ -3,7 +3,7 @@ import { useContacts } from '../hooks/useContacts';
 import ContactDetailsModal from './ContactDetailsModal';
 import ContactFormModal from './ContactFormModal';
 
-function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onManageAvatars, onViewAnalytics, onViewHowToUse, onViewSettings }) {
+function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onViewAnalytics, onViewHowToUse, onViewSettings }) {
   const {
     contacts,
     addContact,
@@ -179,18 +179,6 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onM
               <div className="text-2xl font-bold">Analytics</div>
               <div className="text-sm mt-2 opacity-90">
                 NEPQ insights & metrics
-              </div>
-            </button>
-
-            {/* Manage Avatars */}
-            <button
-              onClick={onManageAvatars}
-              className="p-8 rounded-lg text-center bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer transition-all hover:shadow-xl transform hover:scale-105"
-            >
-              <div className="text-4xl mb-2">👤</div>
-              <div className="text-2xl font-bold">Avatars</div>
-              <div className="text-sm mt-2 opacity-90">
-                Manage buyer personas
               </div>
             </button>
 

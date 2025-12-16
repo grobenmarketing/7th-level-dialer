@@ -2,18 +2,22 @@ import { useState, useEffect } from 'react'
 import Dashboard from './components/Dashboard'
 import CallingInterface from './components/CallingInterface'
 import ContactsPage from './components/ContactsPage'
-import AvatarManager from './components/AvatarManager'
 import Analytics from './components/Analytics'
 import HowToUse from './components/HowToUse'
 import Settings from './components/Settings'
 import FilteredSessionPage from './components/FilteredSessionPage'
 import SessionReviewPage from './components/SessionReviewPage'
+import Login from './components/Login'
+import OkCodesAdmin from './components/OkCodesAdmin'
+import { useAuth } from './hooks/useAuth'
 
 const VIEW_STATE_KEY = 'r7_current_view'
 const CONTACT_INDEX_KEY = 'r7_contact_index'
 const FILTERED_SESSION_KEY = 'r7_filtered_session'
 
 function App() {
+  const { isAuthenticated, login, logout } = useAuth();
+
   // Initialize state from localStorage if available
   const [currentView, setCurrentView] = useState(() => {
     const saved = localStorage.getItem(VIEW_STATE_KEY)
@@ -28,6 +32,11 @@ function App() {
     return saved ? JSON.parse(saved) : null
   })
   const [filterCriteria, setFilterCriteria] = useState(null)
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <Login onLogin={login} />;
+  }
 
   // Persist view state to localStorage whenever it changes
   useEffect(() => {
@@ -86,10 +95,6 @@ function App() {
     setCurrentView('contacts')
   }
 
-  const handleManageAvatars = () => {
-    setCurrentView('avatars')
-  }
-
   const handleViewAnalytics = () => {
     setCurrentView('analytics')
   }
@@ -100,6 +105,10 @@ function App() {
 
   const handleViewSettings = () => {
     setCurrentView('settings')
+  }
+
+  const handleManageOkCodes = () => {
+    setCurrentView('okCodes')
   }
 
   const handleNextContact = () => {
@@ -113,7 +122,6 @@ function App() {
           onStartCalling={handleStartCalling}
           onStartFilteredSession={handleStartFilteredSession}
           onViewContacts={handleViewContacts}
-          onManageAvatars={handleManageAvatars}
           onViewAnalytics={handleViewAnalytics}
           onViewHowToUse={handleViewHowToUse}
           onViewSettings={handleViewSettings}
@@ -143,9 +151,6 @@ function App() {
       {currentView === 'contacts' && (
         <ContactsPage onBackToDashboard={handleBackToDashboard} />
       )}
-      {currentView === 'avatars' && (
-        <AvatarManager onBack={handleBackToDashboard} />
-      )}
       {currentView === 'analytics' && (
         <Analytics onBackToDashboard={handleBackToDashboard} />
       )}
@@ -153,7 +158,14 @@ function App() {
         <HowToUse onBackToDashboard={handleBackToDashboard} />
       )}
       {currentView === 'settings' && (
-        <Settings onBackToDashboard={handleBackToDashboard} />
+        <Settings
+          onBackToDashboard={handleBackToDashboard}
+          onLogout={logout}
+          onManageOkCodes={handleManageOkCodes}
+        />
+      )}
+      {currentView === 'okCodes' && (
+        <OkCodesAdmin onBack={handleViewSettings} />
       )}
     </div>
   )
