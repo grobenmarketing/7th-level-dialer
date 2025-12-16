@@ -84,7 +84,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
     }
 
     // Save call to history with new fields
-    addCallToHistory(currentContact.id, {
+    await addCallToHistory(currentContact.id, {
       outcome,
       okCode,
       notes,

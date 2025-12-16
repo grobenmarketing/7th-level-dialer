@@ -25,9 +25,9 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onM
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const csvText = event.target.result;
-      const result = importFromCSV(csvText);
+      const result = await importFromCSV(csvText);
 
       if (result.success) {
         alert(`Successfully imported ${result.count} contacts!`);
@@ -55,16 +55,17 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onM
     window.URL.revokeObjectURL(url);
   };
 
-  const handleEditContact = (formData) => {
+  const handleEditContact = async (formData) => {
     if (editingContact) {
-      updateContact(editingContact.id, formData);
+      await updateContact(editingContact.id, formData);
       setEditingContact(null);
       setSelectedContact(null);
     }
   };
 
-  const handleDeleteContact = (contactId) => {
-    deleteContact(contactId);
+  const handleDeleteContact = async (contactId) => {
+    await deleteContact(contactId);
+    setSelectedContact(null);
   };
 
   const handleEditClick = (contact) => {
