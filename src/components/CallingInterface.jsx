@@ -114,8 +114,8 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
       await incrementMetric(today, 'triage', 1);
     }
 
-    // Booked meetings (OK-09)
-    if (okCode === 'OK-09') {
+    // Booked meetings (OK-08)
+    if (okCode === 'OK-08') {
       await incrementMetric(today, 'bookedMeetings', 1);
     }
 
@@ -145,11 +145,11 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
   const getFilteredOKCodes = () => {
     if (outcome === 'NA') {
       return OK_CODES.filter(code =>
-        ['OK-07', 'OK-08', 'OK-10'].includes(code.code)
+        ['OK-01', 'OK-03', 'OK-06'].includes(code.code)
       );
     } else if (outcome === 'GK') {
       return OK_CODES.filter(code =>
-        ['OK-03', 'OK-06', 'OK-07', 'OK-11'].includes(code.code)
+        ['OK-04', 'OK-05', 'OK-06', 'OK-09'].includes(code.code)
       );
     } else if (outcome === 'DM') {
       return OK_CODES; // All codes available for decision makers

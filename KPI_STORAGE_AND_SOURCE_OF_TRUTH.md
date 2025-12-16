@@ -27,7 +27,7 @@ Your dialer tracks these metrics **per day**:
 - **Pickups** - When a Decision Maker answers
 - **Conversations** - Meaningful discussions (hadConversation checkbox)
 - **Triage** - Got specific details (hadTriage checkbox)
-- **Booked Meetings** - OK-09 code
+- **Booked Meetings** - OK-08 code
 - **Meetings Ran** - Actually held meetings
 - **Objections** - Array of objections heard
 
