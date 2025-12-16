@@ -1,9 +1,7 @@
 import { useContacts } from './useContacts';
-import { useAvatars } from './useAvatars';
 
 export function useStats() {
   const { contacts } = useContacts();
-  const { avatars } = useAvatars();
 
   // Get all call history records across all contacts
   const getAllCallRecords = () => {
