@@ -12,6 +12,7 @@ function ContactsPage({ onBackToDashboard }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [emailFilter, setEmailFilter] = useState('all');
   const [sortBy, setSortBy] = useState('company');
 
   // Filter and search contacts
@@ -21,6 +22,13 @@ function ContactsPage({ onBackToDashboard }) {
     // Apply status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(c => c.status === statusFilter);
+    }
+
+    // Apply email filter
+    if (emailFilter === 'needs-email') {
+      filtered = filtered.filter(c => c.needsEmail === true);
+    } else if (emailFilter === 'no-email') {
+      filtered = filtered.filter(c => !c.needsEmail);
     }
 
     // Apply search
@@ -53,7 +61,7 @@ function ContactsPage({ onBackToDashboard }) {
     });
 
     return filtered;
-  }, [contacts, searchTerm, statusFilter, sortBy]);
+  }, [contacts, searchTerm, statusFilter, emailFilter, sortBy]);
 
   const handleExport = () => {
     const csvContent = exportToCSV();
@@ -165,7 +173,7 @@ function ContactsPage({ onBackToDashboard }) {
 
         {/* Search and Filters */}
         <div className="card bg-white mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -195,6 +203,22 @@ function ContactsPage({ onBackToDashboard }) {
                 <option value="do-not-call">Do Not Call</option>
                 <option value="closed-won">Closed Won</option>
                 <option value="closed-lost">Closed Lost</option>
+              </select>
+            </div>
+
+            {/* Email Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                📧 Email Filter
+              </label>
+              <select
+                value={emailFilter}
+                onChange={(e) => setEmailFilter(e.target.value)}
+                className="input-field"
+              >
+                <option value="all">All Contacts</option>
+                <option value="needs-email">Needs Email</option>
+                <option value="no-email">No Email Needed</option>
               </select>
             </div>
 

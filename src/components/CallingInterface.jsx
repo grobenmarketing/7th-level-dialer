@@ -1,14 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import { useKPI } from '../hooks/useKPI';
+import { useOkCodes } from '../hooks/useOkCodes';
 import ContactCard from './ContactCard';
 import CallTimer from './CallTimer';
-import { OK_CODES, CALL_OUTCOMES } from '../lib/constants';
+import SessionEndSummary from './SessionEndSummary';
+import { CALL_OUTCOMES } from '../lib/constants';
 import { generatePhoneURL } from '../lib/phoneUtils';
 
 function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, onNextContact }) {
   const { getActiveContacts, addCallToHistory, updateContact } = useContacts();
   const { incrementMetric, addObjection, getTodayDials, dailyDialGoal, saveDailyDialGoal } = useKPI();
+  const { okCodes } = useOkCodes();
   // Use filtered contacts if provided, otherwise use all active contacts
   const activeContacts = filteredContacts || getActiveContacts();
   const currentContact = activeContacts[contactIndex];
@@ -25,10 +28,14 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
   const [hadConversation, setHadConversation] = useState(false);
   const [hadTriage, setHadTriage] = useState(false);
   const [objection, setObjection] = useState('');
+  const [needsEmail, setNeedsEmail] = useState(false);
 
   // Call timer state
   const [callDuration, setCallDuration] = useState(0);
   const [timerActive, setTimerActive] = useState(false); // Start timer when call button is clicked
+
+  // Session end state
+  const [showSessionSummary, setShowSessionSummary] = useState(false);
 
   // Generate phone URL based on device (iOS uses OpenPhone deep link, others use tel:)
   const phoneURL = useMemo(() => {
@@ -49,10 +56,32 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
     setHadConversation(false);
     setHadTriage(false);
     setObjection('');
+    setNeedsEmail(false);
     // Reset timer
     setCallDuration(0);
     setTimerActive(false);
   }, [contactIndex]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      // Ignore if user is typing in an input field
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        return;
+      }
+
+      // Number keys 1-9 for OK codes
+      if (e.key >= '1' && e.key <= '9' && okCodes.length > 0) {
+        const index = parseInt(e.key) - 1;
+        if (index < okCodes.length) {
+          setOkCode(okCodes[index].label);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [okCodes]);
 
   const handleSaveGoal = async () => {
     await saveDailyDialGoal(tempGoal);
@@ -94,6 +123,11 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
       objection: objection.trim()
     });
 
+    // Update contact with needsEmail flag
+    if (needsEmail) {
+      await updateContact(currentContact.id, { needsEmail: true });
+    }
+
     // Update KPI metrics for today
     const today = new Date();
 
@@ -114,8 +148,9 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
       await incrementMetric(today, 'triage', 1);
     }
 
-    // Booked meetings (OK-08)
-    if (okCode === 'OK-08') {
+    // Booked meetings - check if current OK code label indicates a meeting
+    const selectedOkCode = okCodes.find(code => code.label === okCode);
+    if (selectedOkCode && selectedOkCode.label.toLowerCase().includes('meeting')) {
       await incrementMetric(today, 'bookedMeetings', 1);
     }
 
@@ -128,8 +163,8 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
     if (contactIndex < activeContacts.length - 1) {
       onNextContact();
     } else {
-      alert('All contacts completed! Great work!');
-      onBackToDashboard();
+      // Session complete - show summary
+      setShowSessionSummary(true);
     }
   };
 
@@ -141,29 +176,32 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
     }
   };
 
-  // Get filtered OK codes based on outcome
-  const getFilteredOKCodes = () => {
-    if (outcome === 'NA') {
-      return OK_CODES.filter(code =>
-        ['OK-01', 'OK-03', 'OK-06'].includes(code.code)
-      );
-    } else if (outcome === 'GK') {
-      return OK_CODES.filter(code =>
-        ['OK-04', 'OK-05', 'OK-06', 'OK-09'].includes(code.code)
-      );
-    } else if (outcome === 'DM') {
-      return OK_CODES; // All codes available for decision makers
-    }
-    return OK_CODES;
+  // Get last call info for this contact
+  const lastCall = currentContact?.callHistory?.[currentContact.callHistory.length - 1];
+
+  // Handle viewing contacts from session summary
+  const handleViewContactsFromSummary = () => {
+    // This will be handled by App.jsx navigation
+    onBackToDashboard();
+    // User can then navigate to contacts page
   };
 
-  const filteredOKCodes = getFilteredOKCodes();
+  // Show session end summary if complete
+  if (showSessionSummary) {
+    return (
+      <SessionEndSummary
+        contacts={activeContacts}
+        onBackToDashboard={onBackToDashboard}
+        onViewContacts={handleViewContactsFromSummary}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-start mb-6 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-r7-blue">
               {filteredContacts ? '🎯 Filtered Calling Session' : 'Calling Session'}
@@ -173,12 +211,21 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
               {filteredContacts && ' (filtered)'}
             </p>
           </div>
-          <button
-            onClick={onBackToDashboard}
-            className="btn-secondary"
-          >
-            ← Back to Dashboard
-          </button>
+          <div className="flex flex-col gap-3 items-end">
+            {currentContact && timerActive && (
+              <CallTimer
+                key={contactIndex}
+                isActive={timerActive}
+                onTimeUpdate={setCallDuration}
+              />
+            )}
+            <button
+              onClick={onBackToDashboard}
+              className="btn-secondary"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
         </div>
 
         {/* Progress Bar */}
@@ -255,13 +302,37 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
           {/* Left Column - Contact Info */}
           <div className="space-y-6">
             <ContactCard contact={currentContact} />
-            {/* Call Timer */}
-            {currentContact && (
-              <CallTimer
-                key={contactIndex}
-                isActive={timerActive}
-                onTimeUpdate={setCallDuration}
-              />
+
+            {/* Last Call Summary */}
+            {lastCall && (
+              <div className="card bg-blue-50 border-2 border-blue-200">
+                <h3 className="text-lg font-bold text-blue-900 mb-3">📞 Last Call Summary</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Date:</span>
+                    <span className="font-semibold text-blue-900">
+                      {new Date(lastCall.timestamp).toLocaleDateString()} at{' '}
+                      {new Date(lastCall.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">OK Code:</span>
+                    <span className="font-semibold text-blue-900">{lastCall.okCode || 'N/A'}</span>
+                  </div>
+                  {lastCall.duration > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">Duration:</span>
+                      <span className="font-semibold text-blue-900">{Math.floor(lastCall.duration / 60)}m {lastCall.duration % 60}s</span>
+                    </div>
+                  )}
+                  {lastCall.notes && (
+                    <div className="mt-2 pt-2 border-t border-blue-200">
+                      <span className="text-blue-700 block mb-1">Notes:</span>
+                      <p className="text-blue-900">{lastCall.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
@@ -313,6 +384,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
             <div className="card bg-white">
               <h3 className="text-xl font-bold text-gray-700 mb-4">
                 2️⃣ OK Code
+                <span className="text-sm text-gray-500 font-normal ml-2">(or press 1-9)</span>
               </h3>
               <select
                 value={okCode}
@@ -321,9 +393,9 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                 disabled={!outcome}
               >
                 <option value="">Select OK Code...</option>
-                {filteredOKCodes.map((code) => (
-                  <option key={code.code} value={code.code}>
-                    {code.code} - {code.label}
+                {okCodes.map((code, index) => (
+                  <option key={code.id} value={code.label}>
+                    [{index + 1}] {code.label}
                   </option>
                 ))}
               </select>
@@ -332,20 +404,11 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                 <div className="mt-3 p-3 bg-gray-50 rounded">
                   <div className="flex items-center">
                     <span
-                      className={`w-3 h-3 rounded-full mr-2 ${
-                        OK_CODES.find(c => c.code === okCode)?.color === 'green'
-                          ? 'bg-green-500'
-                          : OK_CODES.find(c => c.code === okCode)?.color === 'red'
-                          ? 'bg-red-500'
-                          : OK_CODES.find(c => c.code === okCode)?.color === 'yellow'
-                          ? 'bg-yellow-500'
-                          : OK_CODES.find(c => c.code === okCode)?.color === 'blue'
-                          ? 'bg-blue-500'
-                          : 'bg-gray-500'
-                      }`}
+                      className="w-3 h-3 rounded-full mr-2"
+                      style={{ backgroundColor: okCodes.find(c => c.label === okCode)?.color || '#808080' }}
                     ></span>
                     <span className="text-sm font-semibold">
-                      {OK_CODES.find(c => c.code === okCode)?.label}
+                      {okCode}
                     </span>
                   </div>
                 </div>
@@ -387,6 +450,21 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                   </span>
                   <span className="ml-2 text-sm text-gray-500">
                     (Got specific details about their situation)
+                  </span>
+                </label>
+
+                <label className="flex items-center p-3 bg-green-50 rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={needsEmail}
+                    onChange={(e) => setNeedsEmail(e.target.checked)}
+                    className="w-5 h-5 text-green-600 rounded focus:ring-green-600"
+                  />
+                  <span className="ml-3 font-semibold text-gray-700">
+                    📧 Needs Email Follow-up
+                  </span>
+                  <span className="ml-2 text-sm text-gray-500">
+                    (Got permission to send email)
                   </span>
                 </label>
               </div>
@@ -444,8 +522,9 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>• Click the phone number to dial automatically</li>
                 <li>• Select outcome first, then OK code</li>
+                <li>• Press keys 1-9 for quick OK code selection</li>
+                <li>• Check "Needs Email" if they gave email permission</li>
                 <li>• Add detailed notes for follow-ups</li>
-                <li>• Use Save & Next to move efficiently</li>
               </ul>
             </div>
           </div>

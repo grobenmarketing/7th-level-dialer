@@ -79,44 +79,30 @@ function CallTimer({ isActive, onTimeUpdate }) {
   };
 
   return (
-    <div className="card bg-gradient-to-br from-r7-blue to-r7-dark text-white">
-      <div className="text-center">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <span className="text-2xl">⏱️</span>
-          <h3 className="text-lg font-bold">Call Timer</h3>
-        </div>
-
-        <div className="mb-4">
-          <div className={`text-5xl font-bold font-mono transition-all ${isPaused ? 'opacity-50' : ''}`}>
+    <div className="bg-gradient-to-br from-r7-blue to-r7-dark text-white rounded-lg p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">⏱️</span>
+          <div className={`text-2xl font-bold font-mono ${isPaused ? 'opacity-50' : ''}`}>
             {formatTime(elapsedTime)}
           </div>
-          {isPaused && (
-            <div className="text-sm opacity-75 mt-1">⏸️ Paused</div>
-          )}
+          <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-yellow-400' : 'bg-green-400 animate-pulse'}`}></div>
         </div>
-
-        <div className="flex gap-2 justify-center">
+        <div className="flex gap-2">
           <button
             onClick={togglePause}
-            className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg font-semibold transition-all backdrop-blur-sm"
+            className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-sm font-semibold transition-all"
             title={isPaused ? 'Resume' : 'Pause'}
           >
-            {isPaused ? '▶️ Resume' : '⏸️ Pause'}
+            {isPaused ? '▶️' : '⏸️'}
           </button>
           <button
             onClick={reset}
-            className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg font-semibold transition-all backdrop-blur-sm"
+            className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-sm font-semibold transition-all"
             title="Reset timer"
           >
-            🔄 Reset
+            🔄
           </button>
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-white/20 text-sm opacity-75">
-          <div className="flex items-center justify-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-yellow-400' : 'bg-green-400 animate-pulse'}`}></div>
-            <span>{isPaused ? 'Timer Paused' : 'Timer Running'}</span>
-          </div>
         </div>
       </div>
     </div>
