@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useContacts } from '../hooks/useContacts';
 
-function Settings({ onBackToDashboard }) {
+function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
   const { resetAllStats, getStats } = useContacts();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -74,6 +74,27 @@ function Settings({ onBackToDashboard }) {
             Admin Actions
           </h2>
 
+          {/* Manage OK Codes Section */}
+          <div className="border-2 border-blue-200 rounded-lg p-6 bg-blue-50 mb-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-blue-800 mb-2">
+                  Manage OK Codes
+                </h3>
+                <p className="text-sm text-blue-700 mb-4">
+                  Customize your call outcome options. Add, edit, delete, and reorder
+                  OK codes to match your sales process.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onManageOkCodes}
+              className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all"
+            >
+              Manage OK Codes →
+            </button>
+          </div>
+
           {/* Reset Stats Section */}
           <div className="border-2 border-red-200 rounded-lg p-6 bg-red-50">
             <div className="flex items-start justify-between">
@@ -126,6 +147,26 @@ function Settings({ onBackToDashboard }) {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Logout Section */}
+          <div className="border-2 border-gray-200 rounded-lg p-6 bg-gray-50 mt-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-gray-800 mb-2">
+                  Logout
+                </h3>
+                <p className="text-sm text-gray-700 mb-4">
+                  End your current session and return to the login screen.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onLogout}
+              className="w-full px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg transition-all"
+            >
+              Logout
+            </button>
           </div>
         </div>
 
