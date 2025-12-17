@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -12,7 +13,13 @@ export default {
           red: '#cf071d',
           light: '#f2f7f9',
           dark: '#0f2430',
+          neon: '#00f0ff',
+          purple: '#bc13fe',
+          gold: '#ffd700',
         }
+      },
+      backdropBlur: {
+        xs: '2px',
       }
     },
   },

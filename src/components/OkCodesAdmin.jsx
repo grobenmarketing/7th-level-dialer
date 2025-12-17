@@ -68,13 +68,13 @@ function OkCodesAdmin({ onBack }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-r7-blue">Manage OK Codes</h1>
-            <p className="text-gray-600">Customize your call outcome options</p>
+            <h1 className="text-3xl font-bold text-r7-blue dark:text-r7-neon">Manage OK Codes</h1>
+            <p className="text-muted">Customize your call outcome options</p>
           </div>
           <button onClick={onBack} className="btn-secondary">
             ← Back to Settings
@@ -95,7 +95,7 @@ function OkCodesAdmin({ onBack }) {
 
         {/* Add/Edit Form */}
         {(showAddForm || editingId) && (
-          <div className="card bg-white mb-6">
+          <div className="glass-card mb-6">
             <h2 className="text-xl font-bold text-gray-700 mb-4">
               {editingId ? 'Edit OK Code' : 'Add New OK Code'}
             </h2>
@@ -173,7 +173,7 @@ function OkCodesAdmin({ onBack }) {
         )}
 
         {/* OK Codes List */}
-        <div className="card bg-white">
+        <div className="glass-card">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-700">Current OK Codes</h2>
             <button
@@ -188,7 +188,7 @@ function OkCodesAdmin({ onBack }) {
             {okCodes.map((code, index) => (
               <div
                 key={code.id}
-                className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-gray-300 transition-all"
+                className="flex items-center justify-between p-4 border-2 border-glass rounded-lg hover:border-r7-blue/30 dark:hover:border-r7-neon/30 transition-all"
               >
                 <div className="flex items-center gap-4 flex-1">
                   <div
@@ -250,7 +250,7 @@ function OkCodesAdmin({ onBack }) {
         </div>
 
         {/* Info */}
-        <div className="card bg-blue-50 border-2 border-blue-200 mt-6">
+        <div className="glass-card border-2 border-glass bg-r7-blue/10 dark:bg-r7-neon/10 mt-6">
           <h3 className="font-bold text-blue-900 mb-2">About OK Codes</h3>
           <p className="text-sm text-blue-800">
             OK codes represent the outcomes of your calls. They help track your

@@ -22,13 +22,13 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-r7-blue">Settings</h1>
-            <p className="text-gray-600">Manage your dialer configuration</p>
+            <h1 className="text-3xl font-bold text-r7-blue dark:text-r7-neon">Settings</h1>
+            <p className="text-muted">Manage your dialer configuration</p>
           </div>
           <button onClick={onBackToDashboard} className="btn-secondary">
             ← Back to Dashboard
@@ -36,46 +36,46 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
         </div>
 
         {/* Current Stats Overview */}
-        <div className="card bg-white mb-6">
+        <div className="glass-card mb-6">
           <h2 className="text-xl font-bold text-gray-700 mb-4">
             Current Statistics Overview
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-3xl font-bold text-r7-blue">
+            <div className="text-center p-4 bg-r7-blue/10 dark:bg-r7-neon/10 rounded-lg">
+              <div className="text-3xl font-bold text-r7-blue dark:text-r7-neon">
                 {stats.totalContacts}
               </div>
-              <div className="text-sm text-gray-600">Total Contacts</div>
+              <div className="text-sm text-muted">Total Contacts</div>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-3xl font-bold text-green-600">
+            <div className="text-center p-4 bg-green-500/10 dark:bg-green-400/10 rounded-lg">
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
                 {stats.totalDials}
               </div>
-              <div className="text-sm text-gray-600">Total Dials</div>
+              <div className="text-sm text-muted">Total Dials</div>
             </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-3xl font-bold text-purple-600">
+            <div className="text-center p-4 bg-purple-500/10 dark:bg-purple-400/10 rounded-lg">
+              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
                 {stats.totalCalls}
               </div>
-              <div className="text-sm text-gray-600">Calls Logged</div>
+              <div className="text-sm text-muted">Calls Logged</div>
             </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <div className="text-3xl font-bold text-yellow-600">
+            <div className="text-center p-4 bg-yellow-500/10 dark:bg-yellow-400/10 rounded-lg">
+              <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
                 {stats.meetingsBooked}
               </div>
-              <div className="text-sm text-gray-600">Meetings Booked</div>
+              <div className="text-sm text-muted">Meetings Booked</div>
             </div>
           </div>
         </div>
 
         {/* Admin Actions */}
-        <div className="card bg-white">
+        <div className="glass-card">
           <h2 className="text-xl font-bold text-gray-700 mb-4">
             Admin Actions
           </h2>
 
           {/* Manage OK Codes Section */}
-          <div className="border-2 border-blue-200 rounded-lg p-6 bg-blue-50 mb-6">
+          <div className="border-2 border-glass rounded-lg p-6 bg-r7-blue/10 dark:bg-r7-neon/10 mb-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-blue-800 mb-2">
@@ -96,7 +96,7 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
           </div>
 
           {/* Reset Stats Section */}
-          <div className="border-2 border-red-200 rounded-lg p-6 bg-red-50">
+          <div className="border-2 border-glass rounded-lg p-6 bg-red-500/10 dark:bg-red-400/10">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-red-800 mb-2">
@@ -125,7 +125,7 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
                 Reset All Stats
               </button>
             ) : (
-              <div className="bg-white border-2 border-red-300 rounded-lg p-4">
+              <div className="glass-card border-2 border-red-300 rounded-lg p-4">
                 <p className="text-center font-bold text-red-800 mb-4">
                   Are you absolutely sure? This cannot be undone!
                 </p>
@@ -150,7 +150,7 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
           </div>
 
           {/* Logout Section */}
-          <div className="border-2 border-gray-200 rounded-lg p-6 bg-gray-50 mt-6">
+          <div className="border-2 border-glass rounded-lg p-6 bg-gray-500/10 dark:bg-gray-400/10 mt-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-gray-800 mb-2">
@@ -171,7 +171,7 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
         </div>
 
         {/* Info Section */}
-        <div className="card bg-blue-50 border-2 border-blue-200 mt-6">
+        <div className="glass-card border-2 border-glass bg-r7-blue/10 dark:bg-r7-neon/10 mt-6">
           <h3 className="font-bold text-blue-900 mb-2">
             About Settings
           </h3>

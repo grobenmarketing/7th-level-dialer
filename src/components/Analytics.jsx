@@ -116,15 +116,15 @@ function Analytics({ onBackToDashboard }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Auto-sync loading overlay */}
         {syncing && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-md text-center">
+            <div className="glass-card p-8 max-w-md text-center">
               <div className="text-6xl mb-4">⏳</div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Syncing Data...</h2>
-              <p className="text-gray-600">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">Syncing Data...</h2>
+              <p className="text-muted">
                 Building KPI metrics from your call history. This will only take a moment.
               </p>
             </div>
@@ -134,11 +134,11 @@ function Analytics({ onBackToDashboard }) {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-r7-blue flex items-center">
+            <h1 className="text-3xl font-bold text-r7-blue dark:text-r7-neon flex items-center">
               <span className="mr-3">📊</span>
               Analytics & KPI Tracker
             </h1>
-            <p className="text-gray-600">Performance insights and weekly activity tracking</p>
+            <p className="text-muted">Performance insights and weekly activity tracking</p>
           </div>
           <button
             onClick={onBackToDashboard}
@@ -155,7 +155,7 @@ function Analytics({ onBackToDashboard }) {
             className={`px-6 py-2 rounded-lg font-semibold transition-all ${
               view === 'kpi'
                 ? 'bg-r7-blue text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
+                : 'glass-card text-gray-700 dark:text-gray-300 hover:bg-white/80 dark:hover:bg-white/20'
             }`}
           >
             📅 Weekly KPI Tracker
@@ -165,7 +165,7 @@ function Analytics({ onBackToDashboard }) {
             className={`px-6 py-2 rounded-lg font-semibold transition-all ${
               view === 'overview'
                 ? 'bg-r7-blue text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
+                : 'glass-card text-gray-700 dark:text-gray-300 hover:bg-white/80 dark:hover:bg-white/20'
             }`}
           >
             📈 Overall Analytics
@@ -183,7 +183,7 @@ function Analytics({ onBackToDashboard }) {
         {view === 'kpi' ? (
           <div className="space-y-6">
             {/* Week Navigation */}
-            <div className="card bg-white">
+            <div className="glass-card">
               <div className="flex items-center justify-between">
                 <button
                   onClick={handlePreviousWeek}
@@ -212,7 +212,7 @@ function Analytics({ onBackToDashboard }) {
             </div>
 
             {/* Weekly Targets & Progress */}
-            <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+            <div className="glass-card border-2 border-glass bg-r7-blue/10 dark:bg-r7-neon/10">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold text-gray-700">
                   🎯 Weekly Targets & Progress
@@ -276,11 +276,11 @@ function Analytics({ onBackToDashboard }) {
             </div>
 
             {/* Weekly KPI Table */}
-            <div className="card bg-white overflow-x-auto">
+            <div className="glass-card overflow-x-auto">
               <h3 className="text-xl font-bold text-gray-700 mb-4">📋 Daily Activity Log</h3>
               <table className="w-full">
                 <thead>
-                  <tr className="border-b-2 border-gray-300">
+                  <tr className="border-b-2 border-glass">
                     <th className="text-left py-2 px-2 font-bold">Day</th>
                     <th className="text-center py-2 px-2 font-bold">📞 Dials</th>
                     <th className="text-center py-2 px-2 font-bold">✅ Pickups<br/><span className="text-xs font-normal">(DM only)</span></th>
@@ -292,10 +292,10 @@ function Analytics({ onBackToDashboard }) {
                 </thead>
                 <tbody>
                   {weekData.map((day) => (
-                    <tr key={day.date} className="border-b border-gray-200 hover:bg-blue-50">
+                    <tr key={day.date} className="border-b border-glass hover:bg-r7-blue/5 dark:hover:bg-r7-neon/5">
                       <td className="py-3 px-2 font-semibold">
                         {day.dayName}<br/>
-                        <span className="text-xs text-gray-500">{new Date(day.date).toLocaleDateString()}</span>
+                        <span className="text-xs text-muted">{new Date(day.date).toLocaleDateString()}</span>
                       </td>
                       <td className="text-center py-3 px-2">
                         <input
@@ -354,7 +354,7 @@ function Analytics({ onBackToDashboard }) {
                     </tr>
                   ))}
                   {/* Totals Row */}
-                  <tr className="bg-blue-100 font-bold border-t-2 border-blue-300">
+                  <tr className="bg-r7-blue/10 dark:bg-r7-neon/10 font-bold border-t-2 border-glass">
                     <td className="py-3 px-2">TOTAL</td>
                     <td className="text-center py-3 px-2">{weeklyTotals.dials}</td>
                     <td className="text-center py-3 px-2">{weeklyTotals.pickups}</td>
@@ -364,11 +364,11 @@ function Analytics({ onBackToDashboard }) {
                     <td className="text-center py-3 px-2">{weeklyTotals.meetingsRan}</td>
                   </tr>
                   {/* Daily Average Row */}
-                  <tr className="bg-green-50 font-semibold">
+                  <tr className="bg-green-500/10 dark:bg-green-400/10 font-semibold">
                     <td className="py-3 px-2">
                       Daily Avg
                       <br/>
-                      <span className="text-xs font-normal text-gray-600">
+                      <span className="text-xs font-normal text-muted">
                         ({dailyAverages.daysWorked} {dailyAverages.daysWorked === 1 ? 'day' : 'days'} worked)
                       </span>
                     </td>
@@ -384,43 +384,43 @@ function Analytics({ onBackToDashboard }) {
             </div>
 
             {/* Performance Ratios */}
-            <div className="card bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
-              <h3 className="text-xl font-bold text-gray-700 mb-4">📈 Your Performance Ratios</h3>
+            <div className="glass-card border-2 border-glass bg-purple-500/10 dark:bg-purple-400/10">
+              <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-4">📈 Your Performance Ratios</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-3xl font-bold text-purple-700">
+                <div className="text-center p-4 bg-white/50 dark:bg-white/10 rounded-lg">
+                  <div className="text-3xl font-bold text-purple-700 dark:text-purple-400">
                     {(performanceRatios.meetingsShowedRatio * 100).toFixed(0)}%
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Meetings Showed</div>
-                  <div className="text-xs text-gray-500 mt-1">Ran / Booked</div>
+                  <div className="text-sm text-muted mt-1">Meetings Showed</div>
+                  <div className="text-xs text-muted mt-1">Ran / Booked</div>
                 </div>
-                <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-3xl font-bold text-blue-700">
+                <div className="text-center p-4 bg-white/50 dark:bg-white/10 rounded-lg">
+                  <div className="text-3xl font-bold text-blue-700 dark:text-blue-400">
                     {(performanceRatios.conversationsToMeetings * 100).toFixed(0)}%
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Convos to Meetings</div>
-                  <div className="text-xs text-gray-500 mt-1">Booked / Convos</div>
+                  <div className="text-sm text-muted mt-1">Convos to Meetings</div>
+                  <div className="text-xs text-muted mt-1">Booked / Convos</div>
                 </div>
-                <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-3xl font-bold text-green-700">
+                <div className="text-center p-4 bg-white/50 dark:bg-white/10 rounded-lg">
+                  <div className="text-3xl font-bold text-green-700 dark:text-green-400">
                     {(performanceRatios.triageToConversations * 100).toFixed(0)}%
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Triage Rate</div>
-                  <div className="text-xs text-gray-500 mt-1">Triage / Convos</div>
+                  <div className="text-sm text-muted mt-1">Triage Rate</div>
+                  <div className="text-xs text-muted mt-1">Triage / Convos</div>
                 </div>
-                <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-3xl font-bold text-orange-700">
+                <div className="text-center p-4 bg-white/50 dark:bg-white/10 rounded-lg">
+                  <div className="text-3xl font-bold text-orange-700 dark:text-orange-400">
                     {(performanceRatios.pickupsToConversations * 100).toFixed(0)}%
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Pickup to Convo</div>
-                  <div className="text-xs text-gray-500 mt-1">Convos / Pickups</div>
+                  <div className="text-sm text-muted mt-1">Pickup to Convo</div>
+                  <div className="text-xs text-muted mt-1">Convos / Pickups</div>
                 </div>
               </div>
             </div>
 
             {/* Objection Frequency */}
             {objectionFrequency.length > 0 && (
-              <div className="card bg-white">
+              <div className="glass-card">
                 <h3 className="text-xl font-bold text-gray-700 mb-4">⚠️ Most Common Objections This Week</h3>
                 <div className="space-y-2">
                   {objectionFrequency.slice(0, 10).map((item, index) => (
@@ -444,25 +444,25 @@ function Analytics({ onBackToDashboard }) {
           <div className="space-y-6">
             {/* Key Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+              <div className="glass-card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
                 <div className="text-sm font-semibold opacity-90">Total Contacts</div>
                 <div className="text-4xl font-bold my-2">{activityStats.totalContacts}</div>
                 <div className="text-sm opacity-80">{activityStats.activeContacts} active</div>
               </div>
 
-              <div className="card bg-gradient-to-br from-green-500 to-green-600 text-white">
+              <div className="glass-card bg-gradient-to-br from-green-500 to-green-600 text-white">
                 <div className="text-sm font-semibold opacity-90">Total Dials</div>
                 <div className="text-4xl font-bold my-2">{activityStats.totalDials}</div>
                 <div className="text-sm opacity-80">{activityStats.dmCalls} reached DM</div>
               </div>
 
-              <div className="card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+              <div className="glass-card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
                 <div className="text-sm font-semibold opacity-90">Contact Rate</div>
                 <div className="text-4xl font-bold my-2">{activityStats.contactRate}%</div>
                 <div className="text-sm opacity-80">DM / Total Dials</div>
               </div>
 
-              <div className="card bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+              <div className="glass-card bg-gradient-to-br from-orange-500 to-orange-600 text-white">
                 <div className="text-sm font-semibold opacity-90">Meeting Rate</div>
                 <div className="text-4xl font-bold my-2">{activityStats.meetingRate}%</div>
                 <div className="text-sm opacity-80">{activityStats.meetingsBooked} meetings booked</div>
@@ -470,14 +470,14 @@ function Analytics({ onBackToDashboard }) {
             </div>
 
             {/* Call Breakdown */}
-            <div className="card bg-white">
-              <h3 className="text-xl font-bold text-gray-700 mb-4">Call Outcome Breakdown</h3>
+            <div className="glass-card">
+              <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-4">Call Outcome Breakdown</h3>
               <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="p-4 bg-green-500/10 dark:bg-green-400/10 border border-glass rounded-lg">
                   <div className="text-3xl mb-2">👤</div>
-                  <div className="text-2xl font-bold text-green-700">{activityStats.dmCalls}</div>
-                  <div className="text-sm text-gray-600">Decision Makers</div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-2xl font-bold text-green-700 dark:text-green-400">{activityStats.dmCalls}</div>
+                  <div className="text-sm text-muted">Decision Makers</div>
+                  <div className="text-xs text-muted mt-1">
                     {activityStats.totalCalls > 0
                       ? ((activityStats.dmCalls / activityStats.totalCalls) * 100).toFixed(1)
                       : 0}% of calls
@@ -489,11 +489,11 @@ function Analytics({ onBackToDashboard }) {
                   )}
                 </div>
 
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="p-4 bg-yellow-500/10 dark:bg-yellow-400/10 border border-glass rounded-lg">
                   <div className="text-3xl mb-2">🚪</div>
-                  <div className="text-2xl font-bold text-yellow-700">{activityStats.gkCalls}</div>
-                  <div className="text-sm text-gray-600">Gatekeepers</div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{activityStats.gkCalls}</div>
+                  <div className="text-sm text-muted">Gatekeepers</div>
+                  <div className="text-xs text-muted mt-1">
                     {activityStats.totalCalls > 0
                       ? ((activityStats.gkCalls / activityStats.totalCalls) * 100).toFixed(1)
                       : 0}% of calls
@@ -505,11 +505,11 @@ function Analytics({ onBackToDashboard }) {
                   )}
                 </div>
 
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="p-4 bg-gray-500/10 dark:bg-gray-400/10 border border-glass rounded-lg">
                   <div className="text-3xl mb-2">📵</div>
-                  <div className="text-2xl font-bold text-gray-700">{activityStats.naCalls}</div>
-                  <div className="text-sm text-gray-600">No Answer</div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-2xl font-bold text-gray-700 dark:text-gray-400">{activityStats.naCalls}</div>
+                  <div className="text-sm text-muted">No Answer</div>
+                  <div className="text-xs text-muted mt-1">
                     {activityStats.totalCalls > 0
                       ? ((activityStats.naCalls / activityStats.totalCalls) * 100).toFixed(1)
                       : 0}% of calls
@@ -525,34 +525,34 @@ function Analytics({ onBackToDashboard }) {
 
             {/* Duration Statistics */}
             {activityStats.totalDuration > 0 && (
-              <div className="card bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200">
-                <h3 className="text-xl font-bold text-gray-700 mb-4">⏱️ Call Duration Analytics</h3>
+              <div className="glass-card border-2 border-glass bg-purple-500/10 dark:bg-purple-400/10">
+                <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-4">⏱️ Call Duration Analytics</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-700">
+                    <div className="text-2xl font-bold text-purple-700 dark:text-purple-400">
                       {formatDuration(activityStats.totalDuration)}
                     </div>
-                    <div className="text-xs text-gray-600">Total Talk Time</div>
+                    <div className="text-xs text-muted">Total Talk Time</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-indigo-700">
+                    <div className="text-2xl font-bold text-indigo-700 dark:text-indigo-400">
                       {formatDuration(activityStats.avgDuration)}
                     </div>
-                    <div className="text-xs text-gray-600">Average per Call</div>
+                    <div className="text-xs text-muted">Average per Call</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-700">
+                    <div className="text-2xl font-bold text-green-700 dark:text-green-400">
                       {formatDuration(activityStats.avgDmDuration)}
                     </div>
-                    <div className="text-xs text-gray-600">Avg DM Call</div>
+                    <div className="text-xs text-muted">Avg DM Call</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-700">
+                    <div className="text-2xl font-bold text-orange-700 dark:text-orange-400">
                       {activityStats.avgDmDuration > 0 && activityStats.avgDuration > 0
                         ? ((activityStats.avgDmDuration / activityStats.avgDuration) * 100).toFixed(0)
                         : 0}%
                     </div>
-                    <div className="text-xs text-gray-600">DM vs Avg</div>
+                    <div className="text-xs text-muted">DM vs Avg</div>
                   </div>
                 </div>
                 <div className="text-sm text-purple-800">
@@ -563,7 +563,7 @@ function Analytics({ onBackToDashboard }) {
 
             {/* OK Code Distribution */}
             {okCodeDistribution.length > 0 && (
-              <div className="card bg-white">
+              <div className="glass-card">
                 <h3 className="text-xl font-bold text-gray-700 mb-4">OK Code Distribution</h3>
                 <div className="space-y-2">
                   {okCodeDistribution.map(item => (

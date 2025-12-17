@@ -74,52 +74,69 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <>
+      <div className="min-h-screen p-8">
+        <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-r7-blue mb-2">
-            R7 Creative Dialer
-          </h1>
-          <p className="text-sm text-gray-600">
-            Detach from the outcomes and your income will always increase.
-          </p>
+        <div className="flex justify-between items-center mb-12">
+          <div>
+            <h1 className="text-4xl font-bold text-r7-blue dark:text-r7-neon mb-2">
+              R7 Creative Dialer
+            </h1>
+            <p className="text-muted">
+              Detach from the outcomes and your income will always increase.
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-muted uppercase tracking-wide mb-1">Today's Goal</div>
+            <div className="text-3xl font-bold text-r7-blue dark:text-r7-neon">{stats.totalDials}/50</div>
+          </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="card bg-white hover:shadow-lg transition-shadow">
-            <div className="text-sm text-gray-500 mb-1">Total Contacts</div>
-            <div className="text-4xl font-bold text-r7-blue">
+          <div className="hud-card">
+            <div className="text-sm text-muted uppercase tracking-wide mb-2">Total Contacts</div>
+            <div className="text-5xl font-bold text-r7-blue dark:text-white mb-2">
               {stats.totalContacts}
             </div>
+            <div className="w-full bg-gray-200 dark:bg-white/10 h-1 rounded-full">
+              <div className="bg-r7-blue dark:bg-r7-neon h-1 rounded-full" style={{width: '100%'}}></div>
+            </div>
           </div>
 
-          <div className="card bg-white hover:shadow-lg transition-shadow">
-            <div className="text-sm text-gray-500 mb-1">Active Contacts</div>
-            <div className="text-4xl font-bold text-green-600">
+          <div className="hud-card">
+            <div className="text-sm text-muted uppercase tracking-wide mb-2">Active Contacts</div>
+            <div className="text-5xl font-bold text-green-600 dark:text-green-400 mb-2">
               {stats.activeContacts}
             </div>
-          </div>
-
-          <div className="card bg-white hover:shadow-lg transition-shadow">
-            <div className="text-sm text-gray-500 mb-1">Total Dials</div>
-            <div className="text-4xl font-bold text-blue-600">
-              {stats.totalDials}
+            <div className="text-xs text-muted">
+              {stats.activeContacts > 0 ? 'Ready to dial' : 'Import contacts to begin'}
             </div>
           </div>
 
-          <div className="card bg-white hover:shadow-lg transition-shadow">
-            <div className="text-sm text-gray-500 mb-1">Meetings Booked</div>
-            <div className="text-4xl font-bold text-r7-red">
+          <div className="hud-card">
+            <div className="text-sm text-muted uppercase tracking-wide mb-2">Total Dials</div>
+            <div className="text-5xl font-bold text-r7-blue dark:text-r7-neon mb-2">
+              {stats.totalDials}
+            </div>
+            <div className="text-xs text-muted">All-time call count</div>
+          </div>
+
+          <div className="hud-card">
+            <div className="text-sm text-muted uppercase tracking-wide mb-2">Meetings Booked</div>
+            <div className="text-5xl font-bold text-gold mb-2">
               {stats.meetingsBooked}
+            </div>
+            <div className="text-xs text-muted">
+              {stats.totalDials > 0 ? `${((stats.meetingsBooked / stats.totalDials) * 100).toFixed(1)}% conversion` : 'No calls yet'}
             </div>
           </div>
         </div>
 
         {/* Main Actions */}
-        <div className="card bg-white mb-8">
-          <h2 className="text-2xl font-bold text-r7-blue mb-6">
+        <div className="glass-card p-8 mb-8">
+          <h2 className="text-2xl font-bold text-r7-blue dark:text-r7-neon mb-6">
             Quick Actions
           </h2>
 
@@ -239,24 +256,24 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
 
         {/* Recent Contacts Preview */}
         {contacts.length > 0 && (
-          <div className="card bg-white">
+          <div className="glass-card p-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-r7-blue">
+              <h2 className="text-2xl font-bold text-r7-blue dark:text-r7-neon">
                 Recent Contacts
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted">
                 Click any contact to view details and call history
               </p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4">Company</th>
-                    <th className="text-left py-3 px-4">Phone</th>
-                    <th className="text-left py-3 px-4">Dials</th>
-                    <th className="text-left py-3 px-4">OK Code</th>
-                    <th className="text-left py-3 px-4">Status</th>
+                  <tr className="border-b border-gray-200 dark:border-white/10">
+                    <th className="text-left py-3 px-4 text-muted uppercase text-xs font-semibold tracking-wide">Company</th>
+                    <th className="text-left py-3 px-4 text-muted uppercase text-xs font-semibold tracking-wide">Phone</th>
+                    <th className="text-left py-3 px-4 text-muted uppercase text-xs font-semibold tracking-wide">Dials</th>
+                    <th className="text-left py-3 px-4 text-muted uppercase text-xs font-semibold tracking-wide">OK Code</th>
+                    <th className="text-left py-3 px-4 text-muted uppercase text-xs font-semibold tracking-wide">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -264,19 +281,19 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
                     <tr
                       key={contact.id}
                       onClick={() => setSelectedContact(contact)}
-                      className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
+                      className="border-b border-gray-100 dark:border-white/5 hover:bg-r7-blue/10 dark:hover:bg-r7-neon/10 cursor-pointer transition-colors"
                     >
                       <td className="py-3 px-4 font-medium">
                         {contact.companyName}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
+                      <td className="py-3 px-4 text-muted">
                         {contact.phone}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
+                      <td className="py-3 px-4 text-muted">
                         {contact.totalDials || 0}
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                        <span className="text-sm bg-r7-blue/10 dark:bg-r7-neon/10 text-r7-blue dark:text-r7-neon px-2 py-1 rounded">
                           {contact.currentOkCode || '-'}
                         </span>
                       </td>
@@ -284,8 +301,8 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
                         <span
                           className={`text-sm px-2 py-1 rounded ${
                             contact.status === 'active'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-700'
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                              : 'bg-gray-100 dark:bg-gray-800/30 text-gray-700 dark:text-gray-400'
                           }`}
                         >
                           {contact.status}
@@ -301,12 +318,12 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
 
         {/* Empty State */}
         {contacts.length === 0 && (
-          <div className="card bg-white text-center py-12">
+          <div className="glass-card p-12 text-center">
             <div className="text-6xl mb-4">📋</div>
-            <h3 className="text-2xl font-bold text-gray-700 mb-2">
+            <h3 className="text-2xl font-bold text-r7-blue dark:text-r7-neon mb-2">
               No Contacts Yet
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-muted mb-6">
               Import a CSV file to get started with your calling campaign
             </p>
             <label className="btn-primary inline-block cursor-pointer">
@@ -321,9 +338,10 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
           </div>
         )}
 
-        {/* Footer */}
-        <div className="text-center mt-8 text-gray-500 text-sm">
-          <p>R7 Creative Dialer v1.0</p>
+          {/* Footer */}
+          <div className="text-center mt-8 text-muted text-sm">
+            <p>R7 Creative Dialer v1.0</p>
+          </div>
         </div>
       </div>
 
@@ -345,7 +363,7 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
           onClose={() => setEditingContact(null)}
         />
       )}
-    </div>
+    </>
   );
 }
 
