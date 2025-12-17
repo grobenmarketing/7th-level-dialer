@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import ContactDetailsModal from './ContactDetailsModal';
 import ContactFormModal from './ContactFormModal';
+import Achievements from './Achievements';
 
 function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onViewAnalytics, onViewHowToUse, onViewSettings }) {
   const {
@@ -75,21 +76,21 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
 
   return (
     <>
-      <div className="min-h-screen p-8">
+      <div className="min-h-screen p-8" style={{background: 'var(--bg-void)'}}>
         <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-12">
           <div>
-            <h1 className="text-4xl font-bold text-r7-blue dark:text-r7-neon mb-2">
-              R7 Creative Dialer
+            <h1 className="text-4xl font-bold text-neon mb-2">
+              WOLFPACK <span style={{color: 'var(--neon-blue)'}}>COMMAND CENTER</span>
             </h1>
-            <p className="text-muted">
-              Detach from the outcomes and your income will always increase.
+            <p className="text-muted text-sm uppercase tracking-wide">
+              Detach from outcomes • Income increases
             </p>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-muted uppercase tracking-wide mb-1">Today's Goal</div>
-            <div className="text-3xl font-bold text-r7-blue dark:text-r7-neon">{stats.totalDials}/50</div>
+          <div className="glass-card px-6 py-3 text-right">
+            <div className="text-xs text-muted uppercase tracking-wide mb-1">Today's Mission</div>
+            <div className="text-3xl font-bold text-neon">{stats.totalDials}/50</div>
           </div>
         </div>
 
@@ -136,9 +137,7 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
 
         {/* Main Actions */}
         <div className="glass-card p-8 mb-8">
-          <h2 className="text-2xl font-bold text-r7-blue dark:text-r7-neon mb-6">
-            Quick Actions
-          </h2>
+          <div className="section-title mb-6" style={{marginTop: 0}}>Mission Control • Quick Actions</div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Start Calling Button */}
@@ -254,26 +253,29 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
           </button>
         </div>
 
+        {/* Achievements Section */}
+        <div className="mb-8">
+          <Achievements compact={true} />
+        </div>
+
         {/* Recent Contacts Preview */}
         {contacts.length > 0 && (
           <div className="glass-card p-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-r7-blue dark:text-r7-neon">
-                Recent Contacts
-              </h2>
+              <div className="section-title mb-0" style={{marginTop: 0}}>Intel Grid • Recent Targets</div>
               <p className="text-sm text-muted">
-                Click any contact to view details and call history
+                Click any target for full dossier
               </p>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="data-grid">
                 <thead>
-                  <tr className="border-b border-gray-200 dark:border-white/10">
-                    <th className="text-left py-3 px-4 text-muted uppercase text-xs font-semibold tracking-wide">Company</th>
-                    <th className="text-left py-3 px-4 text-muted uppercase text-xs font-semibold tracking-wide">Phone</th>
-                    <th className="text-left py-3 px-4 text-muted uppercase text-xs font-semibold tracking-wide">Dials</th>
-                    <th className="text-left py-3 px-4 text-muted uppercase text-xs font-semibold tracking-wide">OK Code</th>
-                    <th className="text-left py-3 px-4 text-muted uppercase text-xs font-semibold tracking-wide">Status</th>
+                  <tr>
+                    <th>Company</th>
+                    <th>Phone</th>
+                    <th>Dials</th>
+                    <th>OK Code</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>

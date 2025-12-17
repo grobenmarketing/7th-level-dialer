@@ -14,10 +14,13 @@ function Sidebar({ currentView, onNavigate }) {
   ];
 
   return (
-    <nav className="w-20 bg-black/20 dark:bg-black/40 border-r border-white/10 dark:border-white/5 backdrop-blur-xl flex flex-col items-center py-8 relative">
+    <nav className="w-20 border-r backdrop-blur-xl flex flex-col items-center py-8 relative" style={{
+      background: 'var(--bg-surface)',
+      borderColor: 'var(--border-subtle)'
+    }}>
       {/* Logo */}
-      <div className="mb-8 text-2xl font-bold text-r7-blue dark:text-r7-neon">
-        R7
+      <div className="mb-8 text-2xl font-bold text-neon">
+        🐺
       </div>
 
       {/* Navigation Icons */}
@@ -29,20 +32,31 @@ function Sidebar({ currentView, onNavigate }) {
             className={`
               w-12 h-12 rounded-xl flex items-center justify-center text-2xl
               transition-all duration-200 relative group
-              ${currentView === item.id
-                ? 'bg-white/10 text-r7-blue dark:text-r7-neon shadow-lg shadow-r7-blue/20 dark:shadow-r7-neon/20'
-                : 'text-gray-400 hover:bg-white/5 hover:text-r7-blue dark:hover:text-r7-neon'
-              }
             `}
+            style={currentView === item.id ? {
+              background: 'rgba(59, 130, 246, 0.1)',
+              color: 'var(--neon-blue)',
+              boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)'
+            } : {
+              color: 'var(--text-secondary)'
+            }}
             title={item.label}
           >
             {item.icon}
             {currentView === item.id && (
-              <div className="absolute left-0 top-1/4 h-1/2 w-1 bg-r7-blue dark:bg-r7-neon rounded-r shadow-lg shadow-r7-blue/50 dark:shadow-r7-neon/50" />
+              <div className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r" style={{
+                background: 'var(--neon-blue)',
+                boxShadow: '0 0 10px rgba(59, 130, 246, 0.5)'
+              }} />
             )}
 
             {/* Tooltip */}
-            <div className="absolute left-full ml-4 px-3 py-1 bg-gray-900 dark:bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+            <div className="absolute left-full ml-4 px-3 py-1 text-sm rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap" style={{
+              background: 'var(--bg-surface)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: 'var(--shadow-card)'
+            }}>
               {item.label}
             </div>
           </button>
@@ -52,9 +66,11 @@ function Sidebar({ currentView, onNavigate }) {
       {/* Theme Toggle at Bottom */}
       <button
         onClick={toggleTheme}
-        className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl
-          bg-white/5 hover:bg-white/10 text-gray-400 hover:text-r7-blue dark:hover:text-r7-neon
-          transition-all duration-200"
+        className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl transition-all duration-200"
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          color: 'var(--text-secondary)'
+        }}
         title="Toggle Theme"
       >
         {isDark ? '☀️' : '🌙'}

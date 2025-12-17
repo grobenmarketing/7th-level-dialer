@@ -116,7 +116,7 @@ function Analytics({ onBackToDashboard }) {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{background: 'var(--bg-void)'}}>
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Auto-sync loading overlay */}
         {syncing && (

@@ -15,12 +15,12 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{background: 'var(--bg-void)'}}>
       <div className="glass-card p-12 max-w-md w-full">
         <div className="text-center mb-10">
-          <div className="text-6xl mb-6">🔐</div>
-          <h1 className="text-4xl font-bold text-r7-blue dark:text-r7-neon mb-3">
-            R7 Dialer
+          <div className="text-6xl mb-6">🐺</div>
+          <h1 className="text-4xl font-bold mb-3 text-neon">
+            WOLFPACK DIALER
           </h1>
           <p className="text-muted text-lg">
             Enter password to continue
@@ -29,7 +29,7 @@ function Login({ onLogin }) {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="password" className="block text-sm font-semibold text-r7-blue dark:text-r7-neon mb-3 uppercase tracking-wide">
+            <label htmlFor="password" className="block text-sm font-semibold mb-3 uppercase tracking-wide text-neon">
               Password
             </label>
             <input
@@ -47,7 +47,15 @@ function Login({ onLogin }) {
           </div>
 
           {error && (
-            <div className="bg-red-500/10 dark:bg-red-500/20 border-2 border-red-500 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm font-semibold">
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '2px solid var(--neon-red)',
+              color: 'var(--neon-red)',
+              padding: '0.75rem 1rem',
+              borderRadius: 'var(--radius)',
+              fontSize: '0.875rem',
+              fontWeight: '600'
+            }}>
               {error}
             </div>
           )}
@@ -56,12 +64,12 @@ function Login({ onLogin }) {
             type="submit"
             className="btn-primary w-full text-lg py-4"
           >
-            Login
+            🔓 Access Dialer
           </button>
         </form>
 
         <div className="mt-8 text-center text-xs text-muted">
-          <p>R7 Creative Dialer v1.0</p>
+          <p>R7 Creative • Wolfpack Edition</p>
         </div>
       </div>
     </div>

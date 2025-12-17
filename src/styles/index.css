@@ -3,19 +3,48 @@
 @tailwind utilities;
 
 @layer base {
+  /* WOLFPACK THEME - Core Variables */
+  :root {
+    /* Light Mode */
+    --bg-void: #f1f5f9;
+    --bg-surface: #ffffff;
+    --bg-glass: rgba(255, 255, 255, 0.9);
+    --border-subtle: rgba(226, 232, 240, 1);
+    --border-highlight: rgba(203, 213, 225, 1);
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --shadow-card: 0 4px 10px rgba(0,0,0,0.05);
+
+    /* Accents */
+    --neon-blue: #3b82f6;
+    --neon-green: #10b981;
+    --neon-gold: #fbbf24;
+    --neon-purple: #a855f7;
+    --neon-red: #ef4444;
+
+    --radius: 12px;
+  }
+
   body {
     @apply transition-colors duration-200;
   }
 
   /* Light Mode (Default) */
   body {
-    @apply bg-gradient-to-br from-r7-light to-gray-100 text-gray-900;
+    background-color: var(--bg-void);
+    color: var(--text-primary);
   }
 
   /* Dark Mode */
   body.dark {
-    @apply bg-gray-950 text-white;
-    background-image: radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.03), transparent 60%);
+    --bg-void: #09090b;
+    --bg-surface: #18181b;
+    --bg-glass: rgba(24, 24, 27, 0.6);
+    --border-subtle: rgba(255, 255, 255, 0.1);
+    --border-highlight: rgba(255, 255, 255, 0.2);
+    --text-primary: #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --shadow-card: 0 4px 20px rgba(0,0,0,0.4);
   }
 
   /* Custom Scrollbar */
@@ -24,7 +53,8 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+    background: var(--border-highlight);
+    @apply rounded-full;
   }
 
   ::-webkit-scrollbar-track {
@@ -33,76 +63,204 @@
 }
 
 @layer components {
-  /* Original Button Styles (Updated for Dark Mode) */
+  /* WOLFPACK BUTTONS */
   .btn-primary {
-    @apply bg-r7-blue dark:bg-r7-neon text-white dark:text-black px-6 py-3 rounded-lg font-semibold
-      hover:bg-r7-dark dark:hover:bg-r7-neon/90 transition-all duration-200 shadow-md
-      hover:shadow-xl hover:scale-105;
+    background: var(--neon-blue);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-card);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
   }
 
   .btn-secondary {
-    @apply bg-white dark:bg-white/10 text-r7-blue dark:text-r7-neon px-6 py-3 rounded-lg font-semibold
-      border-2 border-r7-blue dark:border-r7-neon hover:bg-r7-light dark:hover:bg-white/20
-      transition-all duration-200;
+    background: transparent;
+    color: var(--text-primary);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-highlight);
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--neon-blue);
+    color: var(--neon-blue);
   }
 
   .btn-danger {
-    @apply bg-r7-red text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700
-      transition-all duration-200 shadow-md hover:shadow-xl hover:scale-105;
+    background: var(--neon-red);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
   }
 
-  /* Original Card Style (Updated for Dark Mode) */
+  .btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  }
+
+  .btn-sm {
+    padding: 0.25rem 0.625rem;
+    font-size: 0.8rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    border: 1px solid var(--border-highlight);
+    background: transparent;
+    color: var(--text-primary);
+    transition: all 0.2s;
+  }
+
+  .btn-sm:hover {
+    border-color: var(--neon-blue);
+    color: var(--neon-blue);
+  }
+
+  /* WOLFPACK CARDS */
   .card {
-    @apply bg-white dark:bg-white/5 dark:backdrop-blur-xl dark:border dark:border-white/10
-      rounded-lg shadow-md p-6;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    padding: 1.5rem;
   }
 
-  /* Glass Card Effect (New) */
   .glass-card {
-    @apply bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-gray-200/50
-      dark:border-white/10 rounded-2xl shadow-lg;
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    padding: 1.5rem;
   }
 
-  /* HUD Card for Stats (New) */
   .hud-card {
-    @apply glass-card p-6 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    padding: 1.5rem;
+    transition: all 0.3s;
   }
 
-  /* Original Form Inputs (Updated for Dark Mode) */
+  .hud-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  }
+
+  /* WOLFPACK FORM INPUTS */
   .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 dark:border-white/20 rounded-lg
-      focus:ring-2 focus:ring-r7-blue dark:focus:ring-r7-neon focus:border-transparent outline-none
-      bg-white dark:bg-white/5 text-gray-900 dark:text-white;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .input-field:focus {
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
   .select-field {
-    @apply w-full px-4 py-2 border border-gray-300 dark:border-white/20 rounded-lg
-      focus:ring-2 focus:ring-r7-blue dark:focus:ring-r7-neon focus:border-transparent outline-none
-      bg-white dark:bg-white/5 text-gray-900 dark:text-white;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.2s;
   }
 
-  /* Neon Text Effects (New) */
+  .select-field:focus {
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  /* WOLFPACK DATA TABLES */
+  .data-grid {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+  }
+
+  .data-grid th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    background: rgba(0,0,0,0.02);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .data-grid td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+  }
+
+  .data-grid tr:hover {
+    background: rgba(59, 130, 246, 0.05);
+    cursor: pointer;
+  }
+
+  .data-grid tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Neon Text Effects */
   .text-neon {
-    @apply text-r7-neon;
-    text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+    color: var(--neon-blue);
+    text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
   }
 
   .text-gold {
-    @apply text-r7-gold;
-    text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    color: var(--neon-gold);
+    text-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
   }
 }
 
 @layer utilities {
   .bg-glass {
-    @apply bg-white/80 dark:bg-white/5 backdrop-blur-xl;
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
   }
 
   .border-glass {
-    @apply border border-gray-200/50 dark:border-white/10;
+    border: 1px solid var(--border-subtle);
   }
 
   .text-muted {
-    @apply text-gray-600 dark:text-gray-400;
+    color: var(--text-secondary);
+  }
+
+  .section-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-secondary);
+    margin: 3.75rem 0 1.25rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0.625rem;
   }
 }

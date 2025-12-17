@@ -121,17 +121,17 @@ function ContactsPage({ onBackToDashboard }) {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{background: 'var(--bg-void)'}}>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold text-r7-blue dark:text-r7-neon mb-2">
-                📇 Contact Database
+              <h1 className="text-4xl font-bold text-neon mb-2">
+                📇 INTEL DATABASE
               </h1>
-              <p className="text-muted">
-                Manage and review your contact list
+              <p className="text-muted uppercase tracking-wide">
+                Full Target Management System
               </p>
             </div>
             <button

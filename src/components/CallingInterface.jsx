@@ -198,17 +198,17 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-6" style={{background: 'var(--bg-void)'}}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-start mb-6 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-r7-blue dark:text-r7-neon mb-2">
-              {filteredContacts ? '🎯 Filtered Session' : '📞 Calling Session'}
+            <h1 className="text-4xl font-bold text-neon mb-2">
+              {filteredContacts ? '🎯 FILTERED MISSION' : '📞 ACTIVE MISSION'}
             </h1>
-            <p className="text-muted text-lg">
-              Contact {contactIndex + 1} of {activeContacts.length}
-              {filteredContacts && ' (filtered)'}
+            <p className="text-muted text-lg uppercase tracking-wide">
+              Target {contactIndex + 1} of {activeContacts.length}
+              {filteredContacts && ' • Filtered'}
             </p>
           </div>
           <div className="flex flex-col gap-3 items-end">
@@ -348,15 +348,18 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
           <div className="space-y-6">
             {/* Call Now Button */}
             {currentContact && (
-              <div className="glass-card bg-gradient-to-br from-r7-blue to-r7-dark dark:from-r7-neon/20 dark:to-r7-blue/20 text-white dark:text-r7-neon border-r7-blue dark:border-r7-neon">
+              <div className="glass-card" style={{
+                background: 'linear-gradient(135deg, var(--neon-blue), var(--neon-purple))',
+                border: '2px solid var(--neon-blue)'
+              }}>
                 <a
                   href={phoneURL}
                   onClick={handleStartCall}
                   className="block text-center py-10 hover:scale-105 transition-transform"
                 >
                   <div className="text-7xl mb-4">📞</div>
-                  <div className="text-3xl font-bold mb-2">Call Now</div>
-                  <div className="text-2xl opacity-90 font-mono">
+                  <div className="text-3xl font-bold mb-2 text-white">ENGAGE TARGET</div>
+                  <div className="text-2xl text-white/90 font-mono">
                     {currentContact.phone}
                   </div>
                 </a>
@@ -365,8 +368,8 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
 
             {/* Call Outcome Selection */}
             <div className="glass-card p-6">
-              <h3 className="text-xl font-bold text-r7-blue dark:text-r7-neon mb-4">
-                1️⃣ Call Outcome
+              <h3 className="text-xl font-bold text-neon mb-4">
+                1️⃣ Mission Outcome
               </h3>
               <div className="grid grid-cols-3 gap-3">
                 {CALL_OUTCOMES.map((outcomeOption) => (
@@ -390,9 +393,9 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
 
             {/* OK Code Selection */}
             <div className="glass-card p-6">
-              <h3 className="text-xl font-bold text-r7-blue dark:text-r7-neon mb-4">
-                2️⃣ OK Code
-                <span className="text-sm text-muted font-normal ml-2">(or press 1-9)</span>
+              <h3 className="text-xl font-bold text-neon mb-4">
+                2️⃣ Status Code
+                <span className="text-sm text-muted font-normal ml-2">(press 1-9)</span>
               </h3>
               <select
                 value={okCode}
