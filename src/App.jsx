@@ -9,7 +9,9 @@ import FilteredSessionPage from './components/FilteredSessionPage'
 import SessionReviewPage from './components/SessionReviewPage'
 import Login from './components/Login'
 import OkCodesAdmin from './components/OkCodesAdmin'
+import Sidebar from './components/Sidebar'
 import { useAuth } from './hooks/useAuth'
+import { useTheme } from './hooks/useTheme'
 
 const VIEW_STATE_KEY = 'r7_current_view'
 const CONTACT_INDEX_KEY = 'r7_contact_index'
@@ -17,6 +19,7 @@ const FILTERED_SESSION_KEY = 'r7_filtered_session'
 
 function App() {
   const { isAuthenticated, login, logout } = useAuth();
+  const { theme } = useTheme(); // Initialize theme system
 
   // Initialize state from localStorage if available
   const [currentView, setCurrentView] = useState(() => {
@@ -115,58 +118,70 @@ function App() {
     setCurrentContactIndex(prev => prev + 1)
   }
 
+  // Helper to determine the main view (excluding modals like sessionReview and okCodes)
+  const getMainView = () => {
+    if (currentView === 'sessionReview' || currentView === 'okCodes') {
+      return 'filteredSession'; // Default fallback for sub-views
+    }
+    return currentView;
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {currentView === 'dashboard' && (
-        <Dashboard
-          onStartCalling={handleStartCalling}
-          onStartFilteredSession={handleStartFilteredSession}
-          onViewContacts={handleViewContacts}
-          onViewAnalytics={handleViewAnalytics}
-          onViewHowToUse={handleViewHowToUse}
-          onViewSettings={handleViewSettings}
-        />
-      )}
-      {currentView === 'filteredSession' && (
-        <FilteredSessionPage
-          onBackToDashboard={handleBackToDashboard}
-          onReview={handleReviewFilters}
-        />
-      )}
-      {currentView === 'sessionReview' && filterCriteria && (
-        <SessionReviewPage
-          filterCriteria={filterCriteria}
-          onBackToFilters={handleBackToFilters}
-          onStartSession={handleStartFilteredCalling}
-        />
-      )}
-      {currentView === 'calling' && (
-        <CallingInterface
-          contactIndex={currentContactIndex}
-          filteredContacts={filteredSession}
-          onBackToDashboard={handleBackToDashboard}
-          onNextContact={handleNextContact}
-        />
-      )}
-      {currentView === 'contacts' && (
-        <ContactsPage onBackToDashboard={handleBackToDashboard} />
-      )}
-      {currentView === 'analytics' && (
-        <Analytics onBackToDashboard={handleBackToDashboard} />
-      )}
-      {currentView === 'howto' && (
-        <HowToUse onBackToDashboard={handleBackToDashboard} />
-      )}
-      {currentView === 'settings' && (
-        <Settings
-          onBackToDashboard={handleBackToDashboard}
-          onLogout={logout}
-          onManageOkCodes={handleManageOkCodes}
-        />
-      )}
-      {currentView === 'okCodes' && (
-        <OkCodesAdmin onBack={handleViewSettings} />
-      )}
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar currentView={getMainView()} onNavigate={setCurrentView} />
+
+      <div className="flex-1 overflow-y-auto">
+        {currentView === 'dashboard' && (
+          <Dashboard
+            onStartCalling={handleStartCalling}
+            onStartFilteredSession={handleStartFilteredSession}
+            onViewContacts={handleViewContacts}
+            onViewAnalytics={handleViewAnalytics}
+            onViewHowToUse={handleViewHowToUse}
+            onViewSettings={handleViewSettings}
+          />
+        )}
+        {currentView === 'filteredSession' && (
+          <FilteredSessionPage
+            onBackToDashboard={handleBackToDashboard}
+            onReview={handleReviewFilters}
+          />
+        )}
+        {currentView === 'sessionReview' && filterCriteria && (
+          <SessionReviewPage
+            filterCriteria={filterCriteria}
+            onBackToFilters={handleBackToFilters}
+            onStartSession={handleStartFilteredCalling}
+          />
+        )}
+        {currentView === 'calling' && (
+          <CallingInterface
+            contactIndex={currentContactIndex}
+            filteredContacts={filteredSession}
+            onBackToDashboard={handleBackToDashboard}
+            onNextContact={handleNextContact}
+          />
+        )}
+        {currentView === 'contacts' && (
+          <ContactsPage onBackToDashboard={handleBackToDashboard} />
+        )}
+        {currentView === 'analytics' && (
+          <Analytics onBackToDashboard={handleBackToDashboard} />
+        )}
+        {currentView === 'howto' && (
+          <HowToUse onBackToDashboard={handleBackToDashboard} />
+        )}
+        {currentView === 'settings' && (
+          <Settings
+            onBackToDashboard={handleBackToDashboard}
+            onLogout={logout}
+            onManageOkCodes={handleManageOkCodes}
+          />
+        )}
+        {currentView === 'okCodes' && (
+          <OkCodesAdmin onBack={handleViewSettings} />
+        )}
+      </div>
     </div>
   )
 }
