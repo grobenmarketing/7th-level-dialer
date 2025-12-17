@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R7 Creative Dialer - UI Design Master</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #f2f7f9 0%, #e5e7eb 100%);
+            min-height: 100vh;
+        }
+
+        /* Brand Colors */
+        :root {
+            --r7-blue: #1d4460;
+            --r7-red: #cf071d;
+            --r7-light: #f2f7f9;
+            --r7-dark: #0f2430;
+        }
+
+        /* Navigation Tabs */
+        .screen-nav {
+            background: var(--r7-blue);
+            padding: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .screen-nav button {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .screen-nav button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .screen-nav button.active {
+            background: white;
+            color: var(--r7-blue);
+            font-weight: bold;
+        }
+
+        /* Screen Container */
+        .screen {
+            display: none;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.5rem;
+            color: var(--r7-blue);
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: var(--r7-blue);
+            margin-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            color: var(--r7-blue);
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            color: #4b5563;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        /* Action Buttons Grid */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, var(--r7-blue), var(--r7-dark));
+            color: white;
+            border: none;
+            padding: 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .action-btn .icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-btn .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-btn .subtitle {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        /* Color Variants */
+        .action-btn.purple { background: linear-gradient(135deg, #9333ea, #7e22ce); }
+        .action-btn.orange { background: linear-gradient(135deg, #ea580c, #c2410c); }
+        .action-btn.green { background: linear-gradient(135deg, #16a34a, #15803d); }
+        .action-btn.yellow { background: linear-gradient(135deg, #ca8a04, #a16207); }
+        .action-btn.teal { background: linear-gradient(135deg, #0d9488, #0f766e); }
+        .action-btn.gray { background: linear-gradient(135deg, #4b5563, #374151); }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--r7-blue);
+            box-shadow: 0 0 0 3px rgba(29, 68, 96, 0.1);
+        }
+
+        button.btn-primary {
+            background: var(--r7-blue);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button.btn-primary:hover {
+            background: var(--r7-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        button.btn-secondary {
+            background: white;
+            color: var(--r7-blue);
+            border: 2px solid var(--r7-blue);
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button.btn-secondary:hover {
+            background: var(--r7-light);
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--r7-light);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--r7-blue);
+            border-bottom: 2px solid #d1d5db;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        /* Badge Styles */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .badge.green {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge.gray {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        /* Contact Card (Calling Interface) */
+        .contact-display {
+            background: linear-gradient(135deg, var(--r7-blue), var(--r7-dark));
+            color: white;
+            padding: 3rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .contact-display .company {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .contact-display .phone {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .contact-display .details {
+            font-size: 1.25rem;
+            opacity: 0.9;
+        }
+
+        /* OK Code Buttons */
+        .ok-codes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .ok-code-btn {
+            background: white;
+            border: 2px solid #d1d5db;
+            padding: 1.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .ok-code-btn:hover {
+            border-color: var(--r7-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .ok-code-btn.selected {
+            background: var(--r7-blue);
+            color: white;
+            border-color: var(--r7-blue);
+        }
+
+        .ok-code-btn .code {
+            font-weight: bold;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .ok-code-btn .description {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .ok-code-btn.selected .description {
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+        }
+
+        .login-box {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        /* Analytics Charts Placeholder */
+        .chart-placeholder {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            border-radius: 8px;
+            padding: 4rem 2rem;
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 2rem;
+        }
+
+        /* Timer Display */
+        .timer-display {
+            background: var(--r7-light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--r7-blue);
+            margin-bottom: 2rem;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            background: var(--r7-blue);
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .screen {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="screen-nav">
+        <button class="nav-btn active" onclick="showScreen('login')">Login</button>
+        <button class="nav-btn" onclick="showScreen('dashboard')">Dashboard</button>
+        <button class="nav-btn" onclick="showScreen('calling')">Calling Interface</button>
+        <button class="nav-btn" onclick="showScreen('contacts')">Contact List</button>
+        <button class="nav-btn" onclick="showScreen('analytics')">Analytics</button>
+        <button class="nav-btn" onclick="showScreen('filtered')">Filtered Session</button>
+        <button class="nav-btn" onclick="showScreen('settings')">Settings</button>
+        <button class="nav-btn" onclick="showScreen('howto')">How to Use</button>
+    </nav>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login" class="screen active">
+        <div class="login-container">
+            <div class="login-box">
+                <h1 style="text-align: center; margin-bottom: 2rem;">🔐 R7 Dialer</h1>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter password">
+                </div>
+                <button class="btn-primary" style="width: 100%;">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD SCREEN -->
+    <div id="dashboard" class="screen">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h1>R7 Creative Dialer</h1>
+            <p style="color: #6b7280;">Detach from the outcomes and your income will always increase.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Contacts</div>
+                <div class="stat-value" style="color: var(--r7-blue);">247</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Contacts</div>
+                <div class="stat-value" style="color: #16a34a;">182</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Dials</div>
+                <div class="stat-value" style="color: #2563eb;">1,342</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Meetings Booked</div>
+                <div class="stat-value" style="color: var(--r7-red);">34</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <h2>Quick Actions</h2>
+            <div class="actions-grid">
+                <button class="action-btn">
+                    <div class="icon">📞</div>
+                    <div class="title">Start Calling</div>
+                    <div class="subtitle">182 contacts ready</div>
+                </button>
+                <button class="action-btn teal">
+                    <div class="icon">🎯</div>
+                    <div class="title">Filtered Session</div>
+                    <div class="subtitle">Call by OK code & date</div>
+                </button>
+                <button class="action-btn purple">
+                    <div class="icon">📇</div>
+                    <div class="title">View Contacts</div>
+                    <div class="subtitle">Browse 247 contacts</div>
+                </button>
+                <button class="action-btn orange">
+                    <div class="icon">📊</div>
+                    <div class="title">Analytics</div>
+                    <div class="subtitle">Call analytics & KPIs</div>
+                </button>
+                <button class="action-btn green">
+                    <div class="icon">📥</div>
+                    <div class="title">Import CSV</div>
+                    <div class="subtitle">Upload contact list</div>
+                </button>
+                <button class="action-btn yellow">
+                    <div class="icon">📖</div>
+                    <div class="title">How to Use</div>
+                    <div class="subtitle">Learn the system</div>
+                </button>
+                <button class="action-btn gray">
+                    <div class="icon">⚙️</div>
+                    <div class="title">Settings</div>
+                    <div class="subtitle">Admin controls</div>
+                </button>
+            </div>
+            <button class="btn-primary" style="width: 100%; margin-top: 1rem;">📤 Export Contacts to CSV</button>
+        </div>
+
+        <!-- Recent Contacts Preview -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>Recent Contacts</h2>
+                <p style="font-size: 0.875rem; color: #6b7280;">Click any contact to view details</p>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Phone</th>
+                        <th>Dials</th>
+                        <th>OK Code</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Acme Corp</strong></td>
+                        <td>(555) 123-4567</td>
+                        <td>3</td>
+                        <td><span class="badge blue">OK-01</span></td>
+                        <td><span class="badge green">active</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tech Solutions Inc</strong></td>
+                        <td>(555) 234-5678</td>
+                        <td>5</td>
+                        <td><span class="badge blue">OK-08</span></td>
+                        <td><span class="badge gray">closed</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Global Industries</strong></td>
+                        <td>(555) 345-6789</td>
+                        <td>2</td>
+                        <td><span class="badge blue">OK-06</span></td>
+                        <td><span class="badge green">active</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem; color: #6b7280; font-size: 0.875rem;">
+            <p>R7 Creative Dialer v1.0</p>
+        </div>
+    </div>
+
+    <!-- CALLING INTERFACE SCREEN -->
+    <div id="calling" class="screen">
+        <div style="margin-bottom: 2rem;">
+            <button class="btn-secondary">← Back to Dashboard</button>
+        </div>
+
+        <!-- Progress -->
+        <div class="card">
+            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Progress: Contact 12 of 182</p>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 6.6%;"></div>
+            </div>
+        </div>
+
+        <!-- Timer -->
+        <div class="timer-display">
+            ⏱️ 00:00:00
+        </div>
+
+        <!-- Contact Display -->
+        <div class="contact-display">
+            <div class="company">Acme Corporation</div>
+            <div class="phone">📞 (555) 123-4567</div>
+            <div class="details">
+                🌐 www.acmecorp.com<br>
+                🏢 Technology • 50-200 employees
+            </div>
+        </div>
+
+        <!-- Call Outcome Selection -->
+        <div class="card">
+            <h2>1. Select Call Outcome</h2>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                <button class="ok-code-btn">
+                    <div class="code">NA</div>
+                    <div class="description">No Answer</div>
+                </button>
+                <button class="ok-code-btn">
+                    <div class="code">GK</div>
+                    <div class="description">Gatekeeper</div>
+                </button>
+                <button class="ok-code-btn selected">
+                    <div class="code">DM</div>
+                    <div class="description">Decision Maker</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- OK Code Selection -->
+        <div class="card">
+            <h2>2. Choose OK Code</h2>
+            <div class="ok-codes-grid">
+                <button class="ok-code-btn">
+                    <div class="code">OK-01</div>
+                    <div class="description">No Answer</div>
+                </button>
+                <button class="ok-code-btn">
+                    <div class="code">OK-02</div>
+                    <div class="description">Not Interested</div>
+                </button>
+                <button class="ok-code-btn">
+                    <div class="code">OK-03</div>
+                    <div class="description">Hung Up</div>
+                </button>
+                <button class="ok-code-btn">
+                    <div class="code">OK-04</div>
+                    <div class="description">Gatekeeper Block</div>
+                </button>
+                <button class="ok-code-btn">
+                    <div class="code">OK-05</div>
+                    <div class="description">DM Unavailable</div>
+                </button>
+                <button class="ok-code-btn">
+                    <div class="code">OK-06</div>
+                    <div class="description">Voicemail - Left Message</div>
+                </button>
+                <button class="ok-code-btn">
+                    <div class="code">OK-07</div>
+                    <div class="description">Not A Fit</div>
+                </button>
+                <button class="ok-code-btn selected">
+                    <div class="code">OK-08</div>
+                    <div class="description">Meeting Scheduled</div>
+                </button>
+                <button class="ok-code-btn">
+                    <div class="code">OK-09</div>
+                    <div class="description">Wrong Contact</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="card">
+            <h2>3. Call Notes</h2>
+            <div class="form-group">
+                <textarea rows="4" placeholder="Enter notes about this call..."></textarea>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button class="btn-secondary" style="flex: 1;">⏭️ Skip Contact</button>
+            <button class="btn-primary" style="flex: 2;">✅ Save & Next Contact</button>
+        </div>
+    </div>
+
+    <!-- CONTACT LIST SCREEN -->
+    <div id="contacts" class="screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>All Contacts</h1>
+            <button class="btn-secondary">← Back to Dashboard</button>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="card">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label>Search</label>
+                    <input type="text" placeholder="Search contacts...">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select>
+                        <option>All Statuses</option>
+                        <option>Active</option>
+                        <option>Closed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>OK Code</label>
+                    <select>
+                        <option>All Codes</option>
+                        <option>OK-01</option>
+                        <option>OK-08</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contacts Table -->
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Phone</th>
+                        <th>Website</th>
+                        <th>Industry</th>
+                        <th>Dials</th>
+                        <th>OK Code</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Acme Corp</strong></td>
+                        <td>(555) 123-4567</td>
+                        <td>acmecorp.com</td>
+                        <td>Technology</td>
+                        <td>3</td>
+                        <td><span class="badge blue">OK-01</span></td>
+                        <td><span class="badge green">active</span></td>
+                        <td><button class="btn-secondary" style="padding: 0.5rem 1rem;">View</button></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tech Solutions Inc</strong></td>
+                        <td>(555) 234-5678</td>
+                        <td>techsolutions.com</td>
+                        <td>IT Services</td>
+                        <td>5</td>
+                        <td><span class="badge blue">OK-08</span></td>
+                        <td><span class="badge gray">closed</span></td>
+                        <td><button class="btn-secondary" style="padding: 0.5rem 1rem;">View</button></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Global Industries</strong></td>
+                        <td>(555) 345-6789</td>
+                        <td>globalind.com</td>
+                        <td>Manufacturing</td>
+                        <td>2</td>
+                        <td><span class="badge blue">OK-06</span></td>
+                        <td><span class="badge green">active</span></td>
+                        <td><button class="btn-secondary" style="padding: 0.5rem 1rem;">View</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ANALYTICS SCREEN -->
+    <div id="analytics" class="screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Analytics Dashboard</h1>
+            <button class="btn-secondary">← Back to Dashboard</button>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Contact Rate</div>
+                <div class="stat-value" style="color: #16a34a;">24.3%</div>
+                <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">↑ 3.2% from last week</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Meeting Rate</div>
+                <div class="stat-value" style="color: var(--r7-blue);">12.8%</div>
+                <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">↑ 1.5% from last week</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Call Duration</div>
+                <div class="stat-value" style="color: #2563eb;">4m 32s</div>
+                <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">↓ 0:12 from last week</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Calls This Week</div>
+                <div class="stat-value" style="color: var(--r7-red);">342</div>
+                <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">↑ 42 from last week</p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="card">
+            <h2>Call Outcome Distribution</h2>
+            <div class="chart-placeholder">
+                📊 Pie Chart: OK Code Distribution<br>
+                (OK-01: 35%, OK-08: 15%, OK-02: 20%, etc.)
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Calls Over Time</h2>
+            <div class="chart-placeholder">
+                📈 Line Chart: Daily Call Volume<br>
+                (Last 30 days trend)
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Performance Breakdown</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>OK Code</th>
+                        <th>Count</th>
+                        <th>Percentage</th>
+                        <th>Avg Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge blue">OK-01</span> No Answer</td>
+                        <td>467</td>
+                        <td>34.8%</td>
+                        <td>0:45</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge blue">OK-08</span> Meeting Scheduled</td>
+                        <td>172</td>
+                        <td>12.8%</td>
+                        <td>8:23</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge blue">OK-06</span> Voicemail</td>
+                        <td>298</td>
+                        <td>22.2%</td>
+                        <td>1:15</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- FILTERED SESSION SCREEN -->
+    <div id="filtered" class="screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Filtered Calling Session</h1>
+            <button class="btn-secondary">← Back to Dashboard</button>
+        </div>
+
+        <div class="card">
+            <h2>Filter Contacts</h2>
+            <p style="margin-bottom: 2rem;">Select criteria to create a targeted calling list</p>
+
+            <div class="form-group">
+                <label>Last Called Date Range</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <input type="date">
+                    <input type="date">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>OK Code</label>
+                <select>
+                    <option>All Codes</option>
+                    <option>OK-01 - No Answer</option>
+                    <option>OK-02 - Not Interested</option>
+                    <option>OK-06 - Voicemail</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Industry</label>
+                <select>
+                    <option>All Industries</option>
+                    <option>Technology</option>
+                    <option>Healthcare</option>
+                    <option>Manufacturing</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Company Size</label>
+                <select>
+                    <option>All Sizes</option>
+                    <option>1-10</option>
+                    <option>11-50</option>
+                    <option>51-200</option>
+                    <option>200+</option>
+                </select>
+            </div>
+
+            <button class="btn-primary" style="width: 100%; margin-top: 1rem;">🔍 Preview Results (143 contacts)</button>
+        </div>
+    </div>
+
+    <!-- SETTINGS SCREEN -->
+    <div id="settings" class="screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Settings</h1>
+            <button class="btn-secondary">← Back to Dashboard</button>
+        </div>
+
+        <!-- Daily Goal -->
+        <div class="card">
+            <h2>⚙️ Daily Dial Goal</h2>
+            <p>Set your target number of calls per day</p>
+            <div class="form-group">
+                <label>Daily Goal</label>
+                <input type="number" value="50" placeholder="Enter daily goal">
+            </div>
+            <button class="btn-primary">Save Goal</button>
+        </div>
+
+        <!-- OK Codes -->
+        <div class="card">
+            <h2>📋 Manage OK Codes</h2>
+            <p>Customize your outcome codes and descriptions</p>
+            <button class="btn-primary">Manage OK Codes</button>
+        </div>
+
+        <!-- Data Management -->
+        <div class="card">
+            <h2>💾 Data Management</h2>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn-secondary" style="flex: 1;">📥 Import Contacts</button>
+                <button class="btn-secondary" style="flex: 1;">📤 Export Data</button>
+                <button class="btn-secondary" style="flex: 1; border-color: var(--r7-red); color: var(--r7-red);">🗑️ Clear All Data</button>
+            </div>
+        </div>
+
+        <!-- Account -->
+        <div class="card">
+            <h2>🔐 Account</h2>
+            <button class="btn-secondary" style="border-color: var(--r7-red); color: var(--r7-red);">Logout</button>
+        </div>
+    </div>
+
+    <!-- HOW TO USE SCREEN -->
+    <div id="howto" class="screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>📖 How to Use R7 Creative Dialer</h1>
+            <button class="btn-secondary">← Back to Dashboard</button>
+        </div>
+
+        <div class="card">
+            <h2>🎯 What is This App?</h2>
+            <p>R7 Creative Dialer is your personal sales calling assistant. It helps you:</p>
+            <ul style="margin-left: 2rem; line-height: 2;">
+                <li>Keep track of all your prospects in one place</li>
+                <li>Make calls systematically without losing your place</li>
+                <li>Log every conversation with notes and outcomes</li>
+                <li>Track your progress with built-in analytics</li>
+                <li>See which approaches are working</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>🚀 Getting Started</h2>
+            <h3>1. Import Your Contacts</h3>
+            <p>Click "Import CSV" on the dashboard to upload your contact list. Make sure your CSV has columns for: Company Name, Phone, Website, Industry, and Company Size.</p>
+
+            <h3>2. Start Calling</h3>
+            <p>Click "Start Calling" to begin your session. The system will guide you through each contact one by one.</p>
+        </div>
+
+        <div class="card">
+            <h2>📞 During a Call</h2>
+            <h3>Step 1: Select Call Outcome</h3>
+            <ul style="margin-left: 2rem;">
+                <li><strong>NA (No Answer):</strong> Voicemail, busy, or no response</li>
+                <li><strong>GK (Gatekeeper):</strong> Reached a receptionist or assistant</li>
+                <li><strong>DM (Decision Maker):</strong> Spoke directly with the prospect</li>
+            </ul>
+
+            <h3 style="margin-top: 1.5rem;">Step 2: Choose an OK Code</h3>
+            <p>Select the code that best describes the call outcome (OK-01 through OK-09)</p>
+
+            <h3 style="margin-top: 1.5rem;">Step 3: Add Notes</h3>
+            <p>Write down key points from the conversation, objections, interests, or next steps.</p>
+
+            <h3 style="margin-top: 1.5rem;">Step 4: Save & Next</h3>
+            <p>Click "Save & Next" to log this call and move to the next contact in your list.</p>
+        </div>
+
+        <div class="card">
+            <h2>📊 Understanding Your Analytics</h2>
+            <p><strong>Contact Rate:</strong> Percentage of calls where you reached a decision maker. Higher is better!</p>
+            <p><strong>Meeting Rate:</strong> Percentage of DM calls that resulted in a scheduled meeting or qualified lead.</p>
+            <p><strong>Call Duration:</strong> Average time spent on each call. Longer DM calls often indicate higher engagement.</p>
+            <p><strong>OK Code Distribution:</strong> See which outcomes are most common. Use this to identify patterns and refine your approach.</p>
+        </div>
+
+        <div class="card" style="background: linear-gradient(135deg, #eff6ff, #f3e8ff); border: 2px solid #93c5fd;">
+            <h2 style="color: #1e40af;">💡 Tips for Success</h2>
+            <ul style="margin-left: 2rem; line-height: 2; color: #374151;">
+                <li><strong>Be Consistent:</strong> Set aside dedicated calling blocks and work through your list systematically.</li>
+                <li><strong>Take Notes:</strong> Even brief notes help you remember the conversation and build rapport on follow-ups.</li>
+                <li><strong>Review Analytics:</strong> Check your stats weekly to see what's working and where you can improve.</li>
+                <li><strong>Export Your Data:</strong> Use the Export CSV feature to backup your contacts and analyze data in spreadsheets.</li>
+                <li><strong>Follow Up:</strong> Use the call history to review past conversations before making follow-up calls.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function showScreen(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+
+            // Remove active class from all nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected screen
+            document.getElementById(screenId).classList.add('active');
+
+            // Highlight active nav button
+            event.target.classList.add('active');
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+    </script>
+
+</body>
+</html>
