@@ -198,26 +198,28 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="min-h-screen p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-start mb-6 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-r7-blue">
-              {filteredContacts ? '🎯 Filtered Calling Session' : 'Calling Session'}
+            <h1 className="text-4xl font-bold text-r7-blue dark:text-r7-neon mb-2">
+              {filteredContacts ? '🎯 Filtered Session' : '📞 Calling Session'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted text-lg">
               Contact {contactIndex + 1} of {activeContacts.length}
               {filteredContacts && ' (filtered)'}
             </p>
           </div>
           <div className="flex flex-col gap-3 items-end">
             {currentContact && timerActive && (
-              <CallTimer
-                key={contactIndex}
-                isActive={timerActive}
-                onTimeUpdate={setCallDuration}
-              />
+              <div className="glass-card px-6 py-3">
+                <CallTimer
+                  key={contactIndex}
+                  isActive={timerActive}
+                  onTimeUpdate={setCallDuration}
+                />
+              </div>
             )}
             <button
               onClick={onBackToDashboard}
@@ -229,10 +231,16 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
         </div>
 
         {/* Progress Bar */}
-        <div className="mb-6">
-          <div className="bg-gray-200 rounded-full h-3">
+        <div className="glass-card p-4 mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-semibold text-muted uppercase tracking-wide">Progress</span>
+            <span className="text-sm font-mono text-r7-blue dark:text-r7-neon">
+              {Math.round(((contactIndex + 1) / activeContacts.length) * 100)}%
+            </span>
+          </div>
+          <div className="bg-gray-200 dark:bg-white/10 rounded-full h-2">
             <div
-              className="bg-r7-blue rounded-full h-3 transition-all duration-300"
+              className="bg-r7-blue dark:bg-r7-neon rounded-full h-2 transition-all duration-300 shadow-lg shadow-r7-blue/50 dark:shadow-r7-neon/50"
               style={{
                 width: `${((contactIndex + 1) / activeContacts.length) * 100}%`
               }}
@@ -240,9 +248,9 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
           </div>
         </div>
 
-        {/* Daily Dial Goal Tracker - Compact */}
-        <div className="mb-4">
-          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-3">
+        {/* Daily Dial Goal Tracker */}
+        <div className="mb-6">
+          <div className="glass-card bg-gradient-to-r from-green-500/20 to-green-600/20 dark:from-green-500/10 dark:to-green-600/10 border-green-500/30 p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2 mb-1">
@@ -305,30 +313,30 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
 
             {/* Last Call Summary */}
             {lastCall && (
-              <div className="card bg-blue-50 border-2 border-blue-200">
-                <h3 className="text-lg font-bold text-blue-900 mb-3">📞 Last Call Summary</h3>
-                <div className="space-y-2 text-sm">
+              <div className="glass-card p-6 bg-r7-blue/5 dark:bg-r7-neon/5 border-r7-blue/20 dark:border-r7-neon/20">
+                <h3 className="text-lg font-bold text-r7-blue dark:text-r7-neon mb-4">📞 Last Call Summary</h3>
+                <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-blue-700">Date:</span>
-                    <span className="font-semibold text-blue-900">
+                    <span className="text-muted">Date:</span>
+                    <span className="font-semibold">
                       {new Date(lastCall.timestamp).toLocaleDateString()} at{' '}
                       {new Date(lastCall.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-700">OK Code:</span>
-                    <span className="font-semibold text-blue-900">{lastCall.okCode || 'N/A'}</span>
+                    <span className="text-muted">OK Code:</span>
+                    <span className="font-semibold">{lastCall.okCode || 'N/A'}</span>
                   </div>
                   {lastCall.duration > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-blue-700">Duration:</span>
-                      <span className="font-semibold text-blue-900">{Math.floor(lastCall.duration / 60)}m {lastCall.duration % 60}s</span>
+                      <span className="text-muted">Duration:</span>
+                      <span className="font-semibold">{Math.floor(lastCall.duration / 60)}m {lastCall.duration % 60}s</span>
                     </div>
                   )}
                   {lastCall.notes && (
-                    <div className="mt-2 pt-2 border-t border-blue-200">
-                      <span className="text-blue-700 block mb-1">Notes:</span>
-                      <p className="text-blue-900">{lastCall.notes}</p>
+                    <div className="mt-3 pt-3 border-t border-glass">
+                      <span className="text-muted block mb-2">Notes:</span>
+                      <p className="text-sm">{lastCall.notes}</p>
                     </div>
                   )}
                 </div>
@@ -340,15 +348,15 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
           <div className="space-y-6">
             {/* Call Now Button */}
             {currentContact && (
-              <div className="card bg-gradient-to-r from-r7-blue to-r7-dark text-white">
+              <div className="glass-card bg-gradient-to-br from-r7-blue to-r7-dark dark:from-r7-neon/20 dark:to-r7-blue/20 text-white dark:text-r7-neon border-r7-blue dark:border-r7-neon">
                 <a
                   href={phoneURL}
                   onClick={handleStartCall}
-                  className="block text-center py-8 hover:opacity-90 transition-opacity"
+                  className="block text-center py-10 hover:scale-105 transition-transform"
                 >
-                  <div className="text-6xl mb-3">📞</div>
+                  <div className="text-7xl mb-4">📞</div>
                   <div className="text-3xl font-bold mb-2">Call Now</div>
-                  <div className="text-xl opacity-90">
+                  <div className="text-2xl opacity-90 font-mono">
                     {currentContact.phone}
                   </div>
                 </a>
@@ -356,8 +364,8 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
             )}
 
             {/* Call Outcome Selection */}
-            <div className="card bg-white">
-              <h3 className="text-xl font-bold text-gray-700 mb-4">
+            <div className="glass-card p-6">
+              <h3 className="text-xl font-bold text-r7-blue dark:text-r7-neon mb-4">
                 1️⃣ Call Outcome
               </h3>
               <div className="grid grid-cols-3 gap-3">
@@ -367,8 +375,8 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                     onClick={() => setOutcome(outcomeOption.id)}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       outcome === outcomeOption.id
-                        ? 'border-r7-blue bg-blue-50 shadow-md'
-                        : 'border-gray-200 hover:border-r7-blue hover:bg-gray-50'
+                        ? 'border-r7-blue dark:border-r7-neon bg-r7-blue/10 dark:bg-r7-neon/10 shadow-lg shadow-r7-blue/20 dark:shadow-r7-neon/20'
+                        : 'border-glass hover:border-r7-blue dark:hover:border-r7-neon hover:bg-white/50 dark:hover:bg-white/5'
                     }`}
                   >
                     <div className="text-3xl mb-1">{outcomeOption.icon}</div>
@@ -381,10 +389,10 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
             </div>
 
             {/* OK Code Selection */}
-            <div className="card bg-white">
-              <h3 className="text-xl font-bold text-gray-700 mb-4">
+            <div className="glass-card p-6">
+              <h3 className="text-xl font-bold text-r7-blue dark:text-r7-neon mb-4">
                 2️⃣ OK Code
-                <span className="text-sm text-gray-500 font-normal ml-2">(or press 1-9)</span>
+                <span className="text-sm text-muted font-normal ml-2">(or press 1-9)</span>
               </h3>
               <select
                 value={okCode}

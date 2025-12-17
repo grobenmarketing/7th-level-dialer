@@ -125,15 +125,15 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-r7-blue mb-2">
+            <h1 className="text-3xl font-bold text-r7-blue dark:text-r7-neon mb-2">
               🎯 Start Filtered Session
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted">
               Filter contacts by OK codes and call dates
             </p>
           </div>
@@ -149,7 +149,7 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
           {/* Left Column - Filters */}
           <div className="lg:col-span-2 space-y-6">
             {/* OK Codes Filter */}
-            <div className="card bg-white">
+            <div className="glass-card">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-700">
                   OK Codes to Call
@@ -172,7 +172,7 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
               </div>
 
               {/* No OK Code Option */}
-              <label className="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors mb-3 border-2 border-gray-200">
+              <label className="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors mb-3 border-2 border-glass">
                 <input
                   type="checkbox"
                   checked={includeNoOkCode}
@@ -189,17 +189,17 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
                 </div>
               </label>
 
-              <div className="border-t border-gray-200 my-4"></div>
+              <div className="border-t border-glass my-4"></div>
 
               {/* OK Code Checkboxes */}
               <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto">
                 {OK_CODES.map((okCode) => (
                   <label
                     key={okCode.code}
-                    className={`flex items-center p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors border-2 ${
+                    className={`flex items-center p-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-2 ${
                       selectedOkCodes.includes(okCode.code)
-                        ? 'bg-blue-50 border-blue-300'
-                        : 'border-gray-200'
+                        ? 'bg-r7-blue/10 dark:bg-r7-neon/10 border-glass'
+                        : 'border-glass'
                     }`}
                   >
                     <input
@@ -235,7 +235,7 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
             </div>
 
             {/* Date Range Filter */}
-            <div className="card bg-white">
+            <div className="glass-card">
               <h2 className="text-xl font-bold text-gray-700 mb-4">
                 Call Date Range
               </h2>
@@ -296,7 +296,7 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
               </div>
 
               {includeNoOkCode && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="mt-4 p-3 bg-r7-blue/10 dark:bg-r7-neon/10 rounded-lg border border-glass">
                   <p className="text-sm text-blue-800">
                     ℹ️ Never-called contacts will be included regardless of date range
                   </p>
@@ -305,13 +305,13 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
             </div>
 
             {/* Filter Mode */}
-            <div className="card bg-white">
+            <div className="glass-card">
               <h2 className="text-xl font-bold text-gray-700 mb-4">
                 Filter Mode
               </h2>
 
               <div className="space-y-3">
-                <label className="flex items-start p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors border-2 border-gray-200">
+                <label className="flex items-start p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-2 border-glass">
                   <input
                     type="radio"
                     name="filterMode"
@@ -330,7 +330,7 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
                   </div>
                 </label>
 
-                <label className="flex items-start p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors border-2 border-gray-200">
+                <label className="flex items-start p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-2 border-glass">
                   <input
                     type="radio"
                     name="filterMode"
@@ -388,7 +388,7 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
 
             {/* Filter Summary */}
             {(selectedOkCodes.length > 0 || includeNoOkCode || dateFrom || dateTo) && (
-              <div className="card bg-white">
+              <div className="glass-card">
                 <h3 className="text-sm font-bold text-gray-700 mb-3">
                   Active Filters
                 </h3>

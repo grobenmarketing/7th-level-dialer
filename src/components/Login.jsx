@@ -15,17 +15,21 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-4">📞</div>
-          <h1 className="text-3xl font-bold text-gray-800">R7 Creative Dialer</h1>
-          <p className="text-gray-600 mt-2">Enter password to continue</p>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="glass-card p-12 max-w-md w-full">
+        <div className="text-center mb-10">
+          <div className="text-6xl mb-6">🔐</div>
+          <h1 className="text-4xl font-bold text-r7-blue dark:text-r7-neon mb-3">
+            R7 Dialer
+          </h1>
+          <p className="text-muted text-lg">
+            Enter password to continue
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-semibold text-r7-blue dark:text-r7-neon mb-3 uppercase tracking-wide">
               Password
             </label>
             <input
@@ -36,25 +40,29 @@ function Login({ onLogin }) {
                 setPassword(e.target.value);
                 setError('');
               }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="input-field text-lg py-4"
               placeholder="Enter password"
               autoFocus
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-500/10 dark:bg-red-500/20 border-2 border-red-500 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm font-semibold">
               {error}
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            className="btn-primary w-full text-lg py-4"
           >
             Login
           </button>
         </form>
+
+        <div className="mt-8 text-center text-xs text-muted">
+          <p>R7 Creative Dialer v1.0</p>
+        </div>
       </div>
     </div>
   );

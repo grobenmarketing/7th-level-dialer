@@ -121,16 +121,16 @@ function ContactsPage({ onBackToDashboard }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold text-r7-blue mb-2">
+              <h1 className="text-4xl font-bold text-r7-blue dark:text-r7-neon mb-2">
                 📇 Contact Database
               </h1>
-              <p className="text-gray-600">
+              <p className="text-muted">
                 Manage and review your contact list
               </p>
             </div>
@@ -144,26 +144,26 @@ function ContactsPage({ onBackToDashboard }) {
 
           {/* Stats Overview */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="card bg-white">
-              <div className="text-sm text-gray-500 mb-1">Total Contacts</div>
-              <div className="text-3xl font-bold text-r7-blue">
+            <div className="glass-card">
+              <div className="text-sm text-muted mb-1">Total Contacts</div>
+              <div className="text-3xl font-bold text-r7-blue dark:text-r7-neon">
                 {stats.totalContacts}
               </div>
             </div>
-            <div className="card bg-white">
-              <div className="text-sm text-gray-500 mb-1">Active</div>
+            <div className="glass-card">
+              <div className="text-sm text-muted mb-1">Active</div>
               <div className="text-3xl font-bold text-green-600">
                 {stats.activeContacts}
               </div>
             </div>
-            <div className="card bg-white">
-              <div className="text-sm text-gray-500 mb-1">Total Dials</div>
+            <div className="glass-card">
+              <div className="text-sm text-muted mb-1">Total Dials</div>
               <div className="text-3xl font-bold text-blue-600">
                 {stats.totalDials}
               </div>
             </div>
-            <div className="card bg-white">
-              <div className="text-sm text-gray-500 mb-1">Meetings Booked</div>
+            <div className="glass-card">
+              <div className="text-sm text-muted mb-1">Meetings Booked</div>
               <div className="text-3xl font-bold text-r7-red">
                 {stats.meetingsBooked}
               </div>
@@ -172,7 +172,7 @@ function ContactsPage({ onBackToDashboard }) {
         </div>
 
         {/* Search and Filters */}
-        <div className="card bg-white mb-6">
+        <div className="glass-card mb-6">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
@@ -241,8 +241,8 @@ function ContactsPage({ onBackToDashboard }) {
           </div>
 
           {/* Results Count and Actions */}
-          <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
-            <p className="text-sm text-gray-600">
+          <div className="mt-4 pt-4 border-t border-glass flex justify-between items-center">
+            <p className="text-sm text-muted">
               Showing <span className="font-semibold">{filteredContacts.length}</span> of{' '}
               <span className="font-semibold">{contacts.length}</span> contacts
             </p>
@@ -278,8 +278,8 @@ function ContactsPage({ onBackToDashboard }) {
 
         {/* Contacts Table */}
         {filteredContacts.length > 0 ? (
-          <div className="card bg-white overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="glass-card overflow-x-auto">
+            <table className="min-w-full divide-y divide-glass">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -311,20 +311,20 @@ function ContactsPage({ onBackToDashboard }) {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-glass">
                 {filteredContacts.map((contact) => (
                   <tr
                     key={contact.id}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="hover:bg-r7-blue/5 dark:hover:bg-r7-neon/5 transition-colors cursor-pointer"
                     onClick={() => setSelectedContact(contact)}
                   >
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <div className="text-sm font-semibold text-r7-blue">
+                        <div className="text-sm font-semibold text-r7-blue dark:text-r7-neon">
                           {contact.companyName || 'Unknown Company'}
                         </div>
                         {contact.industry && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted">
                             {contact.industry}
                           </span>
                         )}
@@ -333,13 +333,13 @@ function ContactsPage({ onBackToDashboard }) {
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                       {contact.phone || '-'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
+                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate">
                       {contact.website ? (
                         <a
                           href={contact.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-r7-blue hover:underline"
+                          className="text-r7-blue dark:text-r7-neon hover:underline"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {contact.website}
@@ -348,7 +348,7 @@ function ContactsPage({ onBackToDashboard }) {
                         '-'
                       )}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-medium text-r7-blue">
+                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-medium text-r7-blue dark:text-r7-neon">
                       {contact.totalDials || 0}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-medium text-green-600">
@@ -372,7 +372,7 @@ function ContactsPage({ onBackToDashboard }) {
                         {contact.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-500">
+                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-muted">
                       {contact.lastCall
                         ? new Date(contact.lastCall).toLocaleDateString()
                         : '-'}
@@ -383,7 +383,7 @@ function ContactsPage({ onBackToDashboard }) {
                           e.stopPropagation();
                           setSelectedContact(contact);
                         }}
-                        className="text-r7-blue hover:text-r7-dark font-medium"
+                        className="text-r7-blue dark:text-r7-neon hover:text-r7-dark dark:hover:text-r7-blue font-medium"
                       >
                         View
                       </button>
@@ -394,7 +394,7 @@ function ContactsPage({ onBackToDashboard }) {
             </table>
           </div>
         ) : (
-          <div className="card bg-white text-center py-12">
+          <div className="glass-card text-center py-12">
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-2xl font-bold text-gray-700 mb-2">
               No Contacts Found
