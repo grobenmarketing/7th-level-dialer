@@ -178,7 +178,7 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
               <div className="text-4xl mb-2">📊</div>
               <div className="text-2xl font-bold">Analytics</div>
               <div className="text-sm mt-2 opacity-90">
-                NEPQ insights & metrics
+                Call analytics & KPIs
               </div>
             </button>
 

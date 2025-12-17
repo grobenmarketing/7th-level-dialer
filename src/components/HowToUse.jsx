@@ -60,15 +60,7 @@ function HowToUse({ onBackToDashboard }) {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">2. Create Avatars (Optional)</h3>
-                <p className="text-gray-700">
-                  Define buyer personas or ideal customer profiles to organize your contacts. This helps you tailor
-                  your approach for different types of prospects.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">3. Start Calling</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">2. Start Calling</h3>
                 <p className="text-gray-700">
                   Click <span className="font-semibold text-r7-blue">"Start Calling"</span> to begin your session.
                   The system will guide you through each contact one by one.
