@@ -17,6 +17,67 @@ function ContactCard({ contact }) {
 
   return (
     <div className="card bg-white">
+      {/* Sequence Indicator */}
+      {contact.sequence_status && contact.sequence_status !== 'never_contacted' && (
+        <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {contact.sequence_status === 'active' && (
+                <>
+                  <span className="text-lg">🔄</span>
+                  <span className="font-bold">DAY {contact.sequence_current_day} OF 30</span>
+                </>
+              )}
+              {contact.sequence_status === 'paused' && (
+                <>
+                  <span className="text-lg">⏸️</span>
+                  <span className="font-bold">SEQUENCE PAUSED</span>
+                </>
+              )}
+              {contact.sequence_status === 'completed' && (
+                <>
+                  <span className="text-lg">✅</span>
+                  <span className="font-bold">SEQUENCE COMPLETE</span>
+                </>
+              )}
+              {contact.sequence_status === 'dead' && (
+                <>
+                  <span className="text-lg">☠️</span>
+                  <span className="font-bold">MARKED DEAD</span>
+                </>
+              )}
+              {contact.sequence_status === 'converted' && (
+                <>
+                  <span className="text-lg">🎉</span>
+                  <span className="font-bold">CONVERTED TO CLIENT</span>
+                </>
+              )}
+            </div>
+            {contact.sequence_status === 'active' && contact.calls_made !== undefined && (
+              <span className="text-sm opacity-90">
+                Call #{contact.calls_made + 1} of 4
+              </span>
+            )}
+          </div>
+          {contact.sequence_start_date && (
+            <div className="text-xs opacity-80 mt-1">
+              Started: {new Date(contact.sequence_start_date).toLocaleDateString()}
+            </div>
+          )}
+        </div>
+      )}
+      {contact.sequence_status === 'never_contacted' && (
+        <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">✨</span>
+            <span className="font-bold">NEW PROSPECT</span>
+          </div>
+          <div className="text-xs opacity-80 mt-1">
+            Will enter 30-day sequence after first call
+          </div>
+        </div>
+      )}
+
       {/* Company Header */}
       <div className="border-b border-gray-200 pb-4 mb-4">
         <h2 className="text-3xl font-bold text-r7-blue mb-2">

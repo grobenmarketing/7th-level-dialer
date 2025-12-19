@@ -69,7 +69,26 @@ export function useContacts() {
       currentOkCode: null,
       needsEmail: false,
       status: 'active',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+
+      // Sequence Fields (NEW)
+      sequence_status: 'never_contacted', // 'never_contacted', 'active', 'paused', 'dead', 'converted', 'completed'
+      sequence_current_day: 0,
+      sequence_start_date: null,
+      last_contact_date: null,
+      has_email: !!contact.email || false,
+      has_linkedin: !!contact.linkedin || false,
+      has_social_media: false,
+      calls_made: 0,
+      voicemails_left: 0,
+      emails_sent: 0,
+      linkedin_dms_sent: 0,
+      linkedin_comments_made: 0,
+      social_reactions: 0,
+      social_comments: 0,
+      physical_mail_sent: false,
+      dead_reason: null,
+      converted_date: null
     };
 
     const updatedContacts = [...contacts, newContact];
@@ -160,7 +179,26 @@ export function useContacts() {
           currentOkCode: null,
           needsEmail: false,
           status: 'active',
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+
+          // Sequence Fields (NEW)
+          sequence_status: 'never_contacted',
+          sequence_current_day: 0,
+          sequence_start_date: null,
+          last_contact_date: null,
+          has_email: false,
+          has_linkedin: !!(values[4] || '').trim(),
+          has_social_media: false,
+          calls_made: 0,
+          voicemails_left: 0,
+          emails_sent: 0,
+          linkedin_dms_sent: 0,
+          linkedin_comments_made: 0,
+          social_reactions: 0,
+          social_comments: 0,
+          physical_mail_sent: false,
+          dead_reason: null,
+          converted_date: null
         };
 
         newContactsData.push(contactData);
