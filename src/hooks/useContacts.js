@@ -19,7 +19,42 @@ export function useContacts() {
         }
 
         // Load contacts
-        const savedContacts = await storage.get(KEYS.CONTACTS, []);
+        let savedContacts = await storage.get(KEYS.CONTACTS, []);
+
+        // MIGRATION: Add sequence fields to existing contacts that don't have them
+        let needsMigration = false;
+        savedContacts = savedContacts.map(contact => {
+          if (!contact.hasOwnProperty('sequence_status')) {
+            needsMigration = true;
+            return {
+              ...contact,
+              sequence_status: contact.callHistory && contact.callHistory.length > 0 ? 'active' : 'never_contacted',
+              sequence_current_day: contact.callHistory && contact.callHistory.length > 0 ? 1 : 0,
+              sequence_start_date: contact.lastCall || null,
+              last_contact_date: contact.lastCall || null,
+              has_email: !!contact.email || false,
+              has_linkedin: !!contact.linkedin || false,
+              has_social_media: false,
+              calls_made: contact.callHistory ? contact.callHistory.length : 0,
+              voicemails_left: 0,
+              emails_sent: 0,
+              linkedin_dms_sent: 0,
+              linkedin_comments_made: 0,
+              social_reactions: 0,
+              social_comments: 0,
+              physical_mail_sent: false,
+              dead_reason: null,
+              converted_date: null
+            };
+          }
+          return contact;
+        });
+
+        // Save migrated contacts back to storage
+        if (needsMigration) {
+          await storage.set(KEYS.CONTACTS, savedContacts);
+          console.log('✅ Migrated contacts to include sequence fields');
+        }
 
         if (mounted) {
           setContacts(savedContacts);
