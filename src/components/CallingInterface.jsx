@@ -7,6 +7,7 @@ import CallTimer from './CallTimer';
 import SessionEndSummary from './SessionEndSummary';
 import { CALL_OUTCOMES } from '../lib/constants';
 import { generatePhoneURL } from '../lib/phoneUtils';
+import { enterSequence, generateSequenceTasks, completeSequenceTask, applyCounterUpdates, getCounterUpdates } from '../lib/sequenceLogic';
 
 function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, onNextContact }) {
   const { getActiveContacts, addCallToHistory, updateContact } = useContacts();
@@ -126,6 +127,45 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
     // Update contact with needsEmail flag
     if (needsEmail) {
       await updateContact(currentContact.id, { needsEmail: true });
+    }
+
+    // SEQUENCE LOGIC: Auto-enter into sequence on first call
+    if (currentContact.sequence_status === 'never_contacted') {
+      console.log('🔄 Entering contact into sequence...');
+      await enterSequence(currentContact.id, updateContact);
+
+      // Generate sequence tasks for Day 1
+      const updatedContact = {
+        ...currentContact,
+        sequence_status: 'active',
+        sequence_current_day: 1,
+        calls_made: 1
+      };
+      await generateSequenceTasks(updatedContact);
+
+      console.log('✅ Contact entered sequence successfully!');
+    } else if (currentContact.sequence_status === 'active') {
+      // This is a follow-up call - update counters
+      console.log('📞 Follow-up call - updating sequence...');
+
+      // Update call counter
+      const counterUpdates = getCounterUpdates('call');
+      const updatedContactData = applyCounterUpdates(currentContact, counterUpdates);
+
+      await updateContact(currentContact.id, {
+        calls_made: updatedContactData.calls_made,
+        last_contact_date: new Date().toISOString().split('T')[0]
+      });
+
+      // Mark today's call task as complete
+      await completeSequenceTask(
+        currentContact.id,
+        currentContact.sequence_current_day,
+        'call',
+        notes
+      );
+
+      console.log('✅ Follow-up call logged in sequence');
     }
 
     // Update KPI metrics for today

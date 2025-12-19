@@ -10,7 +10,9 @@ const KEYS = {
   KPI_DATA: 'r7_kpi_data',
   WEEKLY_TARGETS: 'r7_weekly_targets',
   DAILY_DIAL_GOAL: 'r7_daily_dial_goal',
-  MIGRATION_STATUS: 'r7_migration_status'
+  MIGRATION_STATUS: 'r7_migration_status',
+  SEQUENCE_TASKS: 'r7_sequence_tasks',
+  MEETINGS: 'r7_meetings'
 };
 
 // Detect if we're running in production (Netlify) or development
@@ -171,7 +173,9 @@ export const migrateToCloud = async () => {
       KEYS.BADGES,
       KEYS.KPI_DATA,
       KEYS.WEEKLY_TARGETS,
-      KEYS.DAILY_DIAL_GOAL
+      KEYS.DAILY_DIAL_GOAL,
+      KEYS.SEQUENCE_TASKS,
+      KEYS.MEETINGS
     ];
 
     const items = [];
