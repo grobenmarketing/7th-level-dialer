@@ -77,10 +77,17 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   const handleLoadTestData = async () => {
     if (confirm('This will add 8 test contacts to your database. Continue?')) {
       const dummyContacts = generateDummyContacts();
+      const baseTimestamp = Date.now();
 
-      // Add each dummy contact
-      for (const contact of dummyContacts) {
-        await addContact(contact);
+      // Add each dummy contact with unique ID
+      for (let i = 0; i < dummyContacts.length; i++) {
+        const contact = dummyContacts[i];
+        // Override the ID with a unique timestamp-based ID
+        const contactWithUniqueId = {
+          ...contact,
+          id: (baseTimestamp + i).toString()
+        };
+        await addContact(contactWithUniqueId);
       }
 
       alert('✅ Test data loaded! 8 contacts added with various sequence states.');
