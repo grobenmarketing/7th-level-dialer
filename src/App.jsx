@@ -9,6 +9,7 @@ import FilteredSessionPage from './components/FilteredSessionPage'
 import SessionReviewPage from './components/SessionReviewPage'
 import Login from './components/Login'
 import OkCodesAdmin from './components/OkCodesAdmin'
+import SequenceTasksPage from './components/SequenceTasksPage'
 import { useAuth } from './hooks/useAuth'
 
 const VIEW_STATE_KEY = 'r7_current_view'
@@ -111,6 +112,10 @@ function App() {
     setCurrentView('okCodes')
   }
 
+  const handleViewSequenceTasks = () => {
+    setCurrentView('sequenceTasks')
+  }
+
   const handleNextContact = () => {
     setCurrentContactIndex(prev => prev + 1)
   }
@@ -125,6 +130,7 @@ function App() {
           onViewAnalytics={handleViewAnalytics}
           onViewHowToUse={handleViewHowToUse}
           onViewSettings={handleViewSettings}
+          onViewSequenceTasks={handleViewSequenceTasks}
         />
       )}
       {currentView === 'filteredSession' && (
@@ -166,6 +172,9 @@ function App() {
       )}
       {currentView === 'okCodes' && (
         <OkCodesAdmin onBack={handleViewSettings} />
+      )}
+      {currentView === 'sequenceTasks' && (
+        <SequenceTasksPage onBackToDashboard={handleBackToDashboard} />
       )}
     </div>
   )

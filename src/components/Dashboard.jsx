@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import ContactDetailsModal from './ContactDetailsModal';
 import ContactFormModal from './ContactFormModal';
+import { generateDummyContacts } from '../lib/dummyData';
 
-function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onViewAnalytics, onViewHowToUse, onViewSettings }) {
+function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onViewAnalytics, onViewHowToUse, onViewSettings, onViewSequenceTasks }) {
   const {
     contacts,
     addContact,
@@ -71,6 +72,19 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   const handleEditClick = (contact) => {
     setEditingContact(contact);
     setSelectedContact(null);
+  };
+
+  const handleLoadTestData = async () => {
+    if (confirm('This will add 8 test contacts to your database. Continue?')) {
+      const dummyContacts = generateDummyContacts();
+
+      // Add each dummy contact
+      for (const contact of dummyContacts) {
+        await addContact(contact);
+      }
+
+      alert('✅ Test data loaded! 8 contacts added with various sequence states.');
+    }
   };
 
   return (
@@ -182,6 +196,18 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
               </div>
             </button>
 
+            {/* Sequence Tasks */}
+            <button
+              onClick={onViewSequenceTasks}
+              className="p-8 rounded-lg text-center bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 cursor-pointer transition-all hover:shadow-xl transform hover:scale-105"
+            >
+              <div className="text-4xl mb-2">🔄</div>
+              <div className="text-2xl font-bold">Sequence Tasks</div>
+              <div className="text-sm mt-2 opacity-90">
+                Manage 27-touch sequence
+              </div>
+            </button>
+
             {/* Import Contacts */}
             <label className="p-8 rounded-lg text-center bg-green-600 text-white hover:bg-green-700 cursor-pointer transition-all hover:shadow-xl transform hover:scale-105">
               <input
@@ -218,6 +244,18 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
               <div className="text-2xl font-bold">Settings</div>
               <div className="text-sm mt-2 opacity-90">
                 Admin controls
+              </div>
+            </button>
+
+            {/* Load Test Data */}
+            <button
+              onClick={handleLoadTestData}
+              className="p-8 rounded-lg text-center bg-gradient-to-br from-pink-500 to-pink-600 text-white hover:from-pink-600 hover:to-pink-700 cursor-pointer transition-all hover:shadow-xl transform hover:scale-105"
+            >
+              <div className="text-4xl mb-2">🧪</div>
+              <div className="text-2xl font-bold">Load Test Data</div>
+              <div className="text-sm mt-2 opacity-90">
+                Add demo contacts
               </div>
             </button>
           </div>
