@@ -1,8 +1,9 @@
 // Sequence management logic
 // Handles entering sequences, advancing days, and managing sequence state
 
-import { getTasksForDay, getNextDayWithTasks, shouldSkipTask } from './sequenceCalendar';
+import { getTasksForDay, getNextDayWithTasks, shouldSkipTask, SEQUENCE_CALENDAR } from './sequenceCalendar';
 import { storage, KEYS } from './cloudStorage';
+import { calculateTaskDueDate, hasOverdueTasks, isTaskOverdue, isTaskDueToday } from './taskScheduler';
 
 // Enter a contact into the sequence (called on first call)
 export async function enterSequence(contactId, updateContactFn) {
@@ -74,31 +75,35 @@ export function applyCounterUpdates(contact, updates) {
   return updatedContact;
 }
 
-// Check if all tasks for a day are complete
+// Check if all tasks for current day are complete (and no overdue tasks exist)
 export async function checkAllDayTasksComplete(contact) {
-  const dayTasks = getTasksForDay(contact.sequence_current_day);
+  // Get all tasks for this contact
+  const allTasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
+  const contactTasks = allTasks.filter(task => task.contact_id === contact.id);
 
-  if (dayTasks.length === 0) {
+  // First, check if there are ANY overdue tasks - if so, can't advance
+  const overdueTasksExist = contactTasks.some(
+    task => task.status === 'pending' && isTaskOverdue(task)
+  );
+
+  if (overdueTasksExist) {
+    console.log(`⚠️ Contact ${contact.id} has overdue tasks - cannot advance`);
+    return false;
+  }
+
+  // Get tasks for current day
+  const currentDayTasks = contactTasks.filter(
+    task => task.sequence_day === contact.sequence_current_day
+  );
+
+  if (currentDayTasks.length === 0) {
     return true; // No tasks for this day
   }
 
-  // Get sequence tasks from storage
-  const allTasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
-  const contactTasks = allTasks.filter(
-    task => task.contact_id === contact.id && task.sequence_day === contact.sequence_current_day
+  // Check if all current day tasks are complete
+  const allComplete = currentDayTasks.every(
+    task => task.status === 'completed' || task.status === 'skipped'
   );
-
-  // Check if all tasks are complete or skipped
-  const allComplete = dayTasks.every(taskType => {
-    // Skip if contact doesn't have the required channel
-    if (shouldSkipTask(contact, taskType)) {
-      return true;
-    }
-
-    // Check if task is marked as complete or skipped
-    const task = contactTasks.find(t => t.task_type === taskType);
-    return task && (task.status === 'completed' || task.status === 'skipped');
-  });
 
   return allComplete;
 }
@@ -161,35 +166,41 @@ export async function completeSequenceTask(contactId, sequenceDay, taskType, not
   console.log(`✅ Task completed: ${taskType} for contact ${contactId} on Day ${sequenceDay}`);
 }
 
-// Generate initial sequence tasks for a contact (called when entering sequence)
+// Generate ALL sequence tasks for a contact (called when entering sequence)
 export async function generateSequenceTasks(contact) {
   const tasks = [];
-  const today = new Date().toISOString().split('T')[0];
+  const sequenceStartDate = contact.sequence_start_date;
 
-  // Generate tasks for Day 1 only (will generate more as they progress)
-  const day1Tasks = getTasksForDay(1);
+  // Generate tasks for ALL days in the sequence (1-30)
+  Object.keys(SEQUENCE_CALENDAR).forEach(day => {
+    const dayNumber = parseInt(day);
+    const dayTasks = SEQUENCE_CALENDAR[day];
 
-  day1Tasks.forEach(taskType => {
-    // Skip if contact doesn't have the required channel
-    if (shouldSkipTask(contact, taskType)) {
-      return;
-    }
+    dayTasks.forEach(taskType => {
+      // Skip if contact doesn't have the required channel
+      if (shouldSkipTask(contact, taskType)) {
+        return;
+      }
 
-    // Don't create a task for the first call - it's already being made
-    if (taskType === 'call') {
-      return;
-    }
+      // Don't create a task for the first call on Day 1 - it's already being made
+      if (dayNumber === 1 && taskType === 'call') {
+        return;
+      }
 
-    tasks.push({
-      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      contact_id: contact.id,
-      task_date: today,
-      sequence_day: 1,
-      task_type: taskType,
-      task_description: taskType,
-      status: 'pending',
-      completed_at: null,
-      notes: ''
+      // Calculate due date for this task
+      const dueDate = calculateTaskDueDate(sequenceStartDate, dayNumber);
+
+      tasks.push({
+        id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${dayNumber}_${taskType}`,
+        contact_id: contact.id,
+        task_due_date: dueDate,
+        sequence_day: dayNumber,
+        task_type: taskType,
+        task_description: taskType,
+        status: 'pending',
+        completed_at: null,
+        notes: ''
+      });
     });
   });
 
@@ -197,7 +208,7 @@ export async function generateSequenceTasks(contact) {
   const allTasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
   await storage.set(KEYS.SEQUENCE_TASKS, [...allTasks, ...tasks]);
 
-  console.log(`📋 Generated ${tasks.length} tasks for contact ${contact.id} on Day 1`);
+  console.log(`📋 Generated ${tasks.length} tasks for contact ${contact.id} for full 30-day sequence`);
 }
 
 // Delete all future sequence tasks for a contact (when marked dead/converted)
