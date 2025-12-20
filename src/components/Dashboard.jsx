@@ -6,7 +6,11 @@ import TodaysSummary from './TodaysSummary';
 import ColdCallsPanel from './ColdCallsPanel';
 import SequencesPanel from './SequencesPanel';
 import { generateDummyContacts } from '../lib/dummyData';
+import { generateRealisticTestData } from '../lib/testDataGenerator';
 import { storage, KEYS } from '../lib/cloudStorage';
+import { generateSequenceTasks } from '../lib/sequenceLogic';
+import { calculateTaskDueDate } from '../lib/taskScheduler';
+import { SEQUENCE_CALENDAR } from '../lib/sequenceCalendar';
 
 function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onViewAnalytics, onViewHowToUse, onViewSettings, onViewSequenceTasks }) {
   const {
@@ -109,6 +113,89 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
     }
   };
 
+  const handleLoadRealisticTestData = async () => {
+    if (confirm('This will add 75 realistic test contacts with proper sequence tasks and due dates. Continue?')) {
+      const realisticContacts = generateRealisticTestData(75);
+
+      // Add all contacts
+      for (let i = 0; i < realisticContacts.length; i++) {
+        const contact = realisticContacts[i];
+        await addContact(contact);
+      }
+
+      // Generate sequence tasks for active contacts
+      const activeContacts = realisticContacts.filter(c => c.sequence_status === 'active');
+      const allTasks = [];
+
+      for (const contact of activeContacts) {
+        // Generate tasks for this contact
+        const tasks = [];
+        const sequenceStartDate = contact.sequence_start_date;
+
+        Object.keys(SEQUENCE_CALENDAR).forEach(day => {
+          const dayNumber = parseInt(day);
+          const dayTasks = SEQUENCE_CALENDAR[day];
+
+          // Only generate tasks up to current day and a few days ahead
+          if (dayNumber > contact.sequence_current_day + 5) return;
+
+          dayTasks.forEach(taskType => {
+            // Skip based on channel availability
+            if (taskType.includes('email') && !contact.has_email) return;
+            if (taskType.includes('linkedin') && !contact.has_linkedin) return;
+            if (taskType.includes('social') && !contact.has_social_media) return;
+            if (taskType === 'physical_mail' && !contact.has_email) return;
+
+            // Calculate due date
+            const dueDate = calculateTaskDueDate(sequenceStartDate, dayNumber);
+
+            // Determine status based on day
+            let status = 'pending';
+            let completed_at = null;
+
+            if (dayNumber < contact.sequence_current_day) {
+              // Past days should be completed
+              status = 'completed';
+              const completedDate = new Date(dueDate);
+              completedDate.setHours(Math.floor(Math.random() * 8) + 9); // 9am-5pm
+              completed_at = completedDate.toISOString();
+            } else if (dayNumber === contact.sequence_current_day) {
+              // Current day - some completed, some pending
+              if (Math.random() > 0.4) {
+                status = 'completed';
+                const completedDate = new Date();
+                completedDate.setHours(Math.floor(Math.random() * 8) + 9);
+                completed_at = completedDate.toISOString();
+              }
+            }
+
+            tasks.push({
+              id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${dayNumber}_${taskType}`,
+              contact_id: contact.id,
+              task_due_date: dueDate,
+              sequence_day: dayNumber,
+              task_type: taskType,
+              task_description: taskType,
+              status,
+              completed_at,
+              notes: ''
+            });
+          });
+        });
+
+        allTasks.push(...tasks);
+      }
+
+      // Save all tasks at once
+      await storage.set(KEYS.SEQUENCE_TASKS, allTasks);
+
+      // Reload tasks in UI
+      await loadSequenceTasks();
+
+      alert(`✅ Realistic test data loaded!\n\n${realisticContacts.length} contacts added:\n- ${realisticContacts.filter(c => c.sequence_status === 'never_contacted').length} never contacted (for cold calling)\n- ${activeContacts.length} active sequences with ${allTasks.length} tasks\n- ${realisticContacts.filter(c => c.sequence_status === 'paused').length} paused\n- ${realisticContacts.filter(c => c.sequence_status === 'completed').length} completed\n- ${realisticContacts.filter(c => c.sequence_status === 'converted').length} converted\n- ${realisticContacts.filter(c => c.sequence_status === 'dead').length} dead`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -160,18 +247,18 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
                 <div className="text-sm font-medium text-orange-900">Analytics</div>
               </button>
               <button
+                onClick={handleLoadRealisticTestData}
+                className="p-4 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors"
+              >
+                <div className="text-3xl mb-1">🎲</div>
+                <div className="text-sm font-medium text-blue-900">Load 75 Test Contacts</div>
+              </button>
+              <button
                 onClick={onViewSettings}
                 className="p-4 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
               >
                 <div className="text-3xl mb-1">⚙️</div>
                 <div className="text-sm font-medium text-gray-900">Settings</div>
-              </button>
-              <button
-                onClick={handleLoadTestData}
-                className="p-4 rounded-lg bg-pink-100 hover:bg-pink-200 transition-colors"
-              >
-                <div className="text-3xl mb-1">🧪</div>
-                <div className="text-sm font-medium text-pink-900">Test Data</div>
               </button>
             </div>
           </div>
@@ -202,7 +289,7 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
             {/* Quick Actions Bar */}
             <div className="card bg-white">
               <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
                 <button
                   onClick={onViewContacts}
                   className="p-3 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors text-center"
@@ -254,6 +341,14 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
                 >
                   <div className="text-2xl mb-1">📤</div>
                   <div className="text-xs font-medium text-blue-900">Export</div>
+                </button>
+
+                <button
+                  onClick={handleLoadRealisticTestData}
+                  className="p-3 rounded-lg bg-pink-100 hover:bg-pink-200 transition-colors text-center"
+                >
+                  <div className="text-2xl mb-1">🎲</div>
+                  <div className="text-xs font-medium text-pink-900">Add 75 Test</div>
                 </button>
 
                 <button
