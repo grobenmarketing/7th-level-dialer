@@ -38,6 +38,9 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
   // Session end state
   const [showSessionSummary, setShowSessionSummary] = useState(false);
 
+  // Saving state to prevent double submissions
+  const [isSaving, setIsSaving] = useState(false);
+
   // Generate phone URL based on device (iOS uses OpenPhone deep link, others use tel:)
   const phoneURL = useMemo(() => {
     if (!currentContact?.phone) return '#';
@@ -61,6 +64,8 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
     // Reset timer
     setCallDuration(0);
     setTimerActive(false);
+    // Reset saving state
+    setIsSaving(false);
   }, [contactIndex]);
 
   // Keyboard shortcuts
@@ -98,6 +103,12 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
   };
 
   const handleSaveAndNext = async () => {
+    // Prevent double submissions
+    if (isSaving) {
+      console.log('⏳ Already saving, please wait...');
+      return;
+    }
+
     if (!currentContact) {
       onBackToDashboard();
       return;
@@ -113,98 +124,115 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
       return;
     }
 
-    // Save call to history with new fields
-    await addCallToHistory(currentContact.id, {
-      outcome,
-      okCode,
-      notes,
-      duration: callDuration,
-      hadConversation,
-      hadTriage,
-      objection: objection.trim()
-    });
+    try {
+      setIsSaving(true);
 
-    // Update contact with needsEmail flag
-    if (needsEmail) {
-      await updateContact(currentContact.id, { needsEmail: true });
-    }
-
-    // SEQUENCE LOGIC: Auto-enter into sequence on first call
-    if (currentContact.sequence_status === 'never_contacted') {
-      console.log('🔄 Entering contact into sequence...');
-      await enterSequence(currentContact.id, updateContact);
-
-      // Generate sequence tasks for Day 1
-      const updatedContact = {
-        ...currentContact,
-        sequence_status: 'active',
-        sequence_current_day: 1,
-        calls_made: 1
-      };
-      await generateSequenceTasks(updatedContact);
-
-      console.log('✅ Contact entered sequence successfully!');
-    } else if (currentContact.sequence_status === 'active') {
-      // This is a follow-up call - update counters
-      console.log('📞 Follow-up call - updating sequence...');
-
-      // Update call counter
-      const counterUpdates = getCounterUpdates('call');
-      const updatedContactData = applyCounterUpdates(currentContact, counterUpdates);
-
-      await updateContact(currentContact.id, {
-        calls_made: updatedContactData.calls_made,
-        last_contact_date: new Date().toISOString().split('T')[0]
+      // Save call to history with new fields
+      await addCallToHistory(currentContact.id, {
+        outcome,
+        okCode,
+        notes,
+        duration: callDuration,
+        hadConversation,
+        hadTriage,
+        objection: objection.trim()
       });
 
-      // Mark today's call task as complete
-      await completeSequenceTask(
-        currentContact.id,
-        currentContact.sequence_current_day,
-        'call',
-        notes
-      );
+      // Update contact with needsEmail flag
+      if (needsEmail) {
+        await updateContact(currentContact.id, { needsEmail: true });
+      }
 
-      console.log('✅ Follow-up call logged in sequence');
-    }
+      // SEQUENCE LOGIC: Auto-enter into sequence on first call
+      if (currentContact.sequence_status === 'never_contacted') {
+        console.log('🔄 Entering contact into sequence...');
+        await enterSequence(currentContact.id, updateContact);
 
-    // Update KPI metrics for today
-    const today = new Date();
+        // Generate sequence tasks for the full 30-day sequence with due dates
+        const today = new Date().toISOString().split('T')[0];
+        const updatedContact = {
+          ...currentContact,
+          sequence_status: 'active',
+          sequence_current_day: 1,
+          sequence_start_date: today,
+          calls_made: 1,
+          has_email: currentContact.has_email || !!currentContact.email,
+          has_linkedin: currentContact.has_linkedin || !!currentContact.linkedin,
+          has_social_media: currentContact.has_social_media || false
+        };
+        await generateSequenceTasks(updatedContact);
 
-    // Note: Dials are incremented when "Call Now" button is clicked, not here
+        console.log('✅ Contact entered sequence successfully!');
+      } else if (currentContact.sequence_status === 'active') {
+        // This is a follow-up call - update counters
+        console.log('📞 Follow-up call - updating sequence...');
 
-    // Pickup = when DM picks up
-    if (outcome === 'DM') {
-      await incrementMetric(today, 'pickups', 1);
-    }
+        // Update call counter
+        const counterUpdates = getCounterUpdates('call');
+        const updatedContactData = applyCounterUpdates(currentContact, counterUpdates);
 
-    // Conversations
-    if (hadConversation) {
-      await incrementMetric(today, 'conversations', 1);
-    }
+        await updateContact(currentContact.id, {
+          calls_made: updatedContactData.calls_made,
+          last_contact_date: new Date().toISOString().split('T')[0]
+        });
 
-    // Triage (getting into specifics)
-    if (hadTriage) {
-      await incrementMetric(today, 'triage', 1);
-    }
+        // Mark today's call task as complete
+        await completeSequenceTask(
+          currentContact.id,
+          currentContact.sequence_current_day,
+          'call',
+          notes
+        );
 
-    // Booked meetings - check if current OK code label indicates a meeting
-    const selectedOkCode = okCodes.find(code => code.label === okCode);
-    if (selectedOkCode && selectedOkCode.label.toLowerCase().includes('meeting')) {
-      await incrementMetric(today, 'bookedMeetings', 1);
-    }
+        console.log('✅ Follow-up call logged in sequence');
+      }
 
-    // Add objection if present
-    if (objection.trim()) {
-      await addObjection(today, objection.trim());
-    }
+      // Update KPI metrics for today
+      const today = new Date();
 
-    // Move to next contact or finish
-    if (contactIndex < activeContacts.length - 1) {
-      onNextContact();
-    } else {
-      // Session complete - show summary
-      setShowSessionSummary(true);
+      // Note: Dials are incremented when "Call Now" button is clicked, not here
+
+      // Pickup = when DM picks up
+      if (outcome === 'DM') {
+        await incrementMetric(today, 'pickups', 1);
+      }
+
+      // Conversations
+      if (hadConversation) {
+        await incrementMetric(today, 'conversations', 1);
+      }
+
+      // Triage (getting into specifics)
+      if (hadTriage) {
+        await incrementMetric(today, 'triage', 1);
+      }
+
+      // Booked meetings - check if current OK code label indicates a meeting
+      const selectedOkCode = okCodes.find(code => code.label === okCode);
+      if (selectedOkCode && selectedOkCode.label.toLowerCase().includes('meeting')) {
+        await incrementMetric(today, 'bookedMeetings', 1);
+      }
+
+      // Add objection if present
+      if (objection.trim()) {
+        await addObjection(today, objection.trim());
+      }
+
+      // Wait a brief moment for state to settle
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Move to next contact or finish
+      if (contactIndex < activeContacts.length - 1) {
+        onNextContact();
+      } else {
+        // Session complete - show summary
+        setShowSessionSummary(true);
+      }
+    } catch (error) {
+      console.error('Error saving call:', error);
+      alert('Error saving call. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -548,9 +576,10 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
               </button>
               <button
                 onClick={handleSaveAndNext}
-                className="btn-primary"
+                disabled={isSaving}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                💾 Save & Next
+                {isSaving ? '⏳ Saving...' : '💾 Save & Next'}
               </button>
             </div>
 
