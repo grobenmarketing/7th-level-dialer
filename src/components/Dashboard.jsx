@@ -5,12 +5,8 @@ import ContactFormModal from './ContactFormModal';
 import TodaysSummary from './TodaysSummary';
 import ColdCallsPanel from './ColdCallsPanel';
 import SequencesPanel from './SequencesPanel';
-import { generateDummyContacts } from '../lib/dummyData';
-import { generateRealisticTestData } from '../lib/testDataGenerator';
 import { storage, KEYS } from '../lib/cloudStorage';
-import { generateSequenceTasks } from '../lib/sequenceLogic';
-import { calculateTaskDueDate } from '../lib/taskScheduler';
-import { SEQUENCE_CALENDAR } from '../lib/sequenceCalendar';
+import { loadSimpleTestData, loadRealisticTestData } from '../lib/devUtils';
 
 function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onViewAnalytics, onViewHowToUse, onViewSettings, onViewSequenceTasks }) {
   const {
@@ -93,111 +89,15 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
     setSelectedContact(null);
   };
 
-  const handleLoadTestData = async () => {
-    if (confirm('This will add 8 test contacts to your database. Continue?')) {
-      const dummyContacts = generateDummyContacts();
-      const baseTimestamp = Date.now();
-
-      // Add each dummy contact with unique ID
-      for (let i = 0; i < dummyContacts.length; i++) {
-        const contact = dummyContacts[i];
-        // Override the ID with a unique timestamp-based ID
-        const contactWithUniqueId = {
-          ...contact,
-          id: (baseTimestamp + i).toString()
-        };
-        await addContact(contactWithUniqueId);
-      }
-
-      alert('✅ Test data loaded! 8 contacts added with various sequence states.');
-    }
-  };
-
   const handleLoadRealisticTestData = async () => {
     if (confirm('This will add 75 realistic test contacts with proper sequence tasks and due dates. This may take a few seconds. Continue?')) {
-      try {
-        // Generate all contacts
-        const realisticContacts = generateRealisticTestData(75);
+      const result = await loadRealisticTestData(75);
 
-        // Get existing contacts to add to them
-        const existingContacts = await storage.get(KEYS.CONTACTS, []);
-
-        // Add all new contacts to storage at once (much faster)
-        const allContacts = [...existingContacts, ...realisticContacts];
-        await storage.set(KEYS.CONTACTS, allContacts);
-
-        // Generate sequence tasks for active contacts
-        const activeContacts = realisticContacts.filter(c => c.sequence_status === 'active');
-        const allTasks = [];
-        let taskIdCounter = 0;
-
-        for (const contact of activeContacts) {
-          // Generate tasks for this contact
-          const sequenceStartDate = contact.sequence_start_date;
-
-          Object.keys(SEQUENCE_CALENDAR).forEach(day => {
-            const dayNumber = parseInt(day);
-            const dayTasks = SEQUENCE_CALENDAR[day];
-
-            // Only generate tasks up to current day and a few days ahead
-            if (dayNumber > contact.sequence_current_day + 5) return;
-
-            dayTasks.forEach(taskType => {
-              // Skip based on channel availability
-              if (taskType.includes('email') && !contact.has_email) return;
-              if (taskType.includes('linkedin') && !contact.has_linkedin) return;
-              if (taskType.includes('social') && !contact.has_social_media) return;
-              if (taskType === 'physical_mail' && !contact.has_email) return;
-
-              // Calculate due date
-              const dueDate = calculateTaskDueDate(sequenceStartDate, dayNumber);
-
-              // Determine status based on day
-              let status = 'pending';
-              let completed_at = null;
-
-              if (dayNumber < contact.sequence_current_day) {
-                // Past days should be completed
-                status = 'completed';
-                const completedDate = new Date(dueDate);
-                completedDate.setHours(Math.floor(Math.random() * 8) + 9); // 9am-5pm
-                completed_at = completedDate.toISOString();
-              } else if (dayNumber === contact.sequence_current_day) {
-                // Current day - some completed, some pending
-                if (Math.random() > 0.4) {
-                  status = 'completed';
-                  const completedDate = new Date();
-                  completedDate.setHours(Math.floor(Math.random() * 8) + 9);
-                  completed_at = completedDate.toISOString();
-                }
-              }
-
-              taskIdCounter++;
-              allTasks.push({
-                id: `task_${Date.now()}_${taskIdCounter}_${contact.id}_${dayNumber}_${taskType}`,
-                contact_id: contact.id,
-                task_due_date: dueDate,
-                sequence_day: dayNumber,
-                task_type: taskType,
-                task_description: taskType,
-                status,
-                completed_at,
-                notes: ''
-              });
-            });
-          });
-        }
-
-        // Save all tasks at once
-        const existingTasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
-        await storage.set(KEYS.SEQUENCE_TASKS, [...existingTasks, ...allTasks]);
-
+      if (result.success) {
         // Force a reload of the page to refresh all React state
         window.location.reload();
-
-      } catch (error) {
-        console.error('Error loading test data:', error);
-        alert(`❌ Error loading test data: ${error.message}`);
+      } else {
+        alert(`❌ Error loading test data: ${result.error}`);
       }
     }
   };

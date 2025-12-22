@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import { useKPI } from '../hooks/useKPI';
 import { useOkCodes } from '../hooks/useOkCodes';
+import { useCallForm } from '../hooks/useCallForm';
 import ContactCard from './ContactCard';
 import CallTimer from './CallTimer';
 import SessionEndSummary from './SessionEndSummary';
@@ -13,6 +14,14 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
   const { getActiveContacts, addCallToHistory, updateContact } = useContacts();
   const { incrementMetric, addObjection, getTodayDials, dailyDialGoal, saveDailyDialGoal } = useKPI();
   const { okCodes } = useOkCodes();
+
+  // Use custom hook for form state management
+  const {
+    outcome, okCode, notes, hadConversation, hadTriage, objection, needsEmail,
+    callDuration, timerActive, isSaving,
+    updateField, setIsSaving, startTimer, setCallDuration, validate
+  } = useCallForm(contactIndex);
+
   // Use filtered contacts if provided, otherwise use all active contacts
   const activeContacts = filteredContacts || getActiveContacts();
   const currentContact = activeContacts[contactIndex];
@@ -22,24 +31,8 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
   const [tempGoal, setTempGoal] = useState(dailyDialGoal);
   const todayDials = getTodayDials();
 
-  // Form state
-  const [outcome, setOutcome] = useState('');
-  const [okCode, setOkCode] = useState('');
-  const [notes, setNotes] = useState('');
-  const [hadConversation, setHadConversation] = useState(false);
-  const [hadTriage, setHadTriage] = useState(false);
-  const [objection, setObjection] = useState('');
-  const [needsEmail, setNeedsEmail] = useState(false);
-
-  // Call timer state
-  const [callDuration, setCallDuration] = useState(0);
-  const [timerActive, setTimerActive] = useState(false); // Start timer when call button is clicked
-
   // Session end state
   const [showSessionSummary, setShowSessionSummary] = useState(false);
-
-  // Saving state to prevent double submissions
-  const [isSaving, setIsSaving] = useState(false);
 
   // Generate phone URL based on device (iOS uses OpenPhone deep link, others use tel:)
   const phoneURL = useMemo(() => {
@@ -51,22 +44,6 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
   useEffect(() => {
     setTempGoal(dailyDialGoal);
   }, [dailyDialGoal]);
-
-  // Reset form when contact changes
-  useEffect(() => {
-    setOutcome('');
-    setOkCode('');
-    setNotes('');
-    setHadConversation(false);
-    setHadTriage(false);
-    setObjection('');
-    setNeedsEmail(false);
-    // Reset timer
-    setCallDuration(0);
-    setTimerActive(false);
-    // Reset saving state
-    setIsSaving(false);
-  }, [contactIndex]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -80,7 +57,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
       if (e.key >= '1' && e.key <= '9' && okCodes.length > 0) {
         const index = parseInt(e.key) - 1;
         if (index < okCodes.length) {
-          setOkCode(okCodes[index].label);
+          updateField('okCode', okCodes[index].label);
         }
       }
     };
@@ -95,7 +72,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
   };
 
   const handleStartCall = async () => {
-    setTimerActive(true);
+    startTimer();
 
     // Increment dial count immediately when call button is clicked
     const today = new Date();
@@ -114,13 +91,10 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
       return;
     }
 
-    if (!outcome) {
-      alert('Please select a call outcome');
-      return;
-    }
-
-    if (!okCode) {
-      alert('Please select an OK code');
+    // Validate form
+    const validation = validate();
+    if (!validation.isValid) {
+      alert(validation.errors.join('\n'));
       return;
     }
 
@@ -432,7 +406,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                 {CALL_OUTCOMES.map((outcomeOption) => (
                   <button
                     key={outcomeOption.id}
-                    onClick={() => setOutcome(outcomeOption.id)}
+                    onClick={() => updateField('outcome', outcomeOption.id)}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       outcome === outcomeOption.id
                         ? 'border-r7-blue bg-blue-50 shadow-md'
@@ -456,7 +430,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
               </h3>
               <select
                 value={okCode}
-                onChange={(e) => setOkCode(e.target.value)}
+                onChange={(e) => updateField('okCode', e.target.value)}
                 className="select-field"
                 disabled={!outcome}
               >
@@ -495,7 +469,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                   <input
                     type="checkbox"
                     checked={hadConversation}
-                    onChange={(e) => setHadConversation(e.target.checked)}
+                    onChange={(e) => updateField('hadConversation', e.target.checked)}
                     className="w-5 h-5 text-r7-blue rounded focus:ring-r7-blue"
                   />
                   <span className="ml-3 font-semibold text-gray-700">
@@ -510,7 +484,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                   <input
                     type="checkbox"
                     checked={hadTriage}
-                    onChange={(e) => setHadTriage(e.target.checked)}
+                    onChange={(e) => updateField('hadTriage', e.target.checked)}
                     className="w-5 h-5 text-purple-600 rounded focus:ring-purple-600"
                   />
                   <span className="ml-3 font-semibold text-gray-700">
@@ -525,7 +499,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                   <input
                     type="checkbox"
                     checked={needsEmail}
-                    onChange={(e) => setNeedsEmail(e.target.checked)}
+                    onChange={(e) => updateField('needsEmail', e.target.checked)}
                     className="w-5 h-5 text-green-600 rounded focus:ring-green-600"
                   />
                   <span className="ml-3 font-semibold text-gray-700">
@@ -545,7 +519,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                 <input
                   type="text"
                   value={objection}
-                  onChange={(e) => setObjection(e.target.value)}
+                  onChange={(e) => updateField('objection', e.target.value)}
                   placeholder="e.g., Not interested, No budget, Wrong timing..."
                   className="input-field"
                 />
@@ -558,7 +532,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                 </label>
                 <textarea
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => updateField('notes', e.target.value)}
                   placeholder="Add notes about this call..."
                   rows="4"
                   className="input-field resize-none"
