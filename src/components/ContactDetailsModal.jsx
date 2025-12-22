@@ -1,6 +1,7 @@
 import { formatDuration } from '../lib/constants';
+import { getTaskDescription, getTotalImpressions } from '../lib/sequenceCalendar';
 
-function ContactDetailsModal({ contact, onClose, onEdit, onDelete }) {
+function ContactDetailsModal({ contact, onClose, onEdit, onDelete, sequenceTasks, sequenceDay, onCompleteTask }) {
   if (!contact) return null;
 
   const handleDelete = () => {
@@ -167,6 +168,44 @@ function ContactDetailsModal({ contact, onClose, onEdit, onDelete }) {
               </div>
             )}
           </div>
+
+          {/* Sequence Tasks */}
+          {sequenceTasks && sequenceTasks.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-gray-700">
+                  📋 Today's Sequence Tasks
+                </h3>
+                <span className="text-sm text-gray-600">
+                  Day {sequenceDay} of 30 • {getTotalImpressions(contact)} total touches
+                </span>
+              </div>
+              <div className="space-y-2 p-4 bg-blue-50 rounded-lg">
+                {sequenceTasks.map(({ taskType, isComplete }) => (
+                  <div
+                    key={taskType}
+                    className={`flex items-center gap-3 p-3 rounded ${
+                      isComplete ? 'bg-green-100 border border-green-300' : 'bg-white border border-gray-200'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isComplete}
+                      onChange={() => !isComplete && onCompleteTask && onCompleteTask(contact, taskType)}
+                      className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500"
+                      disabled={isComplete || !onCompleteTask}
+                    />
+                    <span className={`flex-1 ${isComplete ? 'line-through text-gray-500' : 'text-gray-800 font-medium'}`}>
+                      {getTaskDescription(taskType, sequenceDay)}
+                    </span>
+                    {isComplete && (
+                      <span className="text-green-600 text-sm font-semibold">✓ Complete</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Call History */}
           {contact.callHistory && contact.callHistory.length > 0 ? (

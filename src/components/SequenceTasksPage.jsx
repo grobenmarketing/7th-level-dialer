@@ -366,17 +366,29 @@ function SequenceTasksPage({ onBackToDashboard }) {
       </div>
 
       {/* Contact Details Modal */}
-      {showContactDetails && selectedContact && (
-        <ContactDetailsModal
-          contact={selectedContact}
-          onClose={() => {
-            setShowContactDetails(false);
-            setSelectedContact(null);
-          }}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteContact}
-        />
-      )}
+      {showContactDetails && selectedContact && (() => {
+        // Prepare sequence tasks for the modal
+        const tasks = getContactTasks(selectedContact);
+        const sequenceTasksData = tasks.map(taskType => ({
+          taskType,
+          isComplete: isTaskComplete(selectedContact, taskType)
+        }));
+
+        return (
+          <ContactDetailsModal
+            contact={selectedContact}
+            onClose={() => {
+              setShowContactDetails(false);
+              setSelectedContact(null);
+            }}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteContact}
+            sequenceTasks={selectedContact.sequence_status === 'active' ? sequenceTasksData : null}
+            sequenceDay={selectedContact.sequence_current_day}
+            onCompleteTask={handleCompleteTask}
+          />
+        );
+      })()}
 
       {/* Edit Contact Modal */}
       {editingContact && (
