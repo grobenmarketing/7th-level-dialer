@@ -9,16 +9,16 @@ function TodaysSummary({ tasks, contacts }) {
 
   // Calculate total tasks due today (including cold calls as a rough estimate)
   const neverContactedCount = contacts.filter(c => c.sequence_status === 'never_contacted').length;
-  const totalTasksToday = summary.total;
-  const completedToday = tasks.filter(
-    t => t.status === 'completed' &&
-    t.completed_at &&
-    t.completed_at.split('T')[0] === today
-  ).length;
 
-  // Progress calculation
+  // Get all tasks that were due today (both pending and completed)
+  const tasksDueToday = tasks.filter(t => t.task_due_date === today);
+  const totalTasksToday = tasksDueToday.length;
+  const completedToday = tasksDueToday.filter(t => t.status === 'completed').length;
+
+  // Progress calculation (cap at 100%)
   const totalWork = totalTasksToday > 0 ? totalTasksToday : 1; // Avoid division by zero
-  const progress = totalTasksToday > 0 ? Math.round((completedToday / totalWork) * 100) : 0;
+  const rawProgress = totalTasksToday > 0 ? Math.round((completedToday / totalWork) * 100) : 0;
+  const progress = Math.min(rawProgress, 100); // Cap at 100%
 
   return (
     <div className="card bg-white mb-6">
