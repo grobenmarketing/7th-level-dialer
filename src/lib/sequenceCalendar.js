@@ -12,13 +12,12 @@ export const SEQUENCE_CALENDAR = {
   12: ['linkedin_dm_2'],
   14: ['social_engagement', 'linkedin_comment_3'],
   15: ['call', 'email_5'],
-  17: ['email_4'], // Repeat email task
   19: ['physical_mail', 'social_engagement'],
   21: ['linkedin_comment_4'],
   22: ['call'], // Final call (4th call)
-  24: ['email_5'], // Repeat email task
+  24: ['email_6'],
   26: ['linkedin_comment_5'],
-  28: ['social_engagement', 'email_6']
+  28: ['social_engagement']
 };
 
 // Call days (only 4 calls total in the sequence)

@@ -5,6 +5,7 @@
 - [Architecture](#architecture)
 - [File Structure](#file-structure)
 - [Key Concepts](#key-concepts)
+- [Touchpoint Sequences](#touchpoint-sequences)
 - [Code Simplifications (2024)](#code-simplifications-2024)
 - [Development Guide](#development-guide)
 
@@ -162,6 +163,54 @@ console.log(ratios.meetingsShowedRatio); // 0.85
 - Day 2: LinkedIn DM
 - Day 3: Call
 - ... (30 days total)
+
+## Touchpoint Sequences
+
+The dialer implements a **30-day, 27-touch multi-channel sequence** designed to build familiarity and engagement with prospects through strategic touchpoints.
+
+### What Are Touchpoints?
+
+Touchpoints are planned interactions across multiple channels (phone, email, LinkedIn, social media, physical mail) that create consistent visibility without overwhelming prospects.
+
+**For complete documentation on touchpoints, see: [TOUCHPOINT_GUIDE.md](../TOUCHPOINT_GUIDE.md)**
+
+### The 30-Day Sequence
+
+| Week | Focus | Key Touchpoints |
+|------|-------|----------------|
+| **Week 1** | Introduction | 4 calls, 2 emails, LinkedIn DM, social follow |
+| **Week 2** | Value Building | 2 emails, LinkedIn engagement, social activity |
+| **Week 3** | Persistence | 1 call, 1 email, physical mail, continued social |
+| **Week 4** | Final Push | Final call, final email, closing touches |
+
+### Touchpoint Types
+
+- **📞 Calls**: 4 total (Days 1, 8, 15, 22)
+- **📧 Emails**: 6 total (Days 1, 4, 8, 10, 15, 24)
+- **💼 LinkedIn DMs**: 2 total (Days 2, 12)
+- **💬 LinkedIn Comments**: 5 total (Days 5, 10, 14, 21, 26)
+- **👍 Social Engagement**: 4 total (Days 2, 6, 14, 19, 28)
+- **📬 Physical Mail**: 1 postcard (Day 19)
+
+### Modifying the Sequence
+
+To customize the touchpoint sequence, edit `src/lib/sequenceCalendar.js`:
+
+```javascript
+export const SEQUENCE_CALENDAR = {
+  1: ['call', 'email_1'],
+  2: ['linkedin_dm_1', 'social_follow', 'social_engagement'],
+  // ... add or modify days as needed
+};
+```
+
+The system automatically:
+- Skips tasks when channels are unavailable (e.g., no email = skip email tasks)
+- Tracks completion for each touchpoint type
+- Advances contacts through the sequence
+- Marks sequences complete after Day 30
+
+**For business context and best practices, see: [TOUCHPOINT_GUIDE.md](../TOUCHPOINT_GUIDE.md)**
 
 ### 6. Cloud Storage (`src/lib/cloudStorage.js`)
 
