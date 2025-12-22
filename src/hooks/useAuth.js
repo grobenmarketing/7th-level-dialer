@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 // This is the password - you can change it to anything you want
 // Or set it via environment variable: import.meta.env.VITE_APP_PASSWORD
-const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD || 'r7dialer2024';
+const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD || '0208';
 
 const AUTH_KEY = 'r7_auth_token';
 
