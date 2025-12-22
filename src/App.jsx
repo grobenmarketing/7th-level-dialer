@@ -34,10 +34,12 @@ function App() {
   })
   const [filterCriteria, setFilterCriteria] = useState(null)
 
-  // Show login screen if not authenticated
-  if (!isAuthenticated) {
-    return <Login onLogin={login} />;
-  }
+  // Reset to dashboard when authentication state changes to true (user logs in)
+  useEffect(() => {
+    if (isAuthenticated) {
+      setCurrentView('dashboard')
+    }
+  }, [isAuthenticated])
 
   // Persist view state to localStorage whenever it changes
   useEffect(() => {
@@ -88,6 +90,11 @@ function App() {
   const handleBackToFilters = () => navigate('filteredSession')
   const handleBackToDashboard = () => navigate('dashboard', { resetSession: true })
   const handleNextContact = () => setCurrentContactIndex(prev => prev + 1)
+
+  // Show login screen if not authenticated (after all hooks are defined)
+  if (!isAuthenticated) {
+    return <Login onLogin={login} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
