@@ -5,15 +5,16 @@ const OK_CODES_KEY = 'r7_ok_codes';
 
 // Default OK codes (matching current implementation)
 const DEFAULT_OK_CODES = [
-  { id: '1', label: 'No Answer', color: '#FFA500', countsAsPickup: false },
-  { id: '2', label: 'Busy', color: '#FF6347', countsAsPickup: false },
-  { id: '3', label: 'Wrong Number', color: '#DC143C', countsAsPickup: false },
-  { id: '4', label: 'Voicemail', color: '#FF8C00', countsAsPickup: false },
-  { id: '5', label: 'Gatekeeper', color: '#4682B4', countsAsPickup: true },
-  { id: '6', label: 'Not Interested', color: '#8B0000', countsAsPickup: true },
-  { id: '7', label: 'Interested', color: '#32CD32', countsAsPickup: true },
-  { id: '8', label: 'Meeting Booked', color: '#FFD700', countsAsPickup: true },
-  { id: '9', label: 'Call Back', color: '#87CEEB', countsAsPickup: true },
+  { id: '1', label: 'Not Interested', color: '#DC143C', countsAsPickup: true },
+  { id: '2', label: 'Do Not Call', color: '#8B0000', countsAsPickup: true },
+  { id: '3', label: 'Not A Fit', color: '#FF6347', countsAsPickup: true },
+  { id: '4', label: 'No Answer - Try Again', color: '#A9A9A9', countsAsPickup: false },
+  { id: '5', label: 'Owner Unavailable', color: '#FFD700', countsAsPickup: true },
+  { id: '6', label: 'Voicemail - Left Message', color: '#4682B4', countsAsPickup: false },
+  { id: '7', label: 'Call Back - Follow Up', color: '#87CEEB', countsAsPickup: true },
+  { id: '8', label: 'More Information Email', color: '#5F9EA0', countsAsPickup: true },
+  { id: '9', label: 'Interested / Finished Lead', color: '#32CD32', countsAsPickup: true },
+  { id: '10', label: 'Meeting Scheduled', color: '#00AA00', countsAsPickup: true },
 ];
 
 export function useOkCodes() {
