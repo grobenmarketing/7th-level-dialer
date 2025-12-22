@@ -12,6 +12,7 @@ A streamlined web-based sales calling system for cold prospecting and outbound s
 - ✅ Call outcome tracking (No Answer / Gatekeeper / Decision Maker)
 - ✅ OK code system (12 predefined codes)
 - ✅ Call history and notes per contact
+- ✅ **30-day, 27-touch multi-channel sequence automation**
 - ✅ Activity dashboard with key metrics
 - ✅ Full contact database viewer with search & filters
 - ✅ Detailed contact history modal
@@ -165,6 +166,17 @@ Buyer personas or ideal customer profiles used to:
 - Organize contacts by type
 - Track performance by segment
 - Tailor calling approaches
+
+### Multi-Touch Sequences
+The dialer implements a **30-day, 27-touch sequence** across multiple channels:
+- 📞 4 phone calls (weekly cadence)
+- 📧 6 emails (strategic timing)
+- 💼 2 LinkedIn DMs
+- 💬 5 LinkedIn comments
+- 👍 4 social media engagements
+- 📬 1 physical mail postcard
+
+**For complete touchpoint documentation, see: [TOUCHPOINT_GUIDE.md](TOUCHPOINT_GUIDE.md)**
 
 ## 📝 Data Storage
 
