@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import { storage, KEYS } from '../lib/cloudStorage';
+import ContactDetailsModal from './ContactDetailsModal';
+import ContactFormModal from './ContactFormModal';
 import {
   getTasksForDay,
   getTaskDescription,
@@ -20,12 +22,14 @@ import {
 } from '../lib/sequenceLogic';
 
 function SequenceTasksPage({ onBackToDashboard }) {
-  const { contacts, updateContact } = useContacts();
+  const { contacts, updateContact, deleteContact } = useContacts();
   const [sequenceTasks, setSequenceTasks] = useState([]);
   const [filter, setFilter] = useState('today'); // 'today', 'overdue', 'all', 'upcoming'
   const [selectedContact, setSelectedContact] = useState(null);
+  const [showContactDetails, setShowContactDetails] = useState(false);
   const [showDeadModal, setShowDeadModal] = useState(false);
   const [deadReason, setDeadReason] = useState('');
+  const [editingContact, setEditingContact] = useState(null);
 
   // Load sequence tasks from storage
   useEffect(() => {
@@ -109,6 +113,25 @@ function SequenceTasksPage({ onBackToDashboard }) {
     if (confirm(`Mark ${contact.companyName} as converted to client?`)) {
       await convertToClient(contact.id, updateContact);
     }
+  };
+
+  const handleEditClick = (contact) => {
+    setEditingContact(contact);
+    setShowContactDetails(false);
+  };
+
+  const handleEditContact = async (formData) => {
+    if (editingContact) {
+      await updateContact(editingContact.id, formData);
+      setEditingContact(null);
+      setSelectedContact(null);
+    }
+  };
+
+  const handleDeleteContact = async (contactId) => {
+    await deleteContact(contactId);
+    setSelectedContact(null);
+    setShowContactDetails(false);
   };
 
   // Get tasks for a contact
@@ -207,7 +230,13 @@ function SequenceTasksPage({ onBackToDashboard }) {
                           <div key={contact.id} className="bg-gray-50 rounded-lg p-4">
                             {/* Contact Header */}
                             <div className="flex items-center justify-between mb-3">
-                              <div>
+                              <div
+                                className="cursor-pointer hover:bg-gray-100 p-2 rounded transition-colors flex-1"
+                                onClick={() => {
+                                  setSelectedContact(contact);
+                                  setShowContactDetails(true);
+                                }}
+                              >
                                 <h4 className="font-bold text-gray-800">
                                   {contact.companyName}
                                 </h4>
@@ -311,7 +340,13 @@ function SequenceTasksPage({ onBackToDashboard }) {
                 .filter(c => c.sequence_status === 'paused')
                 .map(contact => (
                   <div key={contact.id} className="bg-yellow-50 rounded-lg p-4 flex items-center justify-between">
-                    <div>
+                    <div
+                      className="cursor-pointer hover:bg-yellow-100 p-2 rounded transition-colors flex-1"
+                      onClick={() => {
+                        setSelectedContact(contact);
+                        setShowContactDetails(true);
+                      }}
+                    >
                       <h4 className="font-bold text-gray-800">{contact.companyName}</h4>
                       <div className="text-sm text-gray-600 mt-1">
                         Paused on Day {contact.sequence_current_day} • {contact.calls_made} calls made
@@ -329,6 +364,40 @@ function SequenceTasksPage({ onBackToDashboard }) {
           </div>
         )}
       </div>
+
+      {/* Contact Details Modal */}
+      {showContactDetails && selectedContact && (() => {
+        // Prepare sequence tasks for the modal
+        const tasks = getContactTasks(selectedContact);
+        const sequenceTasksData = tasks.map(taskType => ({
+          taskType,
+          isComplete: isTaskComplete(selectedContact, taskType)
+        }));
+
+        return (
+          <ContactDetailsModal
+            contact={selectedContact}
+            onClose={() => {
+              setShowContactDetails(false);
+              setSelectedContact(null);
+            }}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteContact}
+            sequenceTasks={selectedContact.sequence_status === 'active' ? sequenceTasksData : null}
+            sequenceDay={selectedContact.sequence_current_day}
+            onCompleteTask={handleCompleteTask}
+          />
+        );
+      })()}
+
+      {/* Edit Contact Modal */}
+      {editingContact && (
+        <ContactFormModal
+          contact={editingContact}
+          onSave={handleEditContact}
+          onClose={() => setEditingContact(null)}
+        />
+      )}
 
       {/* Mark Dead Modal */}
       {showDeadModal && (
