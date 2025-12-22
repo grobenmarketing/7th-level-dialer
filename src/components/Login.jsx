@@ -6,12 +6,15 @@ function Login({ onLogin }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError(''); // Clear any previous errors
+
     const isValid = onLogin(password);
 
     if (!isValid) {
       setError('Incorrect password');
       setPassword('');
     }
+    // If valid, the parent component will re-render automatically
   };
 
   return (

@@ -34,10 +34,12 @@ function App() {
   })
   const [filterCriteria, setFilterCriteria] = useState(null)
 
-  // Show login screen if not authenticated
-  if (!isAuthenticated) {
-    return <Login onLogin={login} />;
-  }
+  // Reset to dashboard when authentication state changes to true (user logs in)
+  useEffect(() => {
+    if (isAuthenticated) {
+      setCurrentView('dashboard')
+    }
+  }, [isAuthenticated])
 
   // Persist view state to localStorage whenever it changes
   useEffect(() => {
@@ -58,66 +60,40 @@ function App() {
     }
   }, [filteredSession])
 
-  const handleStartCalling = () => {
-    setCurrentContactIndex(0)
-    setFilteredSession(null) // Clear any filtered session
-    setCurrentView('calling')
-  }
+  // Generic navigation handler - replaces 13 individual functions
+  const navigate = (view, options = {}) => {
+    setCurrentView(view)
 
-  const handleStartFilteredSession = () => {
-    setCurrentView('filteredSession')
-  }
-
-  const handleReviewFilters = (criteria) => {
-    setFilterCriteria(criteria)
-    setCurrentView('sessionReview')
-  }
-
-  const handleStartFilteredCalling = () => {
-    if (filterCriteria && filterCriteria.contacts) {
+    // Handle view-specific state changes
+    if (options.resetSession) {
+      setCurrentContactIndex(0)
+      setFilteredSession(null)
+      setFilterCriteria(null)
+    }
+    if (options.filterCriteria) {
+      setFilterCriteria(options.filterCriteria)
+    }
+    if (options.startFilteredCalling && filterCriteria?.contacts) {
       setFilteredSession(filterCriteria.contacts)
       setCurrentContactIndex(0)
-      setCurrentView('calling')
+    }
+    if (options.resetContactIndex) {
+      setCurrentContactIndex(0)
     }
   }
 
-  const handleBackToFilters = () => {
-    setCurrentView('filteredSession')
-  }
+  // Simplified handlers using navigate
+  const handleStartCalling = () => navigate('calling', { resetSession: true })
+  const handleStartFilteredSession = () => navigate('filteredSession')
+  const handleReviewFilters = (criteria) => navigate('sessionReview', { filterCriteria: criteria })
+  const handleStartFilteredCalling = () => navigate('calling', { startFilteredCalling: true })
+  const handleBackToFilters = () => navigate('filteredSession')
+  const handleBackToDashboard = () => navigate('dashboard', { resetSession: true })
+  const handleNextContact = () => setCurrentContactIndex(prev => prev + 1)
 
-  const handleBackToDashboard = () => {
-    setCurrentView('dashboard')
-    setCurrentContactIndex(0)
-    setFilteredSession(null) // Clear filtered session when returning to dashboard
-    setFilterCriteria(null)
-  }
-
-  const handleViewContacts = () => {
-    setCurrentView('contacts')
-  }
-
-  const handleViewAnalytics = () => {
-    setCurrentView('analytics')
-  }
-
-  const handleViewHowToUse = () => {
-    setCurrentView('howto')
-  }
-
-  const handleViewSettings = () => {
-    setCurrentView('settings')
-  }
-
-  const handleManageOkCodes = () => {
-    setCurrentView('okCodes')
-  }
-
-  const handleViewSequenceTasks = () => {
-    setCurrentView('sequenceTasks')
-  }
-
-  const handleNextContact = () => {
-    setCurrentContactIndex(prev => prev + 1)
+  // Show login screen if not authenticated (after all hooks are defined)
+  if (!isAuthenticated) {
+    return <Login onLogin={login} />;
   }
 
   return (
@@ -126,11 +102,11 @@ function App() {
         <Dashboard
           onStartCalling={handleStartCalling}
           onStartFilteredSession={handleStartFilteredSession}
-          onViewContacts={handleViewContacts}
-          onViewAnalytics={handleViewAnalytics}
-          onViewHowToUse={handleViewHowToUse}
-          onViewSettings={handleViewSettings}
-          onViewSequenceTasks={handleViewSequenceTasks}
+          onViewContacts={() => navigate('contacts')}
+          onViewAnalytics={() => navigate('analytics')}
+          onViewHowToUse={() => navigate('howto')}
+          onViewSettings={() => navigate('settings')}
+          onViewSequenceTasks={() => navigate('sequenceTasks')}
         />
       )}
       {currentView === 'filteredSession' && (
@@ -167,11 +143,11 @@ function App() {
         <Settings
           onBackToDashboard={handleBackToDashboard}
           onLogout={logout}
-          onManageOkCodes={handleManageOkCodes}
+          onManageOkCodes={() => navigate('okCodes')}
         />
       )}
       {currentView === 'okCodes' && (
-        <OkCodesAdmin onBack={handleViewSettings} />
+        <OkCodesAdmin onBack={() => navigate('settings')} />
       )}
       {currentView === 'sequenceTasks' && (
         <SequenceTasksPage onBackToDashboard={handleBackToDashboard} />

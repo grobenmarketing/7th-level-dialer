@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { storage, KEYS, migrateToCloud, isCloudStorageAvailable } from '../lib/cloudStorage';
+import { createContact, migrateContact, createContactFromCSV } from '../lib/contactSchema';
 
 export function useContacts() {
   const [contacts, setContacts] = useState([]);
@@ -22,33 +23,10 @@ export function useContacts() {
         let savedContacts = await storage.get(KEYS.CONTACTS, []);
 
         // MIGRATION: Add sequence fields to existing contacts that don't have them
-        let needsMigration = false;
-        savedContacts = savedContacts.map(contact => {
-          if (!contact.hasOwnProperty('sequence_status')) {
-            needsMigration = true;
-            return {
-              ...contact,
-              sequence_status: contact.callHistory && contact.callHistory.length > 0 ? 'active' : 'never_contacted',
-              sequence_current_day: contact.callHistory && contact.callHistory.length > 0 ? 1 : 0,
-              sequence_start_date: contact.lastCall || null,
-              last_contact_date: contact.lastCall || null,
-              has_email: !!contact.email || false,
-              has_linkedin: !!contact.linkedin || false,
-              has_social_media: false,
-              calls_made: contact.callHistory ? contact.callHistory.length : 0,
-              voicemails_left: 0,
-              emails_sent: 0,
-              linkedin_dms_sent: 0,
-              linkedin_comments_made: 0,
-              social_reactions: 0,
-              social_comments: 0,
-              physical_mail_sent: false,
-              dead_reason: null,
-              converted_date: null
-            };
-          }
-          return contact;
-        });
+        const needsMigration = savedContacts.some(c => !c.hasOwnProperty('sequence_status'));
+        if (needsMigration) {
+          savedContacts = savedContacts.map(migrateContact);
+        }
 
         // Save migrated contacts back to storage
         if (needsMigration) {
@@ -85,47 +63,7 @@ export function useContacts() {
   };
 
   const addContact = async (contact) => {
-    const newContact = {
-      id: Date.now().toString(),
-      companyName: contact.companyName || '',
-      phone: contact.phone || '',
-      website: contact.website || '',
-      address: contact.address || '',
-      linkedin: contact.linkedin || '',
-      industry: contact.industry || '',
-
-      // Call History
-      callHistory: [],
-
-      // Metadata
-      totalDials: 0,
-      lastCall: null,
-      nextFollowUp: null,
-      currentOkCode: null,
-      needsEmail: false,
-      status: 'active',
-      createdAt: new Date().toISOString(),
-
-      // Sequence Fields (NEW)
-      sequence_status: 'never_contacted', // 'never_contacted', 'active', 'paused', 'dead', 'converted', 'completed'
-      sequence_current_day: 0,
-      sequence_start_date: null,
-      last_contact_date: null,
-      has_email: !!contact.email || false,
-      has_linkedin: !!contact.linkedin || false,
-      has_social_media: false,
-      calls_made: 0,
-      voicemails_left: 0,
-      emails_sent: 0,
-      linkedin_dms_sent: 0,
-      linkedin_comments_made: 0,
-      social_reactions: 0,
-      social_comments: 0,
-      physical_mail_sent: false,
-      dead_reason: null,
-      converted_date: null
-    };
-
+    const newContact = createContact(contact);
     const updatedContacts = [...contacts, newContact];
     await saveContacts(updatedContacts);
     return newContact;
@@ -191,52 +129,10 @@ export function useContacts() {
         const values = lines[i].split(',').map(v => v.trim());
 
         if (values.length < 2 || !values[0]) {
-          // Skip invalid rows (empty or missing company name)
-          continue;
+          continue; // Skip invalid rows
         }
 
-        const contactData = {
-          id: Date.now().toString() + '-' + i,
-          companyName: values[0] || '',
-          phone: values[1] || '',
-          website: values[2] || '',
-          address: values[3] || '',
-          linkedin: values[4] || '',
-          industry: values[5] || '',
-
-          // Call History
-          callHistory: [],
-
-          // Metadata
-          totalDials: 0,
-          lastCall: null,
-          nextFollowUp: null,
-          currentOkCode: null,
-          needsEmail: false,
-          status: 'active',
-          createdAt: new Date().toISOString(),
-
-          // Sequence Fields (NEW)
-          sequence_status: 'never_contacted',
-          sequence_current_day: 0,
-          sequence_start_date: null,
-          last_contact_date: null,
-          has_email: false,
-          has_linkedin: !!(values[4] || '').trim(),
-          has_social_media: false,
-          calls_made: 0,
-          voicemails_left: 0,
-          emails_sent: 0,
-          linkedin_dms_sent: 0,
-          linkedin_comments_made: 0,
-          social_reactions: 0,
-          social_comments: 0,
-          physical_mail_sent: false,
-          dead_reason: null,
-          converted_date: null
-        };
-
-        newContactsData.push(contactData);
+        newContactsData.push(createContactFromCSV(values, i));
       }
 
       // Batch add all contacts at once to avoid race conditions
