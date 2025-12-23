@@ -17,7 +17,8 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
     getActiveContacts,
     getStats,
     importFromCSV,
-    exportToCSV
+    exportToCSV,
+    reloadContacts
   } = useContacts();
 
   const stats = getStats();
@@ -26,14 +27,23 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   const [editingContact, setEditingContact] = useState(null);
   const [sequenceTasks, setSequenceTasks] = useState([]);
 
-  // Load sequence tasks
+  // Load/reload sequence tasks and contacts whenever Dashboard mounts
   useEffect(() => {
-    loadSequenceTasks();
-  }, []);
+    const refreshData = async () => {
+      console.log('🔄 Dashboard mounted - refreshing data...');
+      await Promise.all([
+        loadSequenceTasks(),
+        reloadContacts()
+      ]);
+      console.log('✅ Dashboard data refreshed');
+    };
+    refreshData();
+  }, [reloadContacts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadSequenceTasks = async () => {
     const tasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
     setSequenceTasks(tasks);
+    console.log('📋 Loaded', tasks.length, 'sequence tasks');
   };
 
   const handleImport = (e) => {
