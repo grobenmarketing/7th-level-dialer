@@ -127,15 +127,19 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
       // SEQUENCE LOGIC: Auto-enter into sequence on first call
       if (currentContact.sequence_status === 'never_contacted') {
         console.log('🔄 Entering contact into sequence...');
+
+        // Get today's date
+        const today = new Date().toISOString().split('T')[0];
+
+        // Enter sequence with today as start date
         await enterSequence(currentContact.id, updateContact);
 
         // Generate sequence tasks for the full 30-day sequence with due dates
-        const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
         const updatedContact = {
           ...currentContact,
           sequence_status: 'active',
-          sequence_current_day: 1, // Start on Day 1 - sequence begins tomorrow
-          sequence_start_date: tomorrow,
+          sequence_current_day: 1, // We're on Day 1 - the cold call we just made IS the Day 1 call
+          sequence_start_date: today, // Sequence starts today
           calls_made: 1,
           has_email: currentContact.has_email || !!currentContact.email,
           has_linkedin: currentContact.has_linkedin || !!currentContact.linkedin,
@@ -143,7 +147,10 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
         };
         await generateSequenceTasks(updatedContact);
 
-        console.log('✅ Contact entered sequence - Day 1 tasks will begin tomorrow!');
+        // Mark the Day 1 call task as complete (since we just did it)
+        // Note: Day 1 call tasks are not generated (see sequenceLogic.js line 197-200)
+        // The cold call we just made counts as the completed Day 1 call
+        console.log('✅ Contact entered sequence on Day 1 - cold call counts as Day 1 call complete!');
       } else if (currentContact.sequence_status === 'active') {
         // This is a follow-up call - update counters
         console.log('📞 Follow-up call - updating sequence...');
