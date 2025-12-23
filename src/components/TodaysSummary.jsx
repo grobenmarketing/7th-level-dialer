@@ -17,6 +17,15 @@ function TodaysSummary({ tasks, contacts }) {
     c => c.sequence_start_date === today
   ).length;
 
+  // Debug logging
+  console.log('📊 Today\'s Workload Debug:', {
+    today,
+    totalContacts: contacts.length,
+    coldCallsCompletedToday,
+    contactsWithSequenceStartDate: contacts.filter(c => c.sequence_start_date).length,
+    sampleDates: contacts.slice(0, 3).map(c => ({ id: c.id, sequence_start_date: c.sequence_start_date }))
+  });
+
   // Get all tasks that were due today (both pending and completed)
   const tasksDueToday = tasks.filter(t => t.task_due_date === today);
   const totalTasksToday = tasksDueToday.length;
