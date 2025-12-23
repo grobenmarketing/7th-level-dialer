@@ -1,42 +1,15 @@
-# 📞 R7 Creative Dialer
+# R7 Creative Dialer
 
-A streamlined web-based sales calling system for cold prospecting and outbound sales teams.
+A web-based sales calling system for cold prospecting and outbound sales teams.
 
-## 🚀 Features
-
-### Core Functionality
-- ✅ Modern React + Vite + Tailwind CSS stack
-- ✅ Contact management with cloud storage (Netlify Blob)
-- ✅ CSV import/export functionality
-- ✅ Streamlined calling interface
-- ✅ Call outcome tracking (No Answer / Gatekeeper / Decision Maker)
-- ✅ OK code system (12 predefined codes)
-- ✅ Call history and notes per contact
-- ✅ **30-day, 27-touch multi-channel sequence automation**
-- ✅ Activity dashboard with key metrics
-- ✅ Full contact database viewer with search & filters
-- ✅ Detailed contact history modal
-- ✅ Live call timer with automatic duration tracking
-- ✅ Avatar/ICP management system
-- ✅ Mobile-responsive design
-- ✅ One-click deployment to Netlify
-
-### Analytics Dashboard
-- 📊 Contact rate (% reaching decision makers)
-- 📊 Meeting rate (conversion to meetings/qualified leads)
-- 📊 Call duration analytics
-- 📊 Call outcome breakdown (DM/GK/NA)
-- 📊 OK code distribution
-- 📊 Call history tracking
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend:** React 18 + Vite 6
 - **Styling:** Tailwind CSS 3.4
 - **Storage:** Netlify Blob (cloud) with localStorage fallback
 - **Deployment:** Netlify
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 - Node.js 16+ and npm
@@ -64,29 +37,20 @@ npm run dev
 npm run build
 ```
 
-## 🌐 Deployment to Netlify
+## Deployment to Netlify
 
-### Option 1: Deploy via Netlify CLI (Recommended)
+### Via Netlify CLI
 
-1. Install Netlify CLI:
 ```bash
 npm install -g netlify-cli
-```
-
-2. Login to Netlify:
-```bash
 netlify login
-```
-
-3. Initialize and deploy:
-```bash
 netlify init
 netlify deploy --prod
 ```
 
-### Option 2: Deploy via Netlify Dashboard
+### Via Netlify Dashboard
 
-1. Push your code to GitHub
+1. Push code to GitHub
 2. Go to [Netlify](https://netlify.com)
 3. Click "Add new site" → "Import an existing project"
 4. Select your GitHub repository
@@ -95,33 +59,7 @@ netlify deploy --prod
    - Publish directory: `dist`
 6. Click "Deploy site"
 
-## 📊 How to Use
-
-### 1. Import Contacts
-- Click "Import CSV" on the dashboard
-- Upload a CSV file with columns: Company Name, Phone, Website, Industry, Company Size
-- Contacts will be loaded into your active list
-
-### 2. Create Avatars (Optional)
-- Define buyer personas or ideal customer profiles
-- Assign contacts to avatars for better organization
-- Track performance by avatar type
-
-### 3. Start Calling
-- Click "Start Calling" to begin your session
-- The system will guide you through each contact
-- For each call:
-  1. Select outcome (NA/GK/DM)
-  2. Choose an OK code
-  3. Add notes
-  4. Save & move to next contact
-
-### 4. Review Analytics
-- Track your performance metrics
-- Identify patterns in call outcomes
-- Optimize your approach based on data
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
@@ -142,60 +80,22 @@ src/
 └── App.jsx           # Main app component
 ```
 
-## 🔑 Key Concepts
+## Key Features
 
-### OK Codes
-Pre-defined outcome codes for categorizing calls:
-- **OK-01:** No Answer
-- **OK-02:** Not Interested
-- **OK-03:** Hung Up
-- **OK-04:** Gatekeeper Block
-- **OK-05:** DM Unavailable
-- **OK-06:** Voicemail - Left Message
-- **OK-07:** Not A Fit
-- **OK-08:** Meeting Scheduled ✅
-- **OK-09:** Wrong Contact
+- Contact management with CSV import/export
+- Calling interface with call outcome tracking (No Answer / Gatekeeper / Decision Maker)
+- OK code system for call categorization
+- 30-day, 27-touch multi-channel sequence automation
+- Activity dashboard with analytics
+- Avatar/ICP management system
+- Live call timer with duration tracking
 
-### Call Outcomes
-- **NA (No Answer):** Voicemail, busy, or no response
-- **GK (Gatekeeper):** Reached receptionist or assistant
-- **DM (Decision Maker):** Spoke with the prospect directly
-
-### Avatars/ICPs
-Buyer personas or ideal customer profiles used to:
-- Organize contacts by type
-- Track performance by segment
-- Tailor calling approaches
-
-### Multi-Touch Sequences
-The dialer implements a **30-day, 27-touch sequence** across multiple channels:
-- 📞 4 phone calls (weekly cadence)
-- 📧 6 emails (strategic timing)
-- 💼 2 LinkedIn DMs
-- 💬 5 LinkedIn comments
-- 👍 4 social media engagements
-- 📬 1 physical mail postcard
-
-**For complete touchpoint documentation, see: [TOUCHPOINT_GUIDE.md](TOUCHPOINT_GUIDE.md)**
-
-## 📝 Data Storage
+## Data Storage
 
 - **Development:** Uses browser localStorage
 - **Production:** Automatically migrates to Netlify Blob storage
 - **Backup:** Export contacts to CSV anytime
 
-## 🤝 Contributing
+## License
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📄 License
-
-This project is open source and available under the MIT License.
-
-## 🙏 Acknowledgments
-
-Built with modern web technologies for sales teams who need a simple, effective calling system.
-
----
-
-**Happy Calling!** 📞✨
+MIT License
