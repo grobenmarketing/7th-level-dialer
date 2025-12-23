@@ -12,14 +12,29 @@ function TodaysSummary({ tasks, contacts }) {
   // Get daily cold call goal from localStorage
   const coldCallGoal = parseInt(localStorage.getItem(DAILY_GOAL_KEY) || '25', 10);
 
+  // Count cold calls completed today (contacts that started their sequence today)
+  const coldCallsCompletedToday = contacts.filter(
+    c => c.sequence_start_date === today
+  ).length;
+
+  // Debug logging
+  console.log('📊 Today\'s Workload Debug:', {
+    today,
+    totalContacts: contacts.length,
+    coldCallsCompletedToday,
+    contactsWithSequenceStartDate: contacts.filter(c => c.sequence_start_date).length,
+    sampleDates: contacts.slice(0, 3).map(c => ({ id: c.id, sequence_start_date: c.sequence_start_date }))
+  });
+
   // Get all tasks that were due today (both pending and completed)
   const tasksDueToday = tasks.filter(t => t.task_due_date === today);
   const totalTasksToday = tasksDueToday.length;
   const completedToday = tasksDueToday.filter(t => t.status === 'completed').length;
 
-  // Progress calculation (cap at 100%)
-  const totalWork = totalTasksToday > 0 ? totalTasksToday : 1; // Avoid division by zero
-  const rawProgress = totalTasksToday > 0 ? Math.round((completedToday / totalWork) * 100) : 0;
+  // Progress calculation including cold calls (cap at 100%)
+  const totalWork = totalTasksToday + coldCallGoal;
+  const totalCompleted = completedToday + coldCallsCompletedToday;
+  const rawProgress = totalWork > 0 ? Math.round((totalCompleted / totalWork) * 100) : 0;
   const progress = Math.min(rawProgress, 100); // Cap at 100%
 
   return (
@@ -74,15 +89,18 @@ function TodaysSummary({ tasks, contacts }) {
       )}
 
       {/* Progress */}
-      {totalTasksToday > 0 && (
+      {totalWork > 0 && (
         <div>
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium text-gray-700">
               Today's Progress
             </span>
             <span className="text-sm text-gray-600">
-              {completedToday} of {totalTasksToday} tasks complete ({progress}%)
+              {totalCompleted} of {totalWork} complete ({progress}%)
             </span>
+          </div>
+          <div className="text-xs text-gray-500 text-right mb-2">
+            {completedToday}/{totalTasksToday} sequence tasks • {coldCallsCompletedToday}/{coldCallGoal} cold calls
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3">
             <div
@@ -95,12 +113,12 @@ function TodaysSummary({ tasks, contacts }) {
 
       {/* Summary Message */}
       <div className="mt-4 text-center">
-        {totalTasksToday === 0 && overdueCount === 0 && (
+        {totalTasksToday === 0 && coldCallGoal > 0 && coldCallsCompletedToday === 0 && overdueCount === 0 && (
           <p className="text-gray-500 text-sm">
             ✅ No sequence tasks due today. Focus on cold calls!
           </p>
         )}
-        {totalTasksToday > 0 && completedToday === totalTasksToday && (
+        {totalCompleted === totalWork && totalWork > 0 && (
           <p className="text-green-600 font-bold text-sm">
             🎉 All tasks for today complete! Great work!
           </p>

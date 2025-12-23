@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { storage, KEYS, migrateToCloud, isCloudStorageAvailable } from '../lib/cloudStorage';
 import { createContact, migrateContact, createContactFromCSV } from '../lib/contactSchema';
 
@@ -6,55 +6,45 @@ export function useContacts() {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Extracted load function that can be called manually (useCallback to stabilize reference)
+  const loadContacts = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Run migration once if in production
+      if (isCloudStorageAvailable()) {
+        await migrateToCloud();
+      }
+
+      // Load contacts
+      let savedContacts = await storage.get(KEYS.CONTACTS, []);
+
+      // MIGRATION: Add sequence fields to existing contacts that don't have them
+      const needsMigration = savedContacts.some(c => !c.hasOwnProperty('sequence_status'));
+      if (needsMigration) {
+        savedContacts = savedContacts.map(migrateContact);
+      }
+
+      // Save migrated contacts back to storage
+      if (needsMigration) {
+        await storage.set(KEYS.CONTACTS, savedContacts);
+        console.log('✅ Migrated contacts to include sequence fields');
+      }
+
+      setContacts(savedContacts);
+      console.log('📋 Loaded', savedContacts.length, 'contacts from storage');
+    } catch (error) {
+      console.error('Error loading contacts:', error);
+      setContacts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Empty deps - this function doesn't depend on any external values
+
   // Load contacts from storage on mount (with automatic migration to cloud)
   useEffect(() => {
-    let mounted = true;
-
-    const loadContacts = async () => {
-      try {
-        setLoading(true);
-
-        // Run migration once if in production
-        if (isCloudStorageAvailable()) {
-          await migrateToCloud();
-        }
-
-        // Load contacts
-        let savedContacts = await storage.get(KEYS.CONTACTS, []);
-
-        // MIGRATION: Add sequence fields to existing contacts that don't have them
-        const needsMigration = savedContacts.some(c => !c.hasOwnProperty('sequence_status'));
-        if (needsMigration) {
-          savedContacts = savedContacts.map(migrateContact);
-        }
-
-        // Save migrated contacts back to storage
-        if (needsMigration) {
-          await storage.set(KEYS.CONTACTS, savedContacts);
-          console.log('✅ Migrated contacts to include sequence fields');
-        }
-
-        if (mounted) {
-          setContacts(savedContacts);
-        }
-      } catch (error) {
-        console.error('Error loading contacts:', error);
-        if (mounted) {
-          setContacts([]);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
     loadContacts();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  }, [loadContacts]);
 
   // Save contacts to storage whenever they change
   const saveContacts = async (updatedContacts) => {
@@ -220,6 +210,7 @@ export function useContacts() {
     getActiveContacts,
     getStats,
     resetAllStats,
+    reloadContacts: loadContacts,
     loading
   };
 }
