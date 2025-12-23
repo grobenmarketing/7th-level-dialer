@@ -259,14 +259,6 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
                 </button>
 
                 <button
-                  onClick={handleLoadRealisticTestData}
-                  className="p-3 rounded-lg bg-pink-100 hover:bg-pink-200 transition-colors text-center"
-                >
-                  <div className="text-2xl mb-1">🎲</div>
-                  <div className="text-xs font-medium text-pink-900">Add 75 Test</div>
-                </button>
-
-                <button
                   onClick={onViewSettings}
                   className="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors text-center"
                 >
