@@ -1,5 +1,7 @@
 import { getTodaysTaskSummary, getOverdueCount, formatDate, getToday } from '../lib/taskScheduler';
 
+const DAILY_GOAL_KEY = 'r7_cold_calls_daily_goal';
+
 function TodaysSummary({ tasks, contacts }) {
   const today = getToday();
   const todayFormatted = formatDate(today);
@@ -7,8 +9,8 @@ function TodaysSummary({ tasks, contacts }) {
   const summary = getTodaysTaskSummary(tasks);
   const overdueCount = getOverdueCount(tasks);
 
-  // Calculate total tasks due today (including cold calls as a rough estimate)
-  const neverContactedCount = contacts.filter(c => c.sequence_status === 'never_contacted').length;
+  // Get daily cold call goal from localStorage
+  const coldCallGoal = parseInt(localStorage.getItem(DAILY_GOAL_KEY) || '25', 10);
 
   // Get all tasks that were due today (both pending and completed)
   const tasksDueToday = tasks.filter(t => t.task_due_date === today);
@@ -47,8 +49,8 @@ function TodaysSummary({ tasks, contacts }) {
         </div>
 
         <div className="text-center p-3 bg-teal-50 rounded-lg">
-          <div className="text-2xl font-bold text-teal-600">{neverContactedCount}</div>
-          <div className="text-xs text-gray-600">Cold Calls Available</div>
+          <div className="text-2xl font-bold text-teal-600">{coldCallGoal}</div>
+          <div className="text-xs text-gray-600">Cold Calls To Do</div>
         </div>
       </div>
 

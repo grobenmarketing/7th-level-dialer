@@ -1,13 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getNeverContactedLeads } from '../lib/taskScheduler';
+
+const DAILY_GOAL_KEY = 'r7_cold_calls_daily_goal';
 
 function ColdCallsPanel({ contacts, onStartCalling }) {
   const [showAll, setShowAll] = useState(false);
+
+  // Daily goal state with localStorage persistence
+  const [dailyGoal, setDailyGoal] = useState(() => {
+    const saved = localStorage.getItem(DAILY_GOAL_KEY);
+    return saved ? parseInt(saved, 10) : 25;
+  });
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [tempGoal, setTempGoal] = useState(dailyGoal);
+
+  // Persist daily goal to localStorage
+  useEffect(() => {
+    localStorage.setItem(DAILY_GOAL_KEY, dailyGoal.toString());
+  }, [dailyGoal]);
 
   const neverContacted = getNeverContactedLeads(contacts);
   const displayLimit = 10;
   const displayedContacts = showAll ? neverContacted : neverContacted.slice(0, displayLimit);
   const hasMore = neverContacted.length > displayLimit;
+
+  const handleSaveGoal = () => {
+    if (tempGoal > 0) {
+      setDailyGoal(tempGoal);
+      setIsEditingGoal(false);
+    }
+  };
+
+  const handleStartCalling = () => {
+    // Pass limited contacts based on daily goal
+    const limitedContacts = neverContacted.slice(0, dailyGoal);
+    onStartCalling(limitedContacts);
+  };
 
   return (
     <div className="card bg-white h-full">
@@ -30,17 +58,72 @@ function ColdCallsPanel({ contacts, onStartCalling }) {
         </div>
       ) : (
         <>
+          {/* Daily Goal Setting */}
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium text-gray-700">
+                Today's Cold Call Goal:
+              </div>
+              {!isEditingGoal ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-blue-700">{dailyGoal}</span>
+                  <button
+                    onClick={() => {
+                      setTempGoal(dailyGoal);
+                      setIsEditingGoal(true);
+                    }}
+                    className="text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition-colors"
+                  >
+                    Edit
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={tempGoal}
+                    onChange={(e) => setTempGoal(parseInt(e.target.value) || 1)}
+                    className="w-16 px-2 py-1 border border-blue-300 rounded text-center text-sm"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSaveGoal}
+                    className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setIsEditingGoal(false)}
+                    className="text-xs px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="text-xs text-gray-600 mt-1">
+              Adjust based on your schedule and sequence tasks
+            </div>
+          </div>
+
           {/* Quick Start Button */}
           <button
-            onClick={onStartCalling}
-            className="w-full mb-4 p-4 rounded-lg text-center bg-gradient-to-br from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 transition-all transform hover:scale-105 shadow-lg"
+            onClick={handleStartCalling}
+            className="w-full mb-2 p-4 rounded-lg text-center bg-gradient-to-br from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 transition-all transform hover:scale-105 shadow-lg"
           >
             <div className="text-2xl mb-1">📞</div>
             <div className="text-lg font-bold">Start Calling Session</div>
             <div className="text-sm mt-1 opacity-90">
-              {neverContacted.length} contacts ready
+              Load {Math.min(dailyGoal, neverContacted.length)} contacts for today
             </div>
           </button>
+
+          {/* Total Available Contacts Info */}
+          <div className="text-center text-xs text-gray-600 mb-4 py-2 bg-gray-50 rounded border border-gray-200">
+            <span className="font-medium">{neverContacted.length} total contacts</span> available to call
+          </div>
 
           {/* Contact List */}
           <div className="space-y-2">
@@ -83,16 +166,6 @@ function ColdCallsPanel({ contacts, onStartCalling }) {
             )}
           </div>
 
-          {/* Stats Footer */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="text-xs text-gray-600 text-center">
-              💡 <span className="font-medium">Goal: ~25 calls/day</span>
-              <br />
-              <span className="text-gray-500">
-                Adjust based on sequence tasks and meetings
-              </span>
-            </div>
-          </div>
         </>
       )}
     </div>

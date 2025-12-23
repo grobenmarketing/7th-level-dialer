@@ -83,7 +83,15 @@ function App() {
   }
 
   // Simplified handlers using navigate
-  const handleStartCalling = () => navigate('calling', { resetSession: true })
+  const handleStartCalling = (limitedContacts = null) => {
+    if (limitedContacts) {
+      setFilteredSession(limitedContacts);
+      setCurrentContactIndex(0);
+      setCurrentView('calling');
+    } else {
+      navigate('calling', { resetSession: true });
+    }
+  }
   const handleStartFilteredSession = () => navigate('filteredSession')
   const handleReviewFilters = (criteria) => navigate('sessionReview', { filterCriteria: criteria })
   const handleStartFilteredCalling = () => navigate('calling', { startFilteredCalling: true })
