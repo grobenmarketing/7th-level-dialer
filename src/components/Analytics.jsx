@@ -3,6 +3,7 @@ import { useStats } from '../hooks/useStats';
 import { useKPI } from '../hooks/useKPI';
 import { useContacts } from '../hooks/useContacts';
 import { formatDuration } from '../lib/constants';
+import eventBus, { EVENTS } from '../lib/eventBus';
 
 function Analytics({ onBackToDashboard }) {
   const {
@@ -34,6 +35,7 @@ function Analytics({ onBackToDashboard }) {
   const [view, setView] = useState('kpi'); // 'kpi' or 'overview'
   const [syncing, setSyncing] = useState(false);
   const hasAutoSynced = useRef(false);
+  const [refreshCounter, setRefreshCounter] = useState(0); // Trigger re-calculation of stats
 
   const activityStats = getActivityStats();
   const okCodeDistribution = getOKCodeDistribution();
@@ -72,6 +74,34 @@ function Analytics({ onBackToDashboard }) {
 
     autoSyncIfNeeded();
   }, [contacts, kpiData, getAllCallRecords, rebuildFromCallHistory]);
+
+  // Subscribe to real-time KPI updates
+  useEffect(() => {
+    const unsubscribe = eventBus.on(EVENTS.KPI_UPDATED, () => {
+      // Force refresh of all stats by incrementing counter
+      setRefreshCounter(prev => prev + 1);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Refresh data when page becomes visible (e.g., returning from calling interface)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page became visible - refresh stats
+        setRefreshCounter(prev => prev + 1);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const handleEditDay = async (date, field, value) => {
     await updateKPIForDate(date, { [field]: parseInt(value) || 0 });

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { storage, KEYS } from '../lib/cloudStorage';
+import eventBus, { EVENTS } from '../lib/eventBus';
 
 // Get start of current week (Monday)
 const getWeekStart = (date = new Date()) => {
@@ -49,10 +50,29 @@ export function useKPI() {
     };
   }, []);
 
+  // Listen for KPI updates from other component instances (real-time sync)
+  useEffect(() => {
+    const handleKPIUpdate = async (updatedKPI) => {
+      // Only update if the data is different from current state
+      // This prevents infinite loops since we emit events in saveKPI
+      if (JSON.stringify(updatedKPI) !== JSON.stringify(kpiData)) {
+        setKpiData(updatedKPI);
+      }
+    };
+
+    const unsubscribe = eventBus.on(EVENTS.KPI_UPDATED, handleKPIUpdate);
+
+    return () => {
+      unsubscribe();
+    };
+  }, [kpiData]);
+
   // Save KPI data to storage
   const saveKPI = async (updatedKPI) => {
     setKpiData(updatedKPI);
     await storage.set(KEYS.KPI_DATA, updatedKPI);
+    // Emit event to notify other components of KPI update
+    eventBus.emit(EVENTS.KPI_UPDATED, updatedKPI);
   };
 
   // Save weekly targets
