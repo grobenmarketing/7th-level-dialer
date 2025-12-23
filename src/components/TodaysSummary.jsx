@@ -38,7 +38,7 @@ function TodaysSummary({ tasks, contacts }) {
   const progress = Math.min(rawProgress, 100); // Cap at 100%
 
   return (
-    <div className="card bg-white mb-6">
+    <div className="card bg-white mb-6 border-2 border-r7-navy">
       <div className="text-center mb-4">
         <h2 className="text-2xl font-bold text-r7-blue">📋 Today's Workload</h2>
         <p className="text-gray-600 mt-1">{todayFormatted}</p>
@@ -104,7 +104,7 @@ function TodaysSummary({ tasks, contacts }) {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3">
             <div
-              className="bg-gradient-to-r from-r7-blue to-blue-600 h-3 rounded-full transition-all duration-500"
+              className="bg-r7-red h-3 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>

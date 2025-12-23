@@ -132,7 +132,7 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
             </div>
             <button
               onClick={onManageOkCodes}
-              className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all"
+              className="w-full px-6 py-3 bg-r7-navy hover:bg-r7-dark text-white font-bold rounded-lg transition-all"
             >
               Manage OK Codes →
             </button>
@@ -162,13 +162,13 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
             {!showResetContactsDialog ? (
               <button
                 onClick={() => setShowResetContactsDialog(true)}
-                className="w-full px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg transition-all"
+                className="w-full px-6 py-3 bg-r7-red-dark hover:bg-red-900 text-white font-bold rounded-lg transition-all"
               >
                 Reset to Fresh Contacts
               </button>
             ) : (
-              <div className="bg-white border-2 border-teal-300 rounded-lg p-4">
-                <p className="text-center font-bold text-teal-800 mb-4">
+              <div className="bg-white border-2 border-red-300 rounded-lg p-4">
+                <p className="text-center font-bold text-red-800 mb-4">
                   This will delete all existing contacts and tasks. Continue?
                 </p>
                 <div className="grid grid-cols-2 gap-3">
@@ -182,7 +182,7 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
                   <button
                     onClick={handleResetContacts}
                     disabled={isResettingContacts}
-                    className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                    className="px-4 py-2 bg-r7-red-dark hover:bg-red-900 text-white font-bold rounded-lg transition-all disabled:opacity-50"
                   >
                     {isResettingContacts ? 'Resetting...' : 'Yes, Create Fresh Contacts'}
                   </button>
@@ -216,13 +216,13 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
             {!showResetKPIDialog ? (
               <button
                 onClick={() => setShowResetKPIDialog(true)}
-                className="w-full px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg transition-all"
+                className="w-full px-6 py-3 bg-r7-red-dark hover:bg-red-900 text-white font-bold rounded-lg transition-all"
               >
                 Reset KPI Data
               </button>
             ) : (
-              <div className="bg-white border-2 border-orange-300 rounded-lg p-4">
-                <p className="text-center font-bold text-orange-800 mb-4">
+              <div className="bg-white border-2 border-red-300 rounded-lg p-4">
+                <p className="text-center font-bold text-red-800 mb-4">
                   This will reset all KPI metrics. Continue?
                 </p>
                 <div className="grid grid-cols-2 gap-3">
@@ -236,7 +236,7 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
                   <button
                     onClick={handleResetKPI}
                     disabled={isResettingKPI}
-                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                    className="px-4 py-2 bg-r7-red-dark hover:bg-red-900 text-white font-bold rounded-lg transition-all disabled:opacity-50"
                   >
                     {isResettingKPI ? 'Resetting...' : 'Yes, Reset KPI Data'}
                   </button>
@@ -270,7 +270,7 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
             {!showConfirmDialog ? (
               <button
                 onClick={() => setShowConfirmDialog(true)}
-                className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all"
+                className="w-full px-6 py-3 bg-r7-red-dark hover:bg-red-900 text-white font-bold rounded-lg transition-all"
               >
                 Reset All Stats
               </button>
@@ -290,7 +290,7 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
                   <button
                     onClick={handleResetStats}
                     disabled={isResetting}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                    className="px-4 py-2 bg-r7-red-dark hover:bg-red-900 text-white font-bold rounded-lg transition-all disabled:opacity-50"
                   >
                     {isResetting ? 'Resetting...' : 'Yes, Reset Everything'}
                   </button>
