@@ -233,46 +233,56 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
           /* Mission Control Dashboard */
           <>
             {/* Header: Centered Quote */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <p className="text-lg text-gray-600 font-light italic">
                 Detach from the outcomes and your income will always increase.
               </p>
             </div>
 
-            {/* Search Bar with Glass-morphism */}
-            <div className="mb-8 relative">
-              <div className="backdrop-blur-lg bg-white/70 rounded-2xl shadow-xl p-6 border border-white/50">
+            {/* Search Bar & Import - Compact */}
+            <div className="mb-6 flex gap-2 justify-end items-center">
+              <label className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg cursor-pointer transition-colors shadow-sm">
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleImport}
+                  className="hidden"
+                />
+                Import CSV
+              </label>
+
+              <div className="relative max-w-md">
                 <input
                   type="text"
-                  placeholder="Search contacts instantly..."
+                  placeholder="Search contacts..."
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full text-lg px-6 py-4 rounded-xl border-2 border-gray-200 focus:border-r7-navy focus:outline-none focus:ring-2 focus:ring-r7-navy/20 transition-all"
+                  className="w-full text-sm px-4 py-2 rounded-lg border border-gray-300 focus:border-r7-navy focus:outline-none focus:ring-1 focus:ring-r7-navy/20 transition-all bg-white shadow-sm"
                 />
-              </div>
 
-              {/* Search Results Dropdown */}
-              {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full mt-2 w-full bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
-                  {searchResults.map(contact => (
-                    <div
-                      key={contact.id}
-                      onClick={() => {
-                        setSelectedContact(contact);
-                        setShowSearchResults(false);
-                        setSearchQuery('');
-                      }}
-                      className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                    >
-                      <div className="font-semibold text-r7-navy">{contact.companyName}</div>
-                      <div className="text-sm text-gray-600">{contact.phone}</div>
-                      {contact.industry && (
-                        <div className="text-xs text-gray-500 mt-1">{contact.industry}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                {/* Search Results Dropdown */}
+                {showSearchResults && searchResults.length > 0 && (
+                  <div className="absolute top-full mt-1 w-full bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-64 overflow-y-auto">
+                    {searchResults.map(contact => (
+                      <div
+                        key={contact.id}
+                        onClick={() => {
+                          setSelectedContact(contact);
+                          setShowSearchResults(false);
+                          setSearchQuery('');
+                        }}
+                        className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="font-semibold text-r7-navy text-sm">{contact.companyName}</div>
+                        <div className="text-xs text-gray-600">{contact.phone}</div>
+                        {contact.industry && (
+                          <div className="text-xs text-gray-500 mt-1">{contact.industry}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Mission Progress Bar */}
@@ -311,13 +321,13 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
                 <button
                   onClick={() => onStartCalling(contacts.filter(c => !c.sequence_status || c.sequence_status === 'not_started').slice(0, 10))}
                   disabled={!nextColdCall}
-                  className="w-full bg-r7-red hover:bg-r7-red-dark text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
                 >
                   Start Calling Session
                 </button>
 
                 <div className="mt-6 text-center">
-                  <div className="text-3xl font-bold text-r7-red">
+                  <div className="text-3xl font-bold text-teal-600">
                     {contacts.filter(c => !c.sequence_status || c.sequence_status === 'not_started').length}
                   </div>
                   <div className="text-sm text-gray-600">Available Leads</div>
