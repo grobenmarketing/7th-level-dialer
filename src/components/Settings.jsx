@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { useContacts } from '../hooks/useContacts';
+import { useKPI } from '../hooks/useKPI';
 import { resetContactsToFresh } from '../lib/resetContacts';
 
 function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
   const { resetAllStats, getStats } = useContacts();
+  const { resetAllKPI } = useKPI();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showResetContactsDialog, setShowResetContactsDialog] = useState(false);
+  const [showResetKPIDialog, setShowResetKPIDialog] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isResettingContacts, setIsResettingContacts] = useState(false);
+  const [isResettingKPI, setIsResettingKPI] = useState(false);
   const stats = getStats();
 
   const handleResetStats = async () => {
@@ -41,6 +45,22 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
       alert('Failed to reset contacts. Please try again.');
     } finally {
       setIsResettingContacts(false);
+    }
+  };
+
+  const handleResetKPI = async () => {
+    setIsResettingKPI(true);
+    try {
+      await resetAllKPI();
+      alert('✅ All KPI data has been reset successfully!\n\nDial counts, pickups, conversations, and all metrics are now cleared.');
+      setShowResetKPIDialog(false);
+      // Reload page to refresh all data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error resetting KPI:', error);
+      alert('Failed to reset KPI data. Please try again.');
+    } finally {
+      setIsResettingKPI(false);
     }
   };
 
@@ -165,6 +185,60 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
                     className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg transition-all disabled:opacity-50"
                   >
                     {isResettingContacts ? 'Resetting...' : 'Yes, Create Fresh Contacts'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Reset KPI Data Section */}
+          <div className="border-2 border-orange-200 rounded-lg p-6 bg-orange-50 mb-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-orange-800 mb-2">
+                  Reset KPI Data
+                </h3>
+                <p className="text-sm text-orange-700 mb-4">
+                  Clear all daily and weekly KPI metrics including dial counts,
+                  pickups, conversations, triage, and objections. Use this to fix
+                  incorrect or stale data.
+                </p>
+                <ul className="text-sm text-orange-700 space-y-1 mb-4">
+                  <li>✓ Resets daily dial counts to 0</li>
+                  <li>✓ Clears all KPI metrics</li>
+                  <li>✓ Removes objection tracking data</li>
+                  <li>✓ Keeps call goal settings</li>
+                  <li>✓ Preserves contact data</li>
+                </ul>
+              </div>
+            </div>
+
+            {!showResetKPIDialog ? (
+              <button
+                onClick={() => setShowResetKPIDialog(true)}
+                className="w-full px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg transition-all"
+              >
+                Reset KPI Data
+              </button>
+            ) : (
+              <div className="bg-white border-2 border-orange-300 rounded-lg p-4">
+                <p className="text-center font-bold text-orange-800 mb-4">
+                  This will reset all KPI metrics. Continue?
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setShowResetKPIDialog(false)}
+                    disabled={isResettingKPI}
+                    className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition-all disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleResetKPI}
+                    disabled={isResettingKPI}
+                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg transition-all disabled:opacity-50"
+                  >
+                    {isResettingKPI ? 'Resetting...' : 'Yes, Reset KPI Data'}
                   </button>
                 </div>
               </div>

@@ -1,39 +1,35 @@
 import { useState, useEffect } from 'react';
 import { getNeverContactedLeads } from '../lib/taskScheduler';
-
-const DAILY_GOAL_KEY = 'r7_cold_calls_daily_goal';
+import { useKPI } from '../hooks/useKPI';
 
 function ColdCallsPanel({ contacts, onStartCalling }) {
   const [showAll, setShowAll] = useState(false);
+  const { dailyDialGoal, saveDailyDialGoal } = useKPI();
 
-  // Daily goal state with localStorage persistence
-  const [dailyGoal, setDailyGoal] = useState(() => {
-    const saved = localStorage.getItem(DAILY_GOAL_KEY);
-    return saved ? parseInt(saved, 10) : 25;
-  });
+  // Daily goal state - now synced with useKPI
   const [isEditingGoal, setIsEditingGoal] = useState(false);
-  const [tempGoal, setTempGoal] = useState(dailyGoal);
+  const [tempGoal, setTempGoal] = useState(dailyDialGoal);
 
-  // Persist daily goal to localStorage
+  // Sync temp goal when dailyDialGoal changes
   useEffect(() => {
-    localStorage.setItem(DAILY_GOAL_KEY, dailyGoal.toString());
-  }, [dailyGoal]);
+    setTempGoal(dailyDialGoal);
+  }, [dailyDialGoal]);
 
   const neverContacted = getNeverContactedLeads(contacts);
   const displayLimit = 10;
   const displayedContacts = showAll ? neverContacted : neverContacted.slice(0, displayLimit);
   const hasMore = neverContacted.length > displayLimit;
 
-  const handleSaveGoal = () => {
+  const handleSaveGoal = async () => {
     if (tempGoal > 0) {
-      setDailyGoal(tempGoal);
+      await saveDailyDialGoal(tempGoal);
       setIsEditingGoal(false);
     }
   };
 
   const handleStartCalling = () => {
     // Pass limited contacts based on daily goal
-    const limitedContacts = neverContacted.slice(0, dailyGoal);
+    const limitedContacts = neverContacted.slice(0, dailyDialGoal);
     onStartCalling(limitedContacts);
   };
 
@@ -66,10 +62,10 @@ function ColdCallsPanel({ contacts, onStartCalling }) {
               </div>
               {!isEditingGoal ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-blue-700">{dailyGoal}</span>
+                  <span className="text-lg font-bold text-blue-700">{dailyDialGoal}</span>
                   <button
                     onClick={() => {
-                      setTempGoal(dailyGoal);
+                      setTempGoal(dailyDialGoal);
                       setIsEditingGoal(true);
                     }}
                     className="text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition-colors"
@@ -116,7 +112,7 @@ function ColdCallsPanel({ contacts, onStartCalling }) {
             <div className="text-2xl mb-1">📞</div>
             <div className="text-lg font-bold">Start Calling Session</div>
             <div className="text-sm mt-1 opacity-90">
-              Load {Math.min(dailyGoal, neverContacted.length)} contacts for today
+              Load {Math.min(dailyDialGoal, neverContacted.length)} contacts for today
             </div>
           </button>
 

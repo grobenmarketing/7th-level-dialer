@@ -1,16 +1,16 @@
 import { getTodaysTaskSummary, getOverdueCount, formatDate, getToday } from '../lib/taskScheduler';
-
-const DAILY_GOAL_KEY = 'r7_cold_calls_daily_goal';
+import { useKPI } from '../hooks/useKPI';
 
 function TodaysSummary({ tasks, contacts }) {
   const today = getToday();
   const todayFormatted = formatDate(today);
+  const { dailyDialGoal } = useKPI();
 
   const summary = getTodaysTaskSummary(tasks);
   const overdueCount = getOverdueCount(tasks);
 
-  // Get daily cold call goal from localStorage
-  const coldCallGoal = parseInt(localStorage.getItem(DAILY_GOAL_KEY) || '25', 10);
+  // Use daily dial goal from useKPI hook (synced with calling interface)
+  const coldCallGoal = dailyDialGoal;
 
   // Count cold calls completed today (contacts that started their sequence today)
   const coldCallsCompletedToday = contacts.filter(

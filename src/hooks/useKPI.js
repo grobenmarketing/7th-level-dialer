@@ -12,9 +12,9 @@ const getWeekStart = (date = new Date()) => {
 export function useKPI() {
   const [kpiData, setKpiData] = useState({});
   const [weeklyTargets, setWeeklyTargets] = useState({
-    dials: 350 // Default weekly dial target
+    dials: 125 // Default weekly dial target (25 * 5 days)
   });
-  const [dailyDialGoal, setDailyDialGoal] = useState(70); // Default daily dial goal
+  const [dailyDialGoal, setDailyDialGoal] = useState(25); // Default daily dial goal
   const [loading, setLoading] = useState(true);
 
   // Load KPI data and targets from storage
@@ -25,8 +25,8 @@ export function useKPI() {
       try {
         setLoading(true);
         const savedKPI = await storage.get(KEYS.KPI_DATA, {});
-        const savedTargets = await storage.get(KEYS.WEEKLY_TARGETS, { dials: 350 });
-        const savedDailyGoal = await storage.get(KEYS.DAILY_DIAL_GOAL, 70);
+        const savedTargets = await storage.get(KEYS.WEEKLY_TARGETS, { dials: 125 });
+        const savedDailyGoal = await storage.get(KEYS.DAILY_DIAL_GOAL, 25);
 
         if (mounted) {
           setKpiData(savedKPI);
