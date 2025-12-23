@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import DashboardLayout from './components/DashboardLayout'
 import Dashboard from './components/Dashboard'
 import CallingInterface from './components/CallingInterface'
 import ContactsPage from './components/ContactsPage'
@@ -105,7 +106,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <DashboardLayout currentView={currentView} onNavigate={navigate}>
       {currentView === 'dashboard' && (
         <Dashboard
           onStartCalling={handleStartCalling}
@@ -160,7 +161,7 @@ function App() {
       {currentView === 'sequenceTasks' && (
         <SequenceTasksPage onBackToDashboard={handleBackToDashboard} />
       )}
-    </div>
+    </DashboardLayout>
   )
 }
 

@@ -204,7 +204,7 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
             {/* Quick Actions Bar */}
             <div className="card bg-white">
               <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 <button
                   onClick={onViewContacts}
                   className="p-3 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors text-center"
@@ -227,15 +227,6 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
                 >
                   <div className="text-2xl mb-1">🔄</div>
                   <div className="text-xs font-medium text-purple-900">All Sequences</div>
-                </button>
-
-                <button
-                  onClick={onStartFilteredSession}
-                  disabled={contacts.length === 0}
-                  className="p-3 rounded-lg bg-teal-100 hover:bg-teal-200 transition-colors text-center disabled:opacity-50"
-                >
-                  <div className="text-2xl mb-1">🎯</div>
-                  <div className="text-xs font-medium text-teal-900">Filtered</div>
                 </button>
 
                 <label className="p-3 rounded-lg bg-green-100 hover:bg-green-200 transition-colors text-center cursor-pointer">

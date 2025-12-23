@@ -1,7 +1,15 @@
+import { motion } from 'framer-motion';
+
 function ContactCard({ contact }) {
   if (!contact) {
     return (
-      <div className="card bg-yellow-50 border-2 border-yellow-200">
+      <motion.div
+        initial={{ opacity: 0, x: 100 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -100 }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="card bg-yellow-50 border-2 border-yellow-200"
+      >
         <div className="text-center py-8">
           <div className="text-5xl mb-3">🎉</div>
           <h3 className="text-2xl font-bold text-gray-700 mb-2">
@@ -11,12 +19,19 @@ function ContactCard({ contact }) {
             You've completed all active contacts.
           </p>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="card bg-white">
+    <motion.div
+      key={contact.id}
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -100 }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
+      className="card bg-white"
+    >
       {/* Sequence Indicator */}
       {contact.sequence_status && contact.sequence_status !== 'never_contacted' && (
         <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white">
@@ -213,7 +228,7 @@ function ContactCard({ contact }) {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useContacts } from '../hooks/useContacts';
 import { useKPI } from '../hooks/useKPI';
 import { useOkCodes } from '../hooks/useOkCodes';
@@ -344,7 +345,9 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Contact Info */}
           <div className="space-y-6">
-            <ContactCard contact={currentContact} />
+            <AnimatePresence mode="wait">
+              <ContactCard contact={currentContact} />
+            </AnimatePresence>
 
             {/* Last Call Summary */}
             {lastCall && (
