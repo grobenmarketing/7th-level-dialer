@@ -36,6 +36,27 @@ function SequenceTasksPage({ onBackToDashboard }) {
     loadSequenceTasks();
   }, []);
 
+  // Reload tasks when page becomes visible (handles updates from calling interface)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadSequenceTasks();
+      }
+    };
+
+    const handleFocus = () => {
+      loadSequenceTasks();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
   const loadSequenceTasks = async () => {
     const tasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
     setSequenceTasks(tasks);
@@ -73,7 +94,7 @@ function SequenceTasksPage({ onBackToDashboard }) {
       last_contact_date: new Date().toISOString().split('T')[0]
     });
 
-    // Reload tasks
+    // Reload tasks to update progress bar immediately
     await loadSequenceTasks();
 
     // Check if all tasks for this day are complete
@@ -88,6 +109,8 @@ function SequenceTasksPage({ onBackToDashboard }) {
         { ...contact, ...updatedContactData },
         updateContact
       );
+      // Reload tasks again after advancing to next day
+      await loadSequenceTasks();
     }
   };
 
