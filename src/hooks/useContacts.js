@@ -47,30 +47,39 @@ export function useContacts() {
   }, [loadContacts]);
 
   // Save contacts to storage whenever they change
-  const saveContacts = async (updatedContacts) => {
-    setContacts(updatedContacts);
-    await storage.set(KEYS.CONTACTS, updatedContacts);
+  // Accepts either an array or a function that receives previous contacts
+  const saveContacts = async (updaterOrArray) => {
+    return new Promise((resolve) => {
+      setContacts(prevContacts => {
+        const updatedContacts = typeof updaterOrArray === 'function'
+          ? updaterOrArray(prevContacts)
+          : updaterOrArray;
+        storage.set(KEYS.CONTACTS, updatedContacts).then(resolve);
+        return updatedContacts;
+      });
+    });
   };
 
   const addContact = async (contact) => {
     const newContact = createContact(contact);
-    const updatedContacts = [...contacts, newContact];
-    await saveContacts(updatedContacts);
+    await saveContacts(prevContacts => [...prevContacts, newContact]);
     return newContact;
   };
 
   const updateContact = async (contactId, updates) => {
-    const updatedContacts = contacts.map(contact =>
-      contact.id === contactId
-        ? { ...contact, ...updates }
-        : contact
+    await saveContacts(prevContacts =>
+      prevContacts.map(contact =>
+        contact.id === contactId
+          ? { ...contact, ...updates }
+          : contact
+      )
     );
-    await saveContacts(updatedContacts);
   };
 
   const deleteContact = async (contactId) => {
-    const updatedContacts = contacts.filter(contact => contact.id !== contactId);
-    await saveContacts(updatedContacts);
+    await saveContacts(prevContacts =>
+      prevContacts.filter(contact => contact.id !== contactId)
+    );
   };
 
   const deleteAllContacts = async () => {
@@ -78,9 +87,6 @@ export function useContacts() {
   };
 
   const addCallToHistory = async (contactId, callData) => {
-    const contact = contacts.find(c => c.id === contactId);
-    if (!contact) return;
-
     const callRecord = {
       date: new Date().toISOString(),
       outcome: callData.outcome || 'NA',
@@ -92,14 +98,19 @@ export function useContacts() {
       objection: callData.objection || ''
     };
 
-    const updates = {
-      callHistory: [...contact.callHistory, callRecord],
-      totalDials: contact.totalDials + 1,
-      lastCall: callRecord.date,
-      currentOkCode: callData.okCode || contact.currentOkCode
-    };
+    await saveContacts(prevContacts =>
+      prevContacts.map(contact => {
+        if (contact.id !== contactId) return contact;
 
-    await updateContact(contactId, updates);
+        return {
+          ...contact,
+          callHistory: [...contact.callHistory, callRecord],
+          totalDials: contact.totalDials + 1,
+          lastCall: callRecord.date,
+          currentOkCode: callData.okCode || contact.currentOkCode
+        };
+      })
+    );
   };
 
   const importFromCSV = async (csvText) => {
@@ -126,8 +137,7 @@ export function useContacts() {
       }
 
       // Batch add all contacts at once to avoid race conditions
-      const updatedContacts = [...contacts, ...newContactsData];
-      await saveContacts(updatedContacts);
+      await saveContacts(prevContacts => [...prevContacts, ...newContactsData]);
 
       return { success: true, count: newContactsData.length };
     } catch (error) {
@@ -187,15 +197,16 @@ export function useContacts() {
   };
 
   const resetAllStats = async () => {
-    const resetContacts = contacts.map(contact => ({
-      ...contact,
-      callHistory: [],
-      totalDials: 0,
-      lastCall: null,
-      nextFollowUp: null,
-      currentOkCode: null
-    }));
-    await saveContacts(resetContacts);
+    await saveContacts(prevContacts =>
+      prevContacts.map(contact => ({
+        ...contact,
+        callHistory: [],
+        totalDials: 0,
+        lastCall: null,
+        nextFollowUp: null,
+        currentOkCode: null
+      }))
+    );
   };
 
   return {
