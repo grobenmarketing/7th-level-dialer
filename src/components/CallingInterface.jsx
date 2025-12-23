@@ -124,12 +124,12 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
         await enterSequence(currentContact.id, updateContact);
 
         // Generate sequence tasks for the full 30-day sequence with due dates
-        const today = new Date().toISOString().split('T')[0];
+        const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
         const updatedContact = {
           ...currentContact,
           sequence_status: 'active',
-          sequence_current_day: 2, // Start on Day 2 - cold call on Day 1 is already complete
-          sequence_start_date: today,
+          sequence_current_day: 1, // Start on Day 1 - sequence begins tomorrow
+          sequence_start_date: tomorrow,
           calls_made: 1,
           has_email: currentContact.has_email || !!currentContact.email,
           has_linkedin: currentContact.has_linkedin || !!currentContact.linkedin,
@@ -137,7 +137,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
         };
         await generateSequenceTasks(updatedContact);
 
-        console.log('✅ Contact entered sequence successfully!');
+        console.log('✅ Contact entered sequence - Day 1 tasks will begin tomorrow!');
       } else if (currentContact.sequence_status === 'active') {
         // This is a follow-up call - update counters
         console.log('📞 Follow-up call - updating sequence...');
