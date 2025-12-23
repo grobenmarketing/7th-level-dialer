@@ -6,6 +6,8 @@ import TodaysSummary from './TodaysSummary';
 import ColdCallsPanel from './ColdCallsPanel';
 import SequencesPanel from './SequencesPanel';
 import { storage, KEYS } from '../lib/cloudStorage';
+import { useKPI } from '../hooks/useKPI';
+import { getNeverContactedLeads } from '../lib/taskScheduler';
 
 function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onViewAnalytics, onViewHowToUse, onViewSettings, onViewSequenceTasks }) {
   const {
@@ -25,6 +27,7 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   const [selectedContact, setSelectedContact] = useState(null);
   const [editingContact, setEditingContact] = useState(null);
   const [sequenceTasks, setSequenceTasks] = useState([]);
+  const { dailyDialGoal } = useKPI();
 
   // Load/reload sequence tasks and contacts whenever Dashboard mounts
   useEffect(() => {
@@ -140,10 +143,31 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   );
 
   // Calculate tasks remaining for progress bar
-  const totalTasksToday = sequenceTasks.filter(t => {
-    const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+
+  // Count sequence tasks due today
+  const sequenceTasksToday = sequenceTasks.filter(t => {
     return t.task_due_date === today && t.status === 'pending';
   }).length;
+
+  // Count cold calls completed today
+  const coldCallsCompletedToday = contacts.filter(
+    c => c.sequence_start_date === today
+  ).length;
+
+  // Count cold calls remaining
+  const neverContacted = getNeverContactedLeads(contacts);
+  const coldCallsRemaining = Math.max(0, dailyDialGoal - coldCallsCompletedToday);
+
+  // Total tasks = sequence tasks + cold calls remaining
+  const totalTasksToday = sequenceTasksToday + coldCallsRemaining;
+
+  // Total work for the day
+  const totalWork = sequenceTasksToday + dailyDialGoal;
+  const totalCompleted = sequenceTasks.filter(t => t.task_due_date === today && t.status === 'completed').length + coldCallsCompletedToday;
+
+  // Progress percentage (cap at 100%)
+  const progressPercent = totalWork > 0 ? Math.min(100, Math.round((totalCompleted / totalWork) * 100)) : 100;
 
   // Get recent activity from contact call history
   const getRecentActivity = () => {
@@ -293,14 +317,20 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
                   {totalTasksToday} Task{totalTasksToday !== 1 ? 's' : ''} Remaining
                 </span>
               </div>
+              <div className="text-sm text-gray-600 mb-2 text-right">
+                {totalCompleted} of {totalWork} complete ({progressPercent}%)
+              </div>
+              <div className="text-xs text-gray-500 text-right mb-2">
+                {sequenceTasks.filter(t => t.task_due_date === today && t.status === 'completed').length}/{sequenceTasksToday + sequenceTasks.filter(t => t.task_due_date === today && t.status === 'completed').length} sequence tasks • {coldCallsCompletedToday}/{dailyDialGoal} cold calls
+              </div>
               <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                 <div
                   className="bg-r7-red h-4 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
                   style={{
-                    width: totalTasksToday === 0 ? '100%' : `${Math.max(10, 100 - (totalTasksToday * 3))}%`
+                    width: `${progressPercent}%`
                   }}
                 >
-                  {totalTasksToday === 0 && (
+                  {progressPercent === 100 && (
                     <span className="text-white text-xs font-bold">COMPLETE</span>
                   )}
                 </div>
@@ -353,9 +383,9 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
 
                 <div className="mt-6 text-center">
                   <div className="text-3xl font-bold text-r7-navy">
-                    {totalTasksToday}
+                    {sequenceTasksToday}
                   </div>
-                  <div className="text-sm text-gray-600">Tasks Due Today</div>
+                  <div className="text-sm text-gray-600">Sequence Tasks Due Today</div>
                 </div>
               </div>
             </div>
