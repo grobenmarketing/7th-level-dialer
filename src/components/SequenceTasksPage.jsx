@@ -31,10 +31,10 @@ function SequenceTasksPage({ onBackToDashboard }) {
   const [deadReason, setDeadReason] = useState('');
   const [editingContact, setEditingContact] = useState(null);
 
-  // Load sequence tasks from storage
+  // Load sequence tasks from storage on mount and when contacts change
   useEffect(() => {
     loadSequenceTasks();
-  }, []);
+  }, [contacts]); // Reload when contacts array changes
 
   // Reload tasks when page becomes visible (handles updates from calling interface)
   useEffect(() => {
@@ -48,10 +48,18 @@ function SequenceTasksPage({ onBackToDashboard }) {
       loadSequenceTasks();
     };
 
+    // Also poll every 2 seconds when page is visible to catch updates
+    const pollInterval = setInterval(() => {
+      if (!document.hidden) {
+        loadSequenceTasks();
+      }
+    }, 2000);
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
 
     return () => {
+      clearInterval(pollInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
