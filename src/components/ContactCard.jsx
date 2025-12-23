@@ -7,7 +7,7 @@ function ContactCard({ contact }) {
         initial={{ opacity: 0, x: 100 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -100 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        transition={{ type: 'spring', stiffness: 400, damping: 35 }}
         className="card bg-yellow-50 border-2 border-yellow-200"
       >
         <div className="text-center py-8">
@@ -25,11 +25,10 @@ function ContactCard({ contact }) {
 
   return (
     <motion.div
-      key={contact.id}
       initial={{ opacity: 0, x: 100 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -100 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
+      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
       className="card bg-white"
     >
       {/* Sequence Indicator */}
