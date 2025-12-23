@@ -131,7 +131,7 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
 
   // Get next contacts for preview
   const nextColdCall = contacts.find(c =>
-    !c.sequence_status || c.sequence_status === 'not_started'
+    !c.sequence_status || c.sequence_status === 'not_started' || c.sequence_status === 'never_contacted'
   );
 
   const nextSequenceContact = contacts.find(c =>
@@ -319,7 +319,7 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
                 </div>
 
                 <button
-                  onClick={() => onStartCalling(contacts.filter(c => !c.sequence_status || c.sequence_status === 'not_started').slice(0, 10))}
+                  onClick={() => onStartCalling(contacts.filter(c => !c.sequence_status || c.sequence_status === 'not_started' || c.sequence_status === 'never_contacted').slice(0, 10))}
                   disabled={!nextColdCall}
                   className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
                 >
@@ -328,7 +328,7 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
 
                 <div className="mt-6 text-center">
                   <div className="text-3xl font-bold text-teal-600">
-                    {contacts.filter(c => !c.sequence_status || c.sequence_status === 'not_started').length}
+                    {contacts.filter(c => !c.sequence_status || c.sequence_status === 'not_started' || c.sequence_status === 'never_contacted').length}
                   </div>
                   <div className="text-sm text-gray-600">Available Leads</div>
                 </div>
