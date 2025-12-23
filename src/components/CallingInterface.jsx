@@ -9,9 +9,10 @@ import SessionEndSummary from './SessionEndSummary';
 import { CALL_OUTCOMES } from '../lib/constants';
 import { generatePhoneURL } from '../lib/phoneUtils';
 import { enterSequence, generateSequenceTasks, completeSequenceTask, applyCounterUpdates, getCounterUpdates } from '../lib/sequenceLogic';
+import { getNeverContactedLeads } from '../lib/taskScheduler';
 
 function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, onNextContact }) {
-  const { getActiveContacts, addCallToHistory, updateContact } = useContacts();
+  const { contacts, getActiveContacts, addCallToHistory, updateContact } = useContacts();
   const { incrementMetric, addObjection, getTodayDials, dailyDialGoal, saveDailyDialGoal } = useKPI();
   const { okCodes } = useOkCodes();
 
@@ -22,8 +23,8 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
     updateField, setIsSaving, startTimer, setCallDuration, validate
   } = useCallForm(contactIndex);
 
-  // Use filtered contacts if provided, otherwise use all active contacts
-  const activeContacts = filteredContacts || getActiveContacts();
+  // Use filtered contacts if provided, otherwise use ONLY never-contacted leads for cold calling
+  const activeContacts = filteredContacts || getNeverContactedLeads(contacts);
   const currentContact = activeContacts[contactIndex];
 
   // Daily goal state

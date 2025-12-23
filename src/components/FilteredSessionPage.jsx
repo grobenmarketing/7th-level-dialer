@@ -14,7 +14,10 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
 
   // Calculate filtered contacts
   const filteredContacts = useMemo(() => {
-    let filtered = contacts.filter(c => c.status === 'active');
+    // Only include contacts that are already in sequences (exclude fresh/never-contacted leads)
+    let filtered = contacts.filter(c =>
+      c.status === 'active' && c.sequence_status !== 'never_contacted'
+    );
 
     // Filter by OK codes
     if (selectedOkCodes.length > 0 || includeNoOkCode) {
@@ -134,7 +137,7 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
               🎯 Start Filtered Session
             </h1>
             <p className="text-gray-600">
-              Filter contacts by OK codes and call dates
+              Filter sequence contacts by OK codes and call dates
             </p>
           </div>
           <button
@@ -181,10 +184,10 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
                 />
                 <div className="ml-3 flex-1">
                   <div className="font-semibold text-gray-700">
-                    No OK Code (Never Called)
+                    No OK Code
                   </div>
                   <div className="text-xs text-gray-500">
-                    Fresh imports and never-dialed contacts
+                    Sequence contacts without an OK code
                   </div>
                 </div>
               </label>
@@ -298,7 +301,7 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
               {includeNoOkCode && (
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-sm text-blue-800">
-                    ℹ️ Never-called contacts will be included regardless of date range
+                    ℹ️ Sequence contacts without OK codes will be included regardless of date range
                   </p>
                 </div>
               )}
