@@ -128,7 +128,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
         const updatedContact = {
           ...currentContact,
           sequence_status: 'active',
-          sequence_current_day: 1,
+          sequence_current_day: 2, // Start on Day 2 - cold call on Day 1 is already complete
           sequence_start_date: today,
           calls_made: 1,
           has_email: currentContact.has_email || !!currentContact.email,

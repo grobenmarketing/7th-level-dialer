@@ -11,7 +11,7 @@ export async function enterSequence(contactId, updateContactFn) {
 
   const sequenceData = {
     sequence_status: 'active',
-    sequence_current_day: 1,
+    sequence_current_day: 2, // Start on Day 2 - cold call on Day 1 is already complete
     sequence_start_date: today,
     last_contact_date: today,
     calls_made: 1, // First call counts
@@ -30,7 +30,7 @@ export async function enterSequence(contactId, updateContactFn) {
   // Update contact with sequence data
   await updateContactFn(contactId, sequenceData);
 
-  console.log(`✅ Contact ${contactId} entered sequence on Day 1`);
+  console.log(`✅ Contact ${contactId} entered sequence on Day 2 (cold call on Day 1 complete)`);
 }
 
 // Update contact counters based on task type
@@ -182,8 +182,8 @@ export async function generateSequenceTasks(contact) {
         return;
       }
 
-      // Don't create a task for the first call on Day 1 - it's already being made
-      if (dayNumber === 1 && taskType === 'call') {
+      // Skip ALL Day 1 tasks - the cold call counts as Day 1, so start sequence with Day 2
+      if (dayNumber === 1) {
         return;
       }
 
