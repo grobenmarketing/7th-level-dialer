@@ -278,18 +278,8 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
               </p>
             </div>
 
-            {/* Search Bar & Import - Compact */}
+            {/* Search Bar - Compact */}
             <div className="mb-6 flex gap-2 justify-end items-center">
-              <label className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg cursor-pointer transition-colors shadow-sm">
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleImport}
-                  className="hidden"
-                />
-                Import CSV
-              </label>
-
               <div className="relative max-w-md">
                 <input
                   type="text"
