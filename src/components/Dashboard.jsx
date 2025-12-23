@@ -27,7 +27,14 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   const [selectedContact, setSelectedContact] = useState(null);
   const [editingContact, setEditingContact] = useState(null);
   const [sequenceTasks, setSequenceTasks] = useState([]);
-  const { dailyDialGoal } = useKPI();
+  const { dailyDialGoal, saveDailyDialGoal } = useKPI();
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [tempGoal, setTempGoal] = useState(dailyDialGoal);
+
+  // Sync temp goal when dailyDialGoal changes
+  useEffect(() => {
+    setTempGoal(dailyDialGoal);
+  }, [dailyDialGoal]);
 
   // Load/reload sequence tasks and contacts whenever Dashboard mounts
   useEffect(() => {
@@ -129,6 +136,14 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   const handleEditClick = (contact) => {
     setEditingContact(contact);
     setSelectedContact(null);
+  };
+
+  const handleSaveGoal = async () => {
+    const goal = parseInt(tempGoal) || 1;
+    if (goal > 0) {
+      await saveDailyDialGoal(goal);
+      setIsEditingGoal(false);
+    }
   };
 
 
@@ -317,6 +332,54 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
                   {totalTasksToday} Task{totalTasksToday !== 1 ? 's' : ''} Remaining
                 </span>
               </div>
+
+              {/* Daily Goal Editor */}
+              <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-gray-700">
+                    Daily Cold Call Goal:
+                  </div>
+                  {!isEditingGoal ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-blue-700">{dailyDialGoal}</span>
+                      <button
+                        onClick={() => {
+                          setTempGoal(dailyDialGoal);
+                          setIsEditingGoal(true);
+                        }}
+                        className="text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition-colors"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={tempGoal}
+                        onChange={(e) => setTempGoal(e.target.value === '' ? '' : parseInt(e.target.value))}
+                        className="w-16 px-2 py-1 border border-blue-300 rounded text-center text-sm"
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleSaveGoal}
+                        className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setIsEditingGoal(false)}
+                        className="text-xs px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="text-sm text-gray-600 mb-2 text-right">
                 {totalCompleted} of {totalWork} complete ({progressPercent}%)
               </div>
