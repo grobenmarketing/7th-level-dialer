@@ -40,6 +40,25 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
     refreshData();
   }, [reloadContacts]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Refresh data when page becomes visible (e.g., returning from calling interface)
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (!document.hidden) {
+        console.log('🔄 Dashboard visible - refreshing data...');
+        await Promise.all([
+          loadSequenceTasks(),
+          reloadContacts()
+        ]);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [reloadContacts]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const loadSequenceTasks = async () => {
     const tasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
     setSequenceTasks(tasks);
