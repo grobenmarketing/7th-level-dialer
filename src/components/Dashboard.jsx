@@ -129,19 +129,85 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   };
 
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-r7-blue mb-2">
-            R7 Creative Dialer
-          </h1>
-          <p className="text-sm text-gray-600">
-            Detach from the outcomes and your income will always increase.
-          </p>
-        </div>
+  // Get next contacts for preview
+  const nextColdCall = contacts.find(c =>
+    !c.sequence_status || c.sequence_status === 'not_started' || c.sequence_status === 'never_contacted'
+  );
 
+  const nextSequenceContact = contacts.find(c =>
+    c.sequence_status === 'active' &&
+    sequenceTasks.some(t => t.contact_id === c.id && t.status === 'pending')
+  );
+
+  // Calculate tasks remaining for progress bar
+  const totalTasksToday = sequenceTasks.filter(t => {
+    const today = new Date().toISOString().split('T')[0];
+    return t.task_due_date === today && t.status === 'pending';
+  }).length;
+
+  // Get recent activity from contact call history
+  const getRecentActivity = () => {
+    const allCalls = [];
+    contacts.forEach(contact => {
+      if (contact.callHistory && contact.callHistory.length > 0) {
+        contact.callHistory.forEach(call => {
+          allCalls.push({
+            companyName: contact.companyName,
+            outcome: call.outcome,
+            date: call.date
+          });
+        });
+      }
+    });
+
+    // Sort by date descending and take the last 3
+    return allCalls
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 3);
+  };
+
+  const recentActivity = getRecentActivity();
+
+  // Contact search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    if (query.trim() === '') {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    const results = contacts.filter(contact =>
+      contact.companyName.toLowerCase().includes(query.toLowerCase()) ||
+      (contact.phone && contact.phone.includes(query)) ||
+      (contact.industry && contact.industry.toLowerCase().includes(query.toLowerCase()))
+    ).slice(0, 5);
+
+    setSearchResults(results);
+    setShowSearchResults(true);
+  };
+
+  const formatOutcome = (outcome) => {
+    const outcomeMap = {
+      'NA': 'No Answer',
+      'LVM': 'Left Voicemail',
+      'GK': 'Gatekeeper',
+      'CB': 'Callback',
+      'NI': 'Not Interested',
+      'DNC': 'Do Not Call',
+      'WN': 'Wrong Number',
+      'MEETING': 'Meeting Booked'
+    };
+    return outcomeMap[outcome] || outcome;
+  };
+
+  return (
+    <div className="min-h-screen bg-r7-gray-light">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Check if we have contacts */}
         {contacts.length === 0 ? (
           /* Empty State */
@@ -162,140 +228,164 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
               />
               Import Your First Contacts
             </label>
-
-            {/* Quick Actions for Empty State */}
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-              <button
-                onClick={onViewContacts}
-                className="p-4 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors"
-              >
-                <div className="text-3xl mb-1">📇</div>
-                <div className="text-sm font-medium text-purple-900">Contacts</div>
-              </button>
-              <button
-                onClick={onViewAnalytics}
-                className="p-4 rounded-lg bg-orange-100 hover:bg-orange-200 transition-colors"
-              >
-                <div className="text-3xl mb-1">📊</div>
-                <div className="text-sm font-medium text-orange-900">Analytics</div>
-              </button>
-              <button
-                onClick={onViewSettings}
-                className="p-4 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <div className="text-3xl mb-1">⚙️</div>
-                <div className="text-sm font-medium text-gray-900">Settings</div>
-              </button>
-            </div>
           </div>
         ) : (
-          /* Main Dashboard with 3-Section Layout */
+          /* Mission Control Dashboard */
           <>
-            {/* Today's Summary - Top Section */}
-            <TodaysSummary tasks={sequenceTasks} contacts={contacts} />
-
-            {/* Two-Column Layout - Bottom Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Left Column - Cold Calls */}
-              <ColdCallsPanel
-                contacts={contacts}
-                onStartCalling={onStartCalling}
-              />
-
-              {/* Right Column - Sequence Tasks */}
-              <SequencesPanel
-                contacts={contacts}
-                tasks={sequenceTasks}
-                updateContact={updateContact}
-                onViewAllSequences={onViewSequenceTasks}
-                reloadTasks={loadSequenceTasks}
-              />
+            {/* Header: Centered Quote */}
+            <div className="text-center mb-6">
+              <p className="text-lg text-gray-600 font-light italic">
+                Detach from the outcomes and your income will always increase.
+              </p>
             </div>
 
-            {/* Quick Actions Bar */}
-            <div className="card bg-white">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <button
-                  onClick={onViewContacts}
-                  className="p-3 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors text-center"
+            {/* Search Bar & Import - Compact */}
+            <div className="mb-6 flex gap-2 justify-end items-center">
+              <label className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg cursor-pointer transition-colors shadow-sm">
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleImport}
+                  className="hidden"
+                />
+                Import CSV
+              </label>
+
+              <div className="relative max-w-md">
+                <input
+                  type="text"
+                  placeholder="Search contacts..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="w-full text-sm px-4 py-2 rounded-lg border border-gray-300 focus:border-r7-navy focus:outline-none focus:ring-1 focus:ring-r7-navy/20 transition-all bg-white shadow-sm"
+                />
+
+                {/* Search Results Dropdown */}
+                {showSearchResults && searchResults.length > 0 && (
+                  <div className="absolute top-full mt-1 w-full bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-64 overflow-y-auto">
+                    {searchResults.map(contact => (
+                      <div
+                        key={contact.id}
+                        onClick={() => {
+                          setSelectedContact(contact);
+                          setShowSearchResults(false);
+                          setSearchQuery('');
+                        }}
+                        className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="font-semibold text-r7-navy text-sm">{contact.companyName}</div>
+                        <div className="text-xs text-gray-600">{contact.phone}</div>
+                        {contact.industry && (
+                          <div className="text-xs text-gray-500 mt-1">{contact.industry}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Mission Progress Bar */}
+            <div className="mb-8 bg-white rounded-xl shadow-lg p-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-xl font-bold text-r7-navy">Today's Mission</h3>
+                <span className="text-lg font-semibold text-gray-700">
+                  {totalTasksToday} Task{totalTasksToday !== 1 ? 's' : ''} Remaining
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div
+                  className="bg-r7-red h-4 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                  style={{
+                    width: totalTasksToday === 0 ? '100%' : `${Math.max(10, 100 - (totalTasksToday * 3))}%`
+                  }}
                 >
-                  <div className="text-2xl mb-1">📇</div>
-                  <div className="text-xs font-medium text-purple-900">Contacts</div>
-                </button>
+                  {totalTasksToday === 0 && (
+                    <span className="text-white text-xs font-bold">COMPLETE</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Central Action Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {/* Left Card - Cold Calling */}
+              <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-shadow">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-r7-navy mb-2">Cold Calling</h2>
+                  <div className="text-sm text-gray-500 mb-4">
+                    Next Up: {nextColdCall ? nextColdCall.companyName : 'No contacts available'}
+                  </div>
+                </div>
 
                 <button
-                  onClick={onViewAnalytics}
-                  className="p-3 rounded-lg bg-orange-100 hover:bg-orange-200 transition-colors text-center"
+                  onClick={() => onStartCalling(contacts.filter(c => !c.sequence_status || c.sequence_status === 'not_started' || c.sequence_status === 'never_contacted').slice(0, 10))}
+                  disabled={!nextColdCall}
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
                 >
-                  <div className="text-2xl mb-1">📊</div>
-                  <div className="text-xs font-medium text-orange-900">Analytics</div>
+                  Start Calling Session
                 </button>
+
+                <div className="mt-6 text-center">
+                  <div className="text-3xl font-bold text-teal-600">
+                    {contacts.filter(c => !c.sequence_status || c.sequence_status === 'not_started' || c.sequence_status === 'never_contacted').length}
+                  </div>
+                  <div className="text-sm text-gray-600">Available Leads</div>
+                </div>
+              </div>
+
+              {/* Right Card - Sequences */}
+              <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-shadow">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-r7-navy mb-2">Sequences</h2>
+                  <div className="text-sm text-gray-500 mb-4">
+                    Next Up: {nextSequenceContact ? nextSequenceContact.companyName : 'No tasks pending'}
+                  </div>
+                </div>
 
                 <button
                   onClick={onViewSequenceTasks}
-                  className="p-3 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors text-center"
+                  disabled={!nextSequenceContact}
+                  className="w-full bg-r7-navy hover:bg-r7-dark text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
                 >
-                  <div className="text-2xl mb-1">🔄</div>
-                  <div className="text-xs font-medium text-purple-900">All Sequences</div>
+                  Execute Sequences
                 </button>
 
-                <label className="p-3 rounded-lg bg-green-100 hover:bg-green-200 transition-colors text-center cursor-pointer">
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleImport}
-                    className="hidden"
-                  />
-                  <div className="text-2xl mb-1">📥</div>
-                  <div className="text-xs font-medium text-green-900">Import</div>
-                </label>
-
-                <button
-                  onClick={handleExport}
-                  disabled={contacts.length === 0}
-                  className="p-3 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors text-center disabled:opacity-50"
-                >
-                  <div className="text-2xl mb-1">📤</div>
-                  <div className="text-xs font-medium text-blue-900">Export</div>
-                </button>
-
-                <button
-                  onClick={onViewSettings}
-                  className="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors text-center"
-                >
-                  <div className="text-2xl mb-1">⚙️</div>
-                  <div className="text-xs font-medium text-gray-900">Settings</div>
-                </button>
+                <div className="mt-6 text-center">
+                  <div className="text-3xl font-bold text-r7-navy">
+                    {totalTasksToday}
+                  </div>
+                  <div className="text-sm text-gray-600">Tasks Due Today</div>
+                </div>
               </div>
             </div>
 
-            {/* Stats Footer */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-              <div className="card bg-white p-4 text-center">
-                <div className="text-2xl font-bold text-r7-blue">{stats.totalContacts}</div>
-                <div className="text-xs text-gray-600">Total Contacts</div>
-              </div>
-              <div className="card bg-white p-4 text-center">
-                <div className="text-2xl font-bold text-green-600">{stats.activeContacts}</div>
-                <div className="text-xs text-gray-600">Active</div>
-              </div>
-              <div className="card bg-white p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">{stats.totalDials}</div>
-                <div className="text-xs text-gray-600">Total Dials</div>
-              </div>
-              <div className="card bg-white p-4 text-center">
-                <div className="text-2xl font-bold text-r7-red">{stats.meetingsBooked}</div>
-                <div className="text-xs text-gray-600">Meetings</div>
-              </div>
+            {/* Recent Activity Mini-Feed */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-bold text-r7-navy mb-4">Recent Activity</h3>
+
+              {recentActivity.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">No recent activity</p>
+              ) : (
+                <div className="flex flex-col md:flex-row md:divide-x divide-gray-200 gap-4 md:gap-0">
+                  {recentActivity.map((activity, index) => (
+                    <div key={index} className="flex-1 md:px-4 first:md:pl-0 last:md:pr-0">
+                      <div className="text-sm">
+                        <span className="font-medium text-r7-navy">
+                          Called {activity.companyName}
+                        </span>
+                        <span className="text-gray-600"> - {formatOutcome(activity.outcome)}</span>
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {new Date(activity.date).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </>
         )}
-
-        {/* Footer */}
-        <div className="text-center mt-6 text-gray-500 text-sm">
-          <p>R7 Creative Dialer v2.0 - Daily Workload Dashboard</p>
-        </div>
       </div>
 
       {/* Contact Details Modal */}
