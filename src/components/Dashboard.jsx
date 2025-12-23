@@ -6,6 +6,8 @@ import TodaysSummary from './TodaysSummary';
 import ColdCallsPanel from './ColdCallsPanel';
 import SequencesPanel from './SequencesPanel';
 import { storage, KEYS } from '../lib/cloudStorage';
+import { useKPI } from '../hooks/useKPI';
+import { getNeverContactedLeads } from '../lib/taskScheduler';
 
 function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onViewAnalytics, onViewHowToUse, onViewSettings, onViewSequenceTasks }) {
   const {
@@ -25,6 +27,14 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   const [selectedContact, setSelectedContact] = useState(null);
   const [editingContact, setEditingContact] = useState(null);
   const [sequenceTasks, setSequenceTasks] = useState([]);
+  const { dailyDialGoal, saveDailyDialGoal } = useKPI();
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [tempGoal, setTempGoal] = useState(dailyDialGoal);
+
+  // Sync temp goal when dailyDialGoal changes
+  useEffect(() => {
+    setTempGoal(dailyDialGoal);
+  }, [dailyDialGoal]);
 
   // Load/reload sequence tasks and contacts whenever Dashboard mounts
   useEffect(() => {
@@ -128,6 +138,14 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
     setSelectedContact(null);
   };
 
+  const handleSaveGoal = async () => {
+    const goal = parseInt(tempGoal) || 1;
+    if (goal > 0) {
+      await saveDailyDialGoal(goal);
+      setIsEditingGoal(false);
+    }
+  };
+
 
   // Get next contacts for preview
   const nextColdCall = contacts.find(c =>
@@ -140,10 +158,31 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   );
 
   // Calculate tasks remaining for progress bar
-  const totalTasksToday = sequenceTasks.filter(t => {
-    const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+
+  // Count sequence tasks due today
+  const sequenceTasksToday = sequenceTasks.filter(t => {
     return t.task_due_date === today && t.status === 'pending';
   }).length;
+
+  // Count cold calls completed today
+  const coldCallsCompletedToday = contacts.filter(
+    c => c.sequence_start_date === today
+  ).length;
+
+  // Count cold calls remaining
+  const neverContacted = getNeverContactedLeads(contacts);
+  const coldCallsRemaining = Math.max(0, dailyDialGoal - coldCallsCompletedToday);
+
+  // Total tasks = sequence tasks + cold calls remaining
+  const totalTasksToday = sequenceTasksToday + coldCallsRemaining;
+
+  // Total work for the day
+  const totalWork = sequenceTasksToday + dailyDialGoal;
+  const totalCompleted = sequenceTasks.filter(t => t.task_due_date === today && t.status === 'completed').length + coldCallsCompletedToday;
+
+  // Progress percentage (cap at 100%)
+  const progressPercent = totalWork > 0 ? Math.min(100, Math.round((totalCompleted / totalWork) * 100)) : 100;
 
   // Get recent activity from contact call history
   const getRecentActivity = () => {
@@ -239,18 +278,8 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
               </p>
             </div>
 
-            {/* Search Bar & Import - Compact */}
+            {/* Search Bar - Compact */}
             <div className="mb-6 flex gap-2 justify-end items-center">
-              <label className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg cursor-pointer transition-colors shadow-sm">
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleImport}
-                  className="hidden"
-                />
-                Import CSV
-              </label>
-
               <div className="relative max-w-md">
                 <input
                   type="text"
@@ -293,14 +322,68 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
                   {totalTasksToday} Task{totalTasksToday !== 1 ? 's' : ''} Remaining
                 </span>
               </div>
+
+              {/* Daily Goal Editor */}
+              <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-gray-700">
+                    Daily Cold Call Goal:
+                  </div>
+                  {!isEditingGoal ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-blue-700">{dailyDialGoal}</span>
+                      <button
+                        onClick={() => {
+                          setTempGoal(dailyDialGoal);
+                          setIsEditingGoal(true);
+                        }}
+                        className="text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition-colors"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={tempGoal}
+                        onChange={(e) => setTempGoal(e.target.value === '' ? '' : parseInt(e.target.value))}
+                        className="w-16 px-2 py-1 border border-blue-300 rounded text-center text-sm"
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleSaveGoal}
+                        className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setIsEditingGoal(false)}
+                        className="text-xs px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-sm text-gray-600 mb-2 text-right">
+                {totalCompleted} of {totalWork} complete ({progressPercent}%)
+              </div>
+              <div className="text-xs text-gray-500 text-right mb-2">
+                {sequenceTasks.filter(t => t.task_due_date === today && t.status === 'completed').length}/{sequenceTasksToday + sequenceTasks.filter(t => t.task_due_date === today && t.status === 'completed').length} sequence tasks • {coldCallsCompletedToday}/{dailyDialGoal} cold calls
+              </div>
               <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                 <div
                   className="bg-r7-red h-4 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
                   style={{
-                    width: totalTasksToday === 0 ? '100%' : `${Math.max(10, 100 - (totalTasksToday * 3))}%`
+                    width: `${progressPercent}%`
                   }}
                 >
-                  {totalTasksToday === 0 && (
+                  {progressPercent === 100 && (
                     <span className="text-white text-xs font-bold">COMPLETE</span>
                   )}
                 </div>
@@ -353,9 +436,9 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
 
                 <div className="mt-6 text-center">
                   <div className="text-3xl font-bold text-r7-navy">
-                    {totalTasksToday}
+                    {sequenceTasksToday}
                   </div>
-                  <div className="text-sm text-gray-600">Tasks Due Today</div>
+                  <div className="text-sm text-gray-600">Sequence Tasks Due Today</div>
                 </div>
               </div>
             </div>

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useContacts } from '../hooks/useContacts';
 
 function Sidebar({ currentView, onNavigate }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { importFromCSV } = useContacts();
 
   const menuItems = [
     { id: 'dashboard', icon: '🏠', label: 'Dashboard' },
@@ -12,6 +14,27 @@ function Sidebar({ currentView, onNavigate }) {
     { id: 'settings', icon: '⚙️', label: 'Settings' },
     { id: 'howto', icon: '❓', label: 'How To Use' },
   ];
+
+  const handleImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const csvText = event.target.result;
+      const result = await importFromCSV(csvText);
+
+      if (result.success) {
+        alert(`Successfully imported ${result.count} contacts!`);
+      } else {
+        alert(`Import failed: ${result.error}`);
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset the input so the same file can be imported again
+    e.target.value = '';
+  };
 
   return (
     <motion.aside
@@ -70,6 +93,29 @@ function Sidebar({ currentView, onNavigate }) {
           </button>
         ))}
       </nav>
+
+      {/* Import CSV Button */}
+      <div className="px-4 pb-4">
+        <label className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} w-full px-4 py-3 bg-green-600 hover:bg-green-700 rounded-lg cursor-pointer transition-colors shadow-md`}>
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleImport}
+            className="hidden"
+          />
+          <span className="text-2xl">📥</span>
+          {!isCollapsed && (
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="font-medium"
+            >
+              Import CSV
+            </motion.span>
+          )}
+        </label>
+      </div>
 
       {/* Footer */}
       <div className="p-4 border-t border-white/10">

@@ -8,12 +8,11 @@ import { calculateTaskDueDate, hasOverdueTasks, isTaskOverdue, isTaskDueToday } 
 // Enter a contact into the sequence (called on first call)
 export async function enterSequence(contactId, updateContactFn) {
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-  const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0];
 
   const sequenceData = {
     sequence_status: 'active',
-    sequence_current_day: 1, // Start on Day 1 - sequence begins tomorrow
-    sequence_start_date: tomorrow,
+    sequence_current_day: 1, // Start on Day 1 - the cold call just made IS the Day 1 call
+    sequence_start_date: today, // Sequence starts today
     last_contact_date: today,
     calls_made: 1, // First call counts
     voicemails_left: 0,
@@ -31,7 +30,7 @@ export async function enterSequence(contactId, updateContactFn) {
   // Update contact with sequence data
   await updateContactFn(contactId, sequenceData);
 
-  console.log(`✅ Contact ${contactId} entered sequence - Day 1 tasks will begin tomorrow`);
+  console.log(`✅ Contact ${contactId} entered sequence on Day 1 - cold call counts as Day 1 call!`);
 }
 
 // Update contact counters based on task type
