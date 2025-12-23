@@ -386,7 +386,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
           <div className="space-y-6">
             {/* Call Now Button */}
             {currentContact && (
-              <div className="card bg-r7-red text-white">
+              <div className="card bg-r7-teal text-white">
                 <a
                   href={phoneURL}
                   onClick={handleStartCall}
@@ -555,7 +555,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
               <button
                 onClick={handleSaveAndNext}
                 disabled={isSaving}
-                className="bg-r7-red text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-r7-teal text-white px-6 py-3 rounded-lg font-semibold hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? '⏳ Saving...' : '💾 Save & Next'}
               </button>

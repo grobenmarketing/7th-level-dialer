@@ -108,7 +108,7 @@ function ColdCallsPanel({ contacts, onStartCalling }) {
           {/* Quick Start Button */}
           <button
             onClick={handleStartCalling}
-            className="w-full mb-2 p-4 rounded-lg text-center bg-r7-red text-white hover:bg-red-700 transition-all transform hover:scale-105 shadow-lg"
+            className="w-full mb-2 p-4 rounded-lg text-center bg-r7-teal text-white hover:bg-teal-600 transition-all transform hover:scale-105 shadow-lg"
           >
             <div className="text-2xl mb-1">📞</div>
             <div className="text-lg font-bold">Start Calling Session</div>
