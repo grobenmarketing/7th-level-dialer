@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import ContactDetailsModal from './ContactDetailsModal';
 import ContactFormModal from './ContactFormModal';
@@ -14,6 +14,8 @@ function ContactsPage({ onBackToDashboard }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [emailFilter, setEmailFilter] = useState('all');
   const [sortBy, setSortBy] = useState('company');
+  const [displayCount, setDisplayCount] = useState(50);
+  const observerTarget = useRef(null);
 
   // Filter and search contacts
   const filteredContacts = useMemo(() => {
@@ -62,6 +64,30 @@ function ContactsPage({ onBackToDashboard }) {
 
     return filtered;
   }, [contacts, searchTerm, statusFilter, emailFilter, sortBy]);
+
+  // Infinite scroll - display contacts in batches
+  const displayedContacts = useMemo(() => {
+    return filteredContacts.slice(0, displayCount);
+  }, [filteredContacts, displayCount]);
+
+  // Intersection Observer for infinite scroll
+  const handleObserver = useCallback((entries) => {
+    const [target] = entries;
+    if (target.isIntersecting && displayCount < filteredContacts.length) {
+      setDisplayCount(prev => Math.min(prev + 50, filteredContacts.length));
+    }
+  }, [displayCount, filteredContacts.length]);
+
+  // Set up the observer
+  useMemo(() => {
+    const element = observerTarget.current;
+    const option = { threshold: 0 };
+    const observer = new IntersectionObserver(handleObserver, option);
+    if (element) observer.observe(element);
+    return () => {
+      if (element) observer.unobserve(element);
+    };
+  }, [handleObserver]);
 
   const handleExport = () => {
     const csvContent = exportToCSV();
@@ -127,7 +153,7 @@ function ContactsPage({ onBackToDashboard }) {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold text-r7-blue mb-2">
+              <h1 className="text-4xl font-bold text-r7-navy mb-2">
                 📇 Contact Database
               </h1>
               <p className="text-gray-600">
@@ -282,37 +308,22 @@ function ContactsPage({ onBackToDashboard }) {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-r7-navy uppercase tracking-wider">
                     Company
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone
+                  <th className="px-4 py-3 text-left text-xs font-medium text-r7-navy uppercase tracking-wider">
+                    Number
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Website
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Dials
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Calls
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    OK Code
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-center text-xs font-medium text-r7-navy uppercase tracking-wider">
                     Last Call
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
+                  <th className="px-4 py-3 text-center text-xs font-medium text-r7-navy uppercase tracking-wider">
+                    OK Code
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredContacts.map((contact) => (
+                {displayedContacts.map((contact) => (
                   <tr
                     key={contact.id}
                     className="hover:bg-gray-50 transition-colors cursor-pointer"
@@ -320,7 +331,7 @@ function ContactsPage({ onBackToDashboard }) {
                   >
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <div className="text-sm font-semibold text-r7-blue">
+                        <div className="text-sm font-semibold text-r7-navy">
                           {contact.companyName || 'Unknown Company'}
                         </div>
                         {contact.industry && (
@@ -333,65 +344,36 @@ function ContactsPage({ onBackToDashboard }) {
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                       {contact.phone || '-'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
-                      {contact.website ? (
-                        <a
-                          href={contact.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-r7-blue hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {contact.website}
-                        </a>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-medium text-r7-blue">
-                      {contact.totalDials || 0}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-medium text-green-600">
-                      {contact.callHistory?.length || 0}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center text-xs text-gray-700">
-                      {contact.currentOkCode || 'N/A'}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${
-                          contact.status === 'active'
-                            ? 'bg-green-100 text-green-700'
-                            : contact.status === 'closed-won'
-                            ? 'bg-blue-100 text-blue-700'
-                            : contact.status === 'closed-lost'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {contact.status}
-                      </span>
-                    </td>
                     <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-500">
                       {contact.lastCall
                         ? new Date(contact.lastCall).toLocaleDateString()
                         : '-'}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedContact(contact);
-                        }}
-                        className="text-r7-blue hover:text-r7-dark font-medium"
-                      >
-                        View
-                      </button>
+                    <td className="px-4 py-3 whitespace-nowrap text-center">
+                      {contact.currentOkCode ? (
+                        <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-r7-teal text-white">
+                          {contact.currentOkCode}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">N/A</span>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {/* Infinite Scroll Trigger */}
+            {displayCount < filteredContacts.length && (
+              <div ref={observerTarget} className="py-4 text-center text-gray-500">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-r7-teal"></div>
+                <p className="text-sm mt-2">Loading more contacts...</p>
+              </div>
+            )}
+            {displayCount >= filteredContacts.length && filteredContacts.length > 50 && (
+              <div className="py-4 text-center text-gray-500 text-sm">
+                Showing all {filteredContacts.length} contacts
+              </div>
+            )}
           </div>
         ) : (
           <div className="card bg-white text-center py-12">

@@ -295,7 +295,7 @@ function Analytics({ onBackToDashboard }) {
                   </div>
                   <div className="bg-gray-200 rounded-full h-8">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-full h-8 flex items-center justify-center text-white font-bold text-sm"
+                      className="bg-r7-red rounded-full h-8 flex items-center justify-center text-white font-bold text-sm"
                       style={{ width: `${Math.min((weeklyTotals.dials / weeklyTargets.dials) * 100, 100)}%` }}
                     >
                       {((weeklyTotals.dials / weeklyTargets.dials) * 100).toFixed(0)}%
@@ -418,31 +418,31 @@ function Analytics({ onBackToDashboard }) {
               <h3 className="text-xl font-bold text-gray-700 mb-4">📈 Your Performance Ratios</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-3xl font-bold text-purple-700">
+                  <div className="text-3xl font-bold text-r7-red">
                     {(performanceRatios.meetingsShowedRatio * 100).toFixed(0)}%
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Meetings Showed</div>
+                  <div className="text-sm text-r7-navy mt-1 font-semibold">Meetings Showed</div>
                   <div className="text-xs text-gray-500 mt-1">Ran / Booked</div>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-3xl font-bold text-blue-700">
+                  <div className="text-3xl font-bold text-r7-red">
                     {(performanceRatios.conversationsToMeetings * 100).toFixed(0)}%
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Convos to Meetings</div>
+                  <div className="text-sm text-r7-navy mt-1 font-semibold">Convos to Meetings</div>
                   <div className="text-xs text-gray-500 mt-1">Booked / Convos</div>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-3xl font-bold text-green-700">
+                  <div className="text-3xl font-bold text-r7-red">
                     {(performanceRatios.triageToConversations * 100).toFixed(0)}%
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Triage Rate</div>
+                  <div className="text-sm text-r7-navy mt-1 font-semibold">Triage Rate</div>
                   <div className="text-xs text-gray-500 mt-1">Triage / Convos</div>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-3xl font-bold text-orange-700">
+                  <div className="text-3xl font-bold text-r7-red">
                     {(performanceRatios.pickupsToConversations * 100).toFixed(0)}%
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">Pickup to Convo</div>
+                  <div className="text-sm text-r7-navy mt-1 font-semibold">Pickup to Convo</div>
                   <div className="text-xs text-gray-500 mt-1">Convos / Pickups</div>
                 </div>
               </div>
