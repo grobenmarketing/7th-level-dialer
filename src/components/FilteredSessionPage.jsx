@@ -151,11 +151,11 @@ function FilteredSessionPage({ onBackToDashboard, onReview }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Filters */}
           <div className="lg:col-span-2 space-y-6">
-            {/* OK Codes Filter */}
+            {/* OK Code Filter */}
             <div className="card bg-white">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-700">
-                  OK Codes to Call
+                  OK Code Filter
                 </h2>
                 <div className="flex gap-2">
                   <button

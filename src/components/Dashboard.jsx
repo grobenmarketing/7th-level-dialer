@@ -6,7 +6,6 @@ import TodaysSummary from './TodaysSummary';
 import ColdCallsPanel from './ColdCallsPanel';
 import SequencesPanel from './SequencesPanel';
 import { storage, KEYS } from '../lib/cloudStorage';
-import { loadSimpleTestData, loadRealisticTestData } from '../lib/devUtils';
 
 function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onViewAnalytics, onViewHowToUse, onViewSettings, onViewSequenceTasks }) {
   const {
@@ -118,18 +117,6 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
     setSelectedContact(null);
   };
 
-  const handleLoadRealisticTestData = async () => {
-    if (confirm('This will add 75 realistic test contacts with proper sequence tasks and due dates. This may take a few seconds. Continue?')) {
-      const result = await loadRealisticTestData(75);
-
-      if (result.success) {
-        // Force a reload of the page to refresh all React state
-        window.location.reload();
-      } else {
-        alert(`❌ Error loading test data: ${result.error}`);
-      }
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
@@ -166,7 +153,7 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
             </label>
 
             {/* Quick Actions for Empty State */}
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+            <div className="mt-8 grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
               <button
                 onClick={onViewContacts}
                 className="p-4 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors"
@@ -180,13 +167,6 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
               >
                 <div className="text-3xl mb-1">📊</div>
                 <div className="text-sm font-medium text-orange-900">Analytics</div>
-              </button>
-              <button
-                onClick={handleLoadRealisticTestData}
-                className="p-4 rounded-lg bg-blue-100 hover:bg-blue-200 transition-colors"
-              >
-                <div className="text-3xl mb-1">🎲</div>
-                <div className="text-sm font-medium text-blue-900">Load 75 Test Contacts</div>
               </button>
               <button
                 onClick={onViewSettings}
