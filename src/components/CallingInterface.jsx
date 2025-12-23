@@ -147,6 +147,11 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
       } else if (currentContact.sequence_status === 'active') {
         // This is a follow-up call - update counters
         console.log('📞 Follow-up call - updating sequence...');
+        console.log('Contact details:', {
+          id: currentContact.id,
+          current_day: currentContact.sequence_current_day,
+          sequence_start_date: currentContact.sequence_start_date
+        });
 
         // Update call counter
         const counterUpdates = getCounterUpdates('call');
@@ -158,6 +163,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
         });
 
         // Mark today's call task as complete
+        console.log('Marking call task as complete for day', currentContact.sequence_current_day);
         await completeSequenceTask(
           currentContact.id,
           currentContact.sequence_current_day,
@@ -653,10 +659,9 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                     checked={hadConversation}
                     onChange={(e) => {
                       updateField('hadConversation', e.target.checked);
-                      // Auto-uncheck dependent checkboxes if unchecking conversation
+                      // Auto-uncheck triage if unchecking conversation (triage requires conversation)
                       if (!e.target.checked) {
                         updateField('hadTriage', false);
-                        updateField('needsEmail', false);
                       }
                     }}
                     className="w-6 h-6 text-r7-navy rounded focus:ring-r7-navy"
@@ -684,18 +689,13 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                   </span>
                 </label>
 
-                {/* Needs Email Follow-up - DISABLED until Had Conversation */}
-                <label className={`flex items-center p-4 rounded-lg border-2 transition-colors ${
-                  hadConversation
-                    ? 'bg-green-50 cursor-pointer hover:bg-green-100 border-transparent hover:border-green-300'
-                    : 'bg-gray-100 cursor-not-allowed border-gray-300 opacity-50'
-                }`}>
+                {/* Needs Email Follow-up - Always Enabled */}
+                <label className="flex items-center p-4 bg-green-50 rounded-lg cursor-pointer hover:bg-green-100 transition-colors border-2 border-transparent hover:border-green-300">
                   <input
                     type="checkbox"
                     checked={needsEmail}
                     onChange={(e) => updateField('needsEmail', e.target.checked)}
-                    disabled={!hadConversation}
-                    className="w-6 h-6 text-green-600 rounded focus:ring-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-6 h-6 text-green-600 rounded focus:ring-green-600"
                   />
                   <span className="ml-3 font-bold text-gray-800">
                     📧 Needs Email Follow-up
