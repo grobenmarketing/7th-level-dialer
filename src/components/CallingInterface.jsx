@@ -346,7 +346,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
           {/* Left Column - Contact Info */}
           <div className="space-y-6">
             <AnimatePresence mode="wait">
-              <ContactCard contact={currentContact} />
+              <ContactCard key={currentContact?.id || 'empty'} contact={currentContact} />
             </AnimatePresence>
 
             {/* Last Call Summary */}
