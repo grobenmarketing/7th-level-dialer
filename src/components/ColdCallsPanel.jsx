@@ -21,8 +21,9 @@ function ColdCallsPanel({ contacts, onStartCalling }) {
   const hasMore = neverContacted.length > displayLimit;
 
   const handleSaveGoal = async () => {
-    if (tempGoal > 0) {
-      await saveDailyDialGoal(tempGoal);
+    const goal = parseInt(tempGoal) || 1;
+    if (goal > 0) {
+      await saveDailyDialGoal(goal);
       setIsEditingGoal(false);
     }
   };
@@ -80,7 +81,7 @@ function ColdCallsPanel({ contacts, onStartCalling }) {
                     min="1"
                     max="100"
                     value={tempGoal}
-                    onChange={(e) => setTempGoal(parseInt(e.target.value) || 1)}
+                    onChange={(e) => setTempGoal(e.target.value === '' ? '' : parseInt(e.target.value))}
                     className="w-16 px-2 py-1 border border-blue-300 rounded text-center text-sm"
                     autoFocus
                   />
