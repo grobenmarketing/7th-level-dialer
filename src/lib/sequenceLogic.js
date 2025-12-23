@@ -134,6 +134,12 @@ export async function advanceContactToNextDay(contact, updateContactFn) {
 export async function completeSequenceTask(contactId, sequenceDay, taskType, notes = '') {
   const allTasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
 
+  console.log(`🔍 Looking for task: contactId=${contactId}, sequenceDay=${sequenceDay}, taskType=${taskType}`);
+  console.log(`📋 Total tasks in storage: ${allTasks.length}`);
+
+  const contactTasks = allTasks.filter(t => t.contact_id === contactId);
+  console.log(`📋 Tasks for this contact: ${contactTasks.length}`);
+
   const taskIndex = allTasks.findIndex(
     task =>
       task.contact_id === contactId &&
@@ -143,6 +149,7 @@ export async function completeSequenceTask(contactId, sequenceDay, taskType, not
 
   if (taskIndex !== -1) {
     // Update existing task
+    console.log(`✓ Found existing task at index ${taskIndex}:`, allTasks[taskIndex]);
     allTasks[taskIndex].status = 'completed';
     allTasks[taskIndex].completed_at = new Date().toISOString();
     if (notes) {
@@ -150,17 +157,21 @@ export async function completeSequenceTask(contactId, sequenceDay, taskType, not
     }
   } else {
     // Create new task record
-    allTasks.push({
+    console.log(`⚠️ Task not found in storage - creating new task record`);
+    const newTask = {
       id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       contact_id: contactId,
       task_date: new Date().toISOString().split('T')[0],
+      task_due_date: new Date().toISOString().split('T')[0], // Set due date to today
       sequence_day: sequenceDay,
       task_type: taskType,
       task_description: taskType,
       status: 'completed',
       completed_at: new Date().toISOString(),
       notes: notes || ''
-    });
+    };
+    console.log(`📝 Creating new task:`, newTask);
+    allTasks.push(newTask);
   }
 
   await storage.set(KEYS.SEQUENCE_TASKS, allTasks);

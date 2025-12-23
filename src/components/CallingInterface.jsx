@@ -147,6 +147,11 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
       } else if (currentContact.sequence_status === 'active') {
         // This is a follow-up call - update counters
         console.log('📞 Follow-up call - updating sequence...');
+        console.log('Contact details:', {
+          id: currentContact.id,
+          current_day: currentContact.sequence_current_day,
+          sequence_start_date: currentContact.sequence_start_date
+        });
 
         // Update call counter
         const counterUpdates = getCounterUpdates('call');
@@ -158,6 +163,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
         });
 
         // Mark today's call task as complete
+        console.log('Marking call task as complete for day', currentContact.sequence_current_day);
         await completeSequenceTask(
           currentContact.id,
           currentContact.sequence_current_day,
