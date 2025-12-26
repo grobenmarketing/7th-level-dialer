@@ -11,6 +11,7 @@ import SessionReviewPage from './components/SessionReviewPage'
 import Login from './components/Login'
 import OkCodesAdmin from './components/OkCodesAdmin'
 import SequenceTasksPage from './components/SequenceTasksPage'
+import DatabaseManager from './components/DatabaseManager'
 import { useAuth } from './hooks/useAuth'
 
 const VIEW_STATE_KEY = 'r7_current_view'
@@ -160,6 +161,9 @@ function App() {
       )}
       {currentView === 'sequenceTasks' && (
         <SequenceTasksPage onBackToDashboard={handleBackToDashboard} />
+      )}
+      {currentView === 'database' && (
+        <DatabaseManager onBackToDashboard={handleBackToDashboard} />
       )}
     </DashboardLayout>
   )
