@@ -38,7 +38,8 @@ function DatabaseManager({ onBackToDashboard }) {
     deleteAllContacts,
     exportToCSV,
     importFromCSV,
-    getStats
+    getStats,
+    loading: contactsLoading
   } = useContacts();
 
   const {
@@ -50,7 +51,8 @@ function DatabaseManager({ onBackToDashboard }) {
     updateKPIForDate,
     weeklyTargets,
     dailyDialGoal,
-    getWeekStart
+    getWeekStart,
+    loading: kpiLoading
   } = useKPI();
 
   // Contacts state
@@ -70,8 +72,6 @@ function DatabaseManager({ onBackToDashboard }) {
   const [sequenceTasks, setSequenceTasks] = useState([]);
   const [tasksFilter, setTasksFilter] = useState('all');
   const [selectedTasks, setSelectedTasks] = useState(new Set());
-
-  const stats = getStats();
 
   // Load sequence tasks
   const loadSequenceTasks = useCallback(async () => {
@@ -263,12 +263,6 @@ function DatabaseManager({ onBackToDashboard }) {
   };
 
   // ==================== KPI TAB ====================
-  const weekData = getWeekData(currentWeekStart);
-  const weeklyTotals = getWeeklyTotals(currentWeekStart);
-  const dailyAverages = getDailyAverages(currentWeekStart);
-  const performanceRatios = getPerformanceRatios(currentWeekStart);
-  const objectionFrequency = getObjectionFrequency(currentWeekStart);
-
   const handleEditDay = async (date, field, value) => {
     await updateKPIForDate(date, { [field]: parseInt(value) || 0 });
   };
@@ -348,6 +342,27 @@ function DatabaseManager({ onBackToDashboard }) {
   };
 
   // ==================== RENDER ====================
+  // Show loading state while data is being fetched
+  if (contactsLoading || kpiLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⏳</div>
+          <h2 className="text-2xl font-bold text-gray-700">Loading Database...</h2>
+          <p className="text-gray-500 mt-2">Please wait while we fetch your data</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate stats and KPI data after loading is complete
+  const stats = getStats();
+  const weekData = getWeekData(currentWeekStart);
+  const weeklyTotals = getWeeklyTotals(currentWeekStart);
+  const dailyAverages = getDailyAverages(currentWeekStart);
+  const performanceRatios = getPerformanceRatios(currentWeekStart);
+  const objectionFrequency = getObjectionFrequency(currentWeekStart);
+
   const contactsColumns = [
     { key: 'companyName', label: 'Company Name', sortable: true, width: '25%' },
     { key: 'phone', label: 'Phone', sortable: true, width: '15%' },
