@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import { useKPI } from '../hooks/useKPI';
 import { storage, KEYS } from '../lib/cloudStorage';
@@ -80,7 +80,7 @@ function DatabaseManager({ onBackToDashboard }) {
   }, []);
 
   // Load tasks on mount and when switching to tasks tab
-  useMemo(() => {
+  useEffect(() => {
     if (activeTab === 'tasks') {
       loadSequenceTasks();
     }
