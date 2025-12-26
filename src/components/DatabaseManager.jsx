@@ -65,8 +65,15 @@ function DatabaseManager({ onBackToDashboard }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingContact, setEditingContact] = useState(null);
 
-  // KPI state
-  const [currentWeekStart, setCurrentWeekStart] = useState(getWeekStart());
+  // KPI state - initialize with null and set once getWeekStart is available
+  const [currentWeekStart, setCurrentWeekStart] = useState(null);
+
+  // Set initial week start once getWeekStart is available
+  useEffect(() => {
+    if (getWeekStart && !currentWeekStart) {
+      setCurrentWeekStart(getWeekStart());
+    }
+  }, [getWeekStart, currentWeekStart]);
 
   // Tasks state
   const [sequenceTasks, setSequenceTasks] = useState([]);
@@ -342,8 +349,8 @@ function DatabaseManager({ onBackToDashboard }) {
   };
 
   // ==================== RENDER ====================
-  // Show loading state while data is being fetched
-  if (contactsLoading || kpiLoading) {
+  // Show loading state while data is being fetched or week start is being initialized
+  if (contactsLoading || kpiLoading || !currentWeekStart) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
