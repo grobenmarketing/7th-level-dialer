@@ -8,8 +8,9 @@ function Sidebar({ currentView, onNavigate }) {
 
   const menuItems = [
     { id: 'dashboard', icon: '🏠', label: 'Dashboard' },
+    { id: 'database', icon: '📊', label: 'Database' },
     { id: 'contacts', icon: '📇', label: 'Contacts' },
-    { id: 'analytics', icon: '📊', label: 'Analytics' },
+    { id: 'analytics', icon: '📈', label: 'Analytics' },
     { id: 'sequenceTasks', icon: '🔄', label: 'Sequences' },
     { id: 'settings', icon: '⚙️', label: 'Settings' },
     { id: 'howto', icon: '❓', label: 'How To Use' },
