@@ -47,7 +47,7 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
   // Handle task completion
   const handleCompleteTask = async (task, contact) => {
     // Optimistically mark as completed immediately
-    const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+    const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallyCompleted(prev => new Set([...prev, taskId]));
 
     // Mark task as complete
@@ -91,7 +91,7 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
   // Handle task skip
   const handleSkipTask = async (task, contact) => {
     // Optimistically mark as skipped immediately
-    const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+    const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallySkipped(prev => new Set([...prev, taskId]));
 
     // Mark task as skipped
@@ -201,7 +201,7 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
                   {/* Task List */}
                   <div className="space-y-2">
                     {displayTasks.map(task => {
-                      const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+                      const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
                       const isOptimisticallyCompleted = optimisticallyCompleted.has(taskId);
                       const isOptimisticallySkipped = optimisticallySkipped.has(taskId);
                       const effectiveStatus = isOptimisticallyCompleted ? 'completed' : isOptimisticallySkipped ? 'skipped' : task.status;

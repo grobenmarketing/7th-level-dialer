@@ -358,7 +358,7 @@ function DatabaseManager({ onBackToDashboard }) {
 
   const handleCompleteTask = async (contact, task) => {
     // Optimistically mark as completed immediately
-    const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+    const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallyCompleted(prev => new Set([...prev, taskId]));
 
     // Perform async operations
@@ -401,7 +401,7 @@ function DatabaseManager({ onBackToDashboard }) {
 
   const handleSkipTask = async (contact, task) => {
     // Optimistically mark as skipped immediately
-    const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+    const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallySkipped(prev => new Set([...prev, taskId]));
 
     // Perform async operations
@@ -1306,7 +1306,7 @@ function DatabaseManager({ onBackToDashboard }) {
                           ) : (
                           tasks.map(task => {
                             const today = new Date().toISOString().split('T')[0];
-                            const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+                            const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
                             const isOptimisticallyCompleted = optimisticallyCompleted.has(taskId);
                             const isOptimisticallySkipped = optimisticallySkipped.has(taskId);
                             const effectiveStatus = isOptimisticallyCompleted ? 'completed' : isOptimisticallySkipped ? 'skipped' : task.status;
@@ -1409,7 +1409,7 @@ function DatabaseManager({ onBackToDashboard }) {
                         <div className="ml-8 text-sm text-gray-600">
                           <div className="space-y-1">
                             {tasks.slice(0, 3).map(task => {
-                              const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+                              const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
                               const isOptimisticallyCompleted = optimisticallyCompleted.has(taskId);
                               const isOptimisticallySkipped = optimisticallySkipped.has(taskId);
                               const effectiveStatus = isOptimisticallyCompleted ? 'completed' : isOptimisticallySkipped ? 'skipped' : task.status;
