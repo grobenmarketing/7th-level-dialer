@@ -19,14 +19,20 @@ import {
 } from '../lib/sequenceCalendar';
 import {
   completeSequenceTask,
+  skipSequenceTask,
   advanceContactToNextDay,
   checkAllDayTasksComplete,
+  pauseSequence,
+  resumeSequence,
+  markContactDead,
+  convertToClient,
   applyCounterUpdates,
   getCounterUpdates
 } from '../lib/sequenceLogic';
 import {
   getVisibleTasks,
   getOverdueTasks,
+  getTodaysTasks,
   hasOverdueTasks
 } from '../lib/sequenceAutomation';
 
@@ -75,6 +81,12 @@ function DatabaseManager({ onBackToDashboard }) {
   const [sequenceTasks, setSequenceTasks] = useState([]);
   const [tasksFilter, setTasksFilter] = useState('all');
   const [selectedTasks, setSelectedTasks] = useState(new Set());
+  const [showDeadModal, setShowDeadModal] = useState(false);
+  const [deadReason, setDeadReason] = useState('');
+  const [contactToMarkDead, setContactToMarkDead] = useState(null);
+  const [optimisticallyCompleted, setOptimisticallyCompleted] = useState(new Set());
+  const [optimisticallySkipped, setOptimisticallySkipped] = useState(new Set());
+  const [expandedContacts, setExpandedContacts] = useState(new Set());
 
   const stats = getStats();
 
@@ -306,15 +318,20 @@ function DatabaseManager({ onBackToDashboard }) {
     c => c.sequence_status === 'active'
   );
 
-  const handleCompleteTask = async (contact, taskType) => {
+  const handleCompleteTask = async (contact, task) => {
+    // Optimistically mark as completed immediately
+    const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+    setOptimisticallyCompleted(prev => new Set([...prev, taskId]));
+
+    // Perform async operations
     await completeSequenceTask(
       contact.id,
-      contact.sequence_current_day,
-      taskType,
+      task.sequence_day,
+      task.task_type,
       ''
     );
 
-    const counterUpdates = getCounterUpdates(taskType);
+    const counterUpdates = getCounterUpdates(task.task_type);
     const updatedContactData = applyCounterUpdates(contact, counterUpdates);
 
     await updateContact(contact.id, {
@@ -323,6 +340,12 @@ function DatabaseManager({ onBackToDashboard }) {
     });
 
     await loadSequenceTasks();
+
+    // Clear optimistic state after React renders the new data
+    setTimeout(() => {
+      setOptimisticallyCompleted(new Set());
+      setOptimisticallySkipped(new Set());
+    }, 100);
 
     const allComplete = await checkAllDayTasksComplete({
       ...contact,
@@ -338,16 +361,95 @@ function DatabaseManager({ onBackToDashboard }) {
     }
   };
 
+  const handleSkipTask = async (contact, task) => {
+    // Optimistically mark as skipped immediately
+    const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+    setOptimisticallySkipped(prev => new Set([...prev, taskId]));
+
+    // Perform async operations
+    await skipSequenceTask(
+      contact.id,
+      task.sequence_day,
+      task.task_type,
+      'Skipped by user'
+    );
+
+    await loadSequenceTasks();
+
+    // Clear optimistic state after React renders the new data
+    setTimeout(() => {
+      setOptimisticallyCompleted(new Set());
+      setOptimisticallySkipped(new Set());
+    }, 100);
+
+    const allComplete = await checkAllDayTasksComplete(contact);
+
+    if (allComplete) {
+      await advanceContactToNextDay(contact, updateContact);
+      await loadSequenceTasks();
+    }
+  };
+
+  // Sequence control handlers
+  const handlePauseSequence = async (contact) => {
+    await pauseSequence(contact.id, updateContact);
+  };
+
+  const handleResumeSequence = async (contact) => {
+    await resumeSequence(contact.id, updateContact);
+  };
+
+  const handleConvertToClient = async (contact) => {
+    if (confirm(`Mark ${contact.companyName} as converted to client?`)) {
+      await convertToClient(contact.id, updateContact);
+      await loadSequenceTasks();
+    }
+  };
+
+  const handleMarkDead = async () => {
+    if (!contactToMarkDead || !deadReason.trim()) return;
+
+    await markContactDead(contactToMarkDead.id, deadReason, updateContact);
+    await loadSequenceTasks();
+    setShowDeadModal(false);
+    setDeadReason('');
+    setContactToMarkDead(null);
+  };
+
+  const toggleContactExpanded = (contactId) => {
+    const newExpanded = new Set(expandedContacts);
+    if (newExpanded.has(contactId)) {
+      newExpanded.delete(contactId);
+    } else {
+      newExpanded.add(contactId);
+    }
+    setExpandedContacts(newExpanded);
+  };
+
   const getContactTasks = (contact) => {
-    // Get only visible tasks (due today or overdue, not future tasks)
-    const visibleTasks = getVisibleTasks(contact, sequenceTasks);
+    // Get all tasks for this contact based on filter
+    let tasks;
 
-    // Filter to only pending tasks and extract task types
-    const pendingTasks = visibleTasks.filter(t => t.status === 'pending');
+    if (tasksFilter === 'all') {
+      // Show all tasks (entire 30-day sequence)
+      tasks = getVisibleTasks(contact, sequenceTasks, 'all');
+    } else if (tasksFilter === 'today') {
+      // Show only tasks due today
+      tasks = getTodaysTasks(contact, sequenceTasks);
+    } else if (tasksFilter === 'overdue') {
+      // Show only overdue tasks
+      tasks = getOverdueTasks(contact, sequenceTasks);
+    } else if (tasksFilter === 'upcoming') {
+      // Show future tasks (not due yet)
+      const allTasks = getVisibleTasks(contact, sequenceTasks, 'all');
+      const today = new Date().toISOString().split('T')[0];
+      tasks = allTasks.filter(t => t.status === 'pending' && t.task_due_date > today);
+    } else {
+      // Default: show visible tasks (due today or overdue)
+      tasks = getVisibleTasks(contact, sequenceTasks, 'today');
+    }
 
-    // Return unique task types
-    const taskTypes = [...new Set(pendingTasks.map(t => t.task_type))];
-    return taskTypes;
+    return tasks.sort((a, b) => a.sequence_day - b.sequence_day);
   };
 
   const isTaskComplete = (contact, taskType) => {
@@ -825,9 +927,13 @@ function DatabaseManager({ onBackToDashboard }) {
               <div className="space-y-6">
                 {activeSequenceContacts.map((contact) => {
                   const tasks = getContactTasks(contact);
-                  const completedTasks = tasks.filter(t => isTaskComplete(contact, t)).length;
+                  const completedTasks = tasks.filter(t => t.status === 'completed').length;
+                  const skippedTasks = tasks.filter(t => t.status === 'skipped').length;
+                  const pendingTasks = tasks.filter(t => t.status === 'pending').length;
                   const hasOverdue = hasOverdueTasks(contact, sequenceTasks);
                   const overdueCount = getOverdueTasks(contact, sequenceTasks).length;
+                  const isExpanded = expandedContacts.has(contact.id);
+                  const displayTasks = isExpanded ? tasks : tasks.slice(0, 3);
 
                   return (
                     <div key={contact.id} className={`card p-6 ${hasOverdue ? 'bg-red-50 border-2 border-red-300' : 'bg-white'}`}>
@@ -835,12 +941,12 @@ function DatabaseManager({ onBackToDashboard }) {
                       <div className="flex items-center justify-between mb-4">
                         <div
                           className="cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors flex-1"
-                          onClick={() => {
-                            setSelectedContact(contact);
-                            setShowContactDetails(true);
-                          }}
+                          onClick={() => toggleContactExpanded(contact.id)}
                         >
                           <div className="flex items-center gap-3">
+                            <span className="text-lg">
+                              {isExpanded ? '▼' : '▶'}
+                            </span>
                             <h4 className="text-lg font-bold text-gray-900">
                               {contact.companyName}
                             </h4>
@@ -850,72 +956,189 @@ function DatabaseManager({ onBackToDashboard }) {
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                          <div className="flex items-center gap-3 text-sm text-gray-600 mt-1 ml-8">
                             <span>📞 {contact.phone}</span>
                             <span>•</span>
                             <span>Day {contact.sequence_current_day} of 30</span>
                             <span>•</span>
                             <span>
-                              {completedTasks} of {tasks.length} tasks complete
+                              {completedTasks} done, {skippedTasks} skipped, {pendingTasks} pending
                             </span>
                             <span>•</span>
                             <span>{getTotalImpressions(contact)} total touches</span>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Task List */}
-                      <div className="space-y-2">
-                        {tasks.map(taskType => {
-                          const isComplete = isTaskComplete(contact, taskType);
-                          const task = sequenceTasks.find(
-                            t => t.contact_id === contact.id && t.task_type === taskType && t.status === 'pending'
-                          );
-                          const isOverdue = task && getOverdueTasks(contact, sequenceTasks).some(t => t.task_type === taskType);
-
-                          return (
-                            <div
-                              key={taskType}
-                              className={`flex items-center gap-3 p-3 rounded-lg border ${
-                                isComplete
-                                  ? 'bg-green-50 border-green-200'
-                                  : isOverdue
-                                  ? 'bg-red-100 border-red-400 border-2'
-                                  : 'bg-gray-50 border-gray-200'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isComplete}
-                                onChange={() => !isComplete && handleCompleteTask(contact, taskType)}
-                                className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 cursor-pointer accent-green-600"
-                                disabled={isComplete}
-                              />
-                              <span className={`flex-1 text-sm ${isComplete ? 'line-through text-gray-500' : 'text-gray-800 font-medium'}`}>
-                                {getTaskDescription(taskType, contact.sequence_current_day)}
-                              </span>
-                              {isOverdue && !isComplete && (
-                                <span className="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded">
-                                  OVERDUE
-                                </span>
-                              )}
-                              {isComplete && (
-                                <span className="text-green-600 text-sm font-semibold">✓ Complete</span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="mt-4">
-                        <div className="w-full bg-gray-200 rounded-full h-3">
-                          <div
-                            className="bg-green-500 h-3 rounded-full transition-all"
-                            style={{ width: `${(completedTasks / tasks.length) * 100}%` }}
-                          />
+                        {/* Action Buttons */}
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => handlePauseSequence(contact)}
+                            className="px-3 py-1.5 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded font-medium"
+                            title="Pause sequence"
+                          >
+                            ⏸️ Pause
+                          </button>
+                          <button
+                            onClick={() => handleConvertToClient(contact)}
+                            className="px-3 py-1.5 text-xs bg-green-500 hover:bg-green-600 text-white rounded font-medium"
+                            title="Mark as converted"
+                          >
+                            🎉 Convert
+                          </button>
+                          <button
+                            onClick={() => {
+                              setContactToMarkDead(contact);
+                              setShowDeadModal(true);
+                            }}
+                            className="px-3 py-1.5 text-xs bg-red-500 hover:bg-red-600 text-white rounded font-medium"
+                            title="Mark as dead"
+                          >
+                            ☠️ Dead
+                          </button>
                         </div>
                       </div>
+
+                      {/* Task List - Only show when expanded */}
+                      {isExpanded && (
+                        <div className="space-y-2 ml-8">
+                          {tasks.length === 0 ? (
+                            <div className="text-center py-4 text-gray-500 text-sm">
+                              No tasks for this filter
+                            </div>
+                          ) : (
+                          tasks.map(task => {
+                            const today = new Date().toISOString().split('T')[0];
+                            const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+                            const isOptimisticallyCompleted = optimisticallyCompleted.has(taskId);
+                            const isOptimisticallySkipped = optimisticallySkipped.has(taskId);
+                            const effectiveStatus = isOptimisticallyCompleted ? 'completed' : isOptimisticallySkipped ? 'skipped' : task.status;
+                            const isOverdue = effectiveStatus === 'pending' && task.task_due_date < today;
+                            const isDueToday = effectiveStatus === 'pending' && task.task_due_date === today;
+                            const isFuture = effectiveStatus === 'pending' && task.task_due_date > today;
+
+                            return (
+                              <div
+                                key={task.id}
+                                className={`flex items-center gap-3 p-3 rounded-lg border ${
+                                  effectiveStatus === 'completed'
+                                    ? 'bg-green-50 border-green-200'
+                                    : effectiveStatus === 'skipped'
+                                    ? 'bg-gray-100 border-gray-300'
+                                    : isOverdue
+                                    ? 'bg-red-100 border-red-400 border-2'
+                                    : isDueToday
+                                    ? 'bg-yellow-50 border-yellow-300'
+                                    : 'bg-gray-50 border-gray-200'
+                                }`}
+                              >
+                                {/* Checkbox or Status Icon */}
+                                {effectiveStatus === 'completed' ? (
+                                  <span className="text-green-600 text-xl">✓</span>
+                                ) : effectiveStatus === 'skipped' ? (
+                                  <span className="text-gray-500 text-xl">⊘</span>
+                                ) : (
+                                  <input
+                                    type="checkbox"
+                                    checked={false}
+                                    onChange={() => handleCompleteTask(contact, task)}
+                                    className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 cursor-pointer accent-green-600"
+                                  />
+                                )}
+
+                                {/* Day Badge */}
+                                <span className="text-xs font-semibold text-gray-600 min-w-[3.5rem] bg-white px-2 py-1 rounded border border-gray-300">
+                                  Day {task.sequence_day}
+                                </span>
+
+                                {/* Task Description */}
+                                <span className={`flex-1 text-sm ${
+                                  effectiveStatus === 'completed' || effectiveStatus === 'skipped'
+                                    ? 'line-through text-gray-500'
+                                    : 'text-gray-800 font-medium'
+                                }`}>
+                                  {getTaskDescription(task.task_type, task.sequence_day)}
+                                </span>
+
+                                {/* Due Date */}
+                                <span className="text-xs text-gray-500 min-w-[5rem]">
+                                  {isOverdue ? '🚨' : isDueToday ? '📅' : isFuture ? '📆' : ''} {task.task_due_date}
+                                </span>
+
+                                {/* Status Badges */}
+                                {effectiveStatus === 'completed' && (
+                                  <span className="text-green-600 text-sm font-semibold">Done</span>
+                                )}
+                                {effectiveStatus === 'skipped' && (
+                                  <span className="text-gray-600 text-sm font-semibold">Skipped</span>
+                                )}
+                                {isOverdue && effectiveStatus === 'pending' && (
+                                  <span className="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded">
+                                    OVERDUE
+                                  </span>
+                                )}
+
+                                {/* Skip Button */}
+                                {effectiveStatus === 'pending' && (
+                                  <button
+                                    onClick={() => handleSkipTask(contact, task)}
+                                    className="px-3 py-1 text-xs bg-gray-400 hover:bg-gray-500 text-white rounded font-medium"
+                                    title="Skip this task"
+                                  >
+                                    Skip
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+
+                          {/* Progress Bar */}
+                          {tasks.length > 0 && (
+                            <div className="mt-4">
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div
+                                  className="bg-green-500 h-3 rounded-full transition-all"
+                                  style={{ width: `${((completedTasks + skippedTasks) / tasks.length) * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Collapsed Summary - Show 2-3 tasks preview when collapsed */}
+                      {!isExpanded && tasks.length > 0 && (
+                        <div className="ml-8 text-sm text-gray-600">
+                          <div className="space-y-1">
+                            {tasks.slice(0, 3).map(task => {
+                              const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+                              const isOptimisticallyCompleted = optimisticallyCompleted.has(taskId);
+                              const isOptimisticallySkipped = optimisticallySkipped.has(taskId);
+                              const effectiveStatus = isOptimisticallyCompleted ? 'completed' : isOptimisticallySkipped ? 'skipped' : task.status;
+
+                              return (
+                                <div key={task.id} className="flex items-center gap-2">
+                                  {effectiveStatus === 'completed' ? (
+                                    <span className="text-green-600">✓</span>
+                                  ) : effectiveStatus === 'skipped' ? (
+                                    <span className="text-gray-500">⊘</span>
+                                  ) : (
+                                    <span className="text-gray-400">○</span>
+                                  )}
+                                  <span className={effectiveStatus === 'pending' ? 'text-gray-900' : 'text-gray-500 line-through'}>
+                                    Day {task.sequence_day}: {getTaskDescription(task.task_type, task.sequence_day)}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                            {tasks.length > 3 && (
+                              <div className="text-xs text-gray-500 italic mt-2">
+                                ... and {tasks.length - 3} more tasks (click to expand)
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -950,6 +1173,45 @@ function DatabaseManager({ onBackToDashboard }) {
             onSave={handleEditContact}
             onClose={() => setEditingContact(null)}
           />
+        )}
+
+        {/* Mark Dead Modal */}
+        {showDeadModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">
+                Mark as Dead Lead
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Why is {contactToMarkDead?.companyName} not a good fit?
+              </p>
+              <textarea
+                value={deadReason}
+                onChange={(e) => setDeadReason(e.target.value)}
+                placeholder="e.g., No budget, wrong timing, not interested..."
+                className="w-full border border-gray-300 rounded-lg p-3 mb-4 h-24"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeadModal(false);
+                    setDeadReason('');
+                    setContactToMarkDead(null);
+                  }}
+                  className="btn flex-1 bg-gray-500 hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMarkDead}
+                  disabled={!deadReason.trim()}
+                  className="btn flex-1 bg-red-500 hover:bg-red-600 disabled:bg-gray-300"
+                >
+                  Mark as Dead
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

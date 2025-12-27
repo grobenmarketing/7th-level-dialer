@@ -10,7 +10,6 @@ import FilteredSessionPage from './components/FilteredSessionPage'
 import SessionReviewPage from './components/SessionReviewPage'
 import Login from './components/Login'
 import OkCodesAdmin from './components/OkCodesAdmin'
-import SequenceTasksPage from './components/SequenceTasksPage'
 import DatabaseManager from './components/DatabaseManager'
 import { useAuth } from './hooks/useAuth'
 
@@ -116,7 +115,7 @@ function App() {
           onViewAnalytics={() => navigate('analytics')}
           onViewHowToUse={() => navigate('howto')}
           onViewSettings={() => navigate('settings')}
-          onViewSequenceTasks={() => navigate('sequenceTasks')}
+          onViewSequenceTasks={() => navigate('database')}
         />
       )}
       {currentView === 'filteredSession' && (
@@ -158,9 +157,6 @@ function App() {
       )}
       {currentView === 'okCodes' && (
         <OkCodesAdmin onBack={() => navigate('settings')} />
-      )}
-      {currentView === 'sequenceTasks' && (
-        <SequenceTasksPage onBackToDashboard={handleBackToDashboard} />
       )}
       {currentView === 'database' && (
         <DatabaseManager onBackToDashboard={handleBackToDashboard} />

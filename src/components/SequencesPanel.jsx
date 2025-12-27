@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { isTaskOverdue, isTaskDueToday, getDaysOverdue } from '../lib/taskScheduler';
 import { getTaskDescription } from '../lib/sequenceCalendar';
-import { completeSequenceTask, getCounterUpdates, applyCounterUpdates, checkAllDayTasksComplete, advanceContactToNextDay } from '../lib/sequenceLogic';
+import { completeSequenceTask, skipSequenceTask, getCounterUpdates, applyCounterUpdates, checkAllDayTasksComplete, advanceContactToNextDay } from '../lib/sequenceLogic';
 
 function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, reloadTasks }) {
   const [expandedContact, setExpandedContact] = useState(null);
+  const [optimisticallyCompleted, setOptimisticallyCompleted] = useState(new Set());
+  const [optimisticallySkipped, setOptimisticallySkipped] = useState(new Set());
 
   // Get active contacts
   const activeContacts = contacts.filter(c => c.sequence_status === 'active');
@@ -44,6 +46,10 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
 
   // Handle task completion
   const handleCompleteTask = async (task, contact) => {
+    // Optimistically mark as completed immediately
+    const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+    setOptimisticallyCompleted(prev => new Set([...prev, taskId]));
+
     // Mark task as complete
     await completeSequenceTask(
       contact.id,
@@ -61,8 +67,10 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
       last_contact_date: new Date().toISOString().split('T')[0]
     });
 
-    // Reload tasks
+    // Reload tasks and clear optimistic state
     await reloadTasks();
+    setOptimisticallyCompleted(new Set());
+    setOptimisticallySkipped(new Set());
 
     // Check if all tasks for this day are complete
     const allComplete = await checkAllDayTasksComplete({
@@ -76,6 +84,35 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
         { ...contact, ...updatedContactData },
         updateContact
       );
+      await reloadTasks();
+    }
+  };
+
+  // Handle task skip
+  const handleSkipTask = async (task, contact) => {
+    // Optimistically mark as skipped immediately
+    const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+    setOptimisticallySkipped(prev => new Set([...prev, taskId]));
+
+    // Mark task as skipped
+    await skipSequenceTask(
+      contact.id,
+      task.sequence_day,
+      task.task_type,
+      'Skipped by user'
+    );
+
+    // Reload tasks and clear optimistic state
+    await reloadTasks();
+    setOptimisticallyCompleted(new Set());
+    setOptimisticallySkipped(new Set());
+
+    // Check if all tasks for this day are complete (including skipped)
+    const allComplete = await checkAllDayTasksComplete(contact);
+
+    if (allComplete) {
+      // Advance to next day
+      await advanceContactToNextDay(contact, updateContact);
       await reloadTasks();
     }
   };
@@ -164,7 +201,11 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
                   {/* Task List */}
                   <div className="space-y-2">
                     {displayTasks.map(task => {
-                      const isOverdue = isTaskOverdue(task);
+                      const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+                      const isOptimisticallyCompleted = optimisticallyCompleted.has(taskId);
+                      const isOptimisticallySkipped = optimisticallySkipped.has(taskId);
+                      const effectiveStatus = isOptimisticallyCompleted ? 'completed' : isOptimisticallySkipped ? 'skipped' : task.status;
+                      const isOverdue = effectiveStatus === 'pending' && isTaskOverdue(task);
                       const daysOverdue = isOverdue ? getDaysOverdue(task.task_due_date) : 0;
 
                       return (
@@ -176,14 +217,14 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
                         >
                           <input
                             type="checkbox"
-                            checked={task.status === 'completed'}
+                            checked={effectiveStatus === 'completed'}
                             onChange={() => handleCompleteTask(task, contact)}
                             className="mt-1 w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
-                            disabled={task.status === 'completed'}
+                            disabled={effectiveStatus === 'completed' || effectiveStatus === 'skipped'}
                           />
                           <div className="flex-1 min-w-0">
                             <div className={`text-sm ${
-                              task.status === 'completed'
+                              effectiveStatus === 'completed' || effectiveStatus === 'skipped'
                                 ? 'line-through text-gray-500'
                                 : 'text-gray-900'
                             }`}>
@@ -195,6 +236,15 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
                               </div>
                             )}
                           </div>
+                          {effectiveStatus === 'pending' && (
+                            <button
+                              onClick={() => handleSkipTask(task, contact)}
+                              className="px-2 py-1 text-xs bg-gray-400 hover:bg-gray-500 text-white rounded"
+                              title="Skip this task"
+                            >
+                              Skip
+                            </button>
+                          )}
                         </div>
                       );
                     })}
