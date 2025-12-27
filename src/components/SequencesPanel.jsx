@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { isTaskOverdue, isTaskDueToday, getDaysOverdue } from '../lib/taskScheduler';
 import { getTaskDescription } from '../lib/sequenceCalendar';
-import { completeSequenceTask, getCounterUpdates, applyCounterUpdates, checkAllDayTasksComplete, advanceContactToNextDay } from '../lib/sequenceLogic';
+import { completeSequenceTask, skipSequenceTask, getCounterUpdates, applyCounterUpdates, checkAllDayTasksComplete, advanceContactToNextDay } from '../lib/sequenceLogic';
 
 function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, reloadTasks }) {
   const [expandedContact, setExpandedContact] = useState(null);
@@ -76,6 +76,29 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
         { ...contact, ...updatedContactData },
         updateContact
       );
+      await reloadTasks();
+    }
+  };
+
+  // Handle task skip
+  const handleSkipTask = async (task, contact) => {
+    // Mark task as skipped
+    await skipSequenceTask(
+      contact.id,
+      task.sequence_day,
+      task.task_type,
+      'Skipped by user'
+    );
+
+    // Reload tasks
+    await reloadTasks();
+
+    // Check if all tasks for this day are complete (including skipped)
+    const allComplete = await checkAllDayTasksComplete(contact);
+
+    if (allComplete) {
+      // Advance to next day
+      await advanceContactToNextDay(contact, updateContact);
       await reloadTasks();
     }
   };
@@ -195,6 +218,15 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
                               </div>
                             )}
                           </div>
+                          {task.status === 'pending' && (
+                            <button
+                              onClick={() => handleSkipTask(task, contact)}
+                              className="px-2 py-1 text-xs bg-gray-400 hover:bg-gray-500 text-white rounded"
+                              title="Skip this task"
+                            >
+                              Skip
+                            </button>
+                          )}
                         </div>
                       );
                     })}

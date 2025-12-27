@@ -11,6 +11,7 @@ import {
 } from '../lib/sequenceCalendar';
 import {
   completeSequenceTask,
+  skipSequenceTask,
   advanceContactToNextDay,
   checkAllDayTasksComplete,
   pauseSequence,
@@ -31,12 +32,14 @@ import {
 function SequenceTasksPage({ onBackToDashboard }) {
   const { contacts, updateContact, deleteContact } = useContacts();
   const [sequenceTasks, setSequenceTasks] = useState([]);
-  const [filter, setFilter] = useState('today'); // 'today', 'overdue', 'all', 'upcoming'
+  const [viewMode, setViewMode] = useState('today'); // 'today' or 'all'
   const [selectedContact, setSelectedContact] = useState(null);
   const [showContactDetails, setShowContactDetails] = useState(false);
   const [showDeadModal, setShowDeadModal] = useState(false);
   const [deadReason, setDeadReason] = useState('');
   const [editingContact, setEditingContact] = useState(null);
+  const [showSkipModal, setShowSkipModal] = useState(false);
+  const [taskToSkip, setTaskToSkip] = useState(null);
 
   // Load sequence tasks from storage on mount and when contacts change
   useEffect(() => {
@@ -129,6 +132,25 @@ function SequenceTasksPage({ onBackToDashboard }) {
     }
   };
 
+  // Handle task skip
+  const handleSkipTask = async (contact, taskType, sequenceDay, reason = '') => {
+    // Mark task as skipped in storage
+    await skipSequenceTask(contact.id, sequenceDay, taskType, reason);
+
+    // Reload tasks to update UI
+    await loadSequenceTasks();
+
+    // Check if all tasks for this day are complete (including skipped)
+    const allComplete = await checkAllDayTasksComplete(contact);
+
+    if (allComplete) {
+      // Advance to next day
+      await advanceContactToNextDay(contact, updateContact);
+      // Reload tasks again after advancing
+      await loadSequenceTasks();
+    }
+  };
+
   // Handle sequence controls
   const handlePause = async (contact) => {
     await pauseSequence(contact.id, updateContact);
@@ -172,17 +194,13 @@ function SequenceTasksPage({ onBackToDashboard }) {
     setShowContactDetails(false);
   };
 
-  // Get tasks for a contact (only visible tasks - due today or overdue)
+  // Get tasks for a contact (respects viewMode)
   const getContactTasks = (contact) => {
-    // Get only visible tasks (due today or overdue, not future tasks)
-    const visibleTasks = getVisibleTasks(contact, sequenceTasks);
+    // Get visible tasks based on view mode
+    const visibleTasks = getVisibleTasks(contact, sequenceTasks, viewMode);
 
-    // Filter to only pending tasks and extract task types
-    const pendingTasks = visibleTasks.filter(t => t.status === 'pending');
-
-    // Return unique task types
-    const taskTypes = [...new Set(pendingTasks.map(t => t.task_type))];
-    return taskTypes;
+    // Return all tasks (with their full data) sorted by sequence day
+    return visibleTasks.sort((a, b) => a.sequence_day - b.sequence_day);
   };
 
   // Check if task is complete
@@ -206,12 +224,37 @@ function SequenceTasksPage({ onBackToDashboard }) {
               Manage your 27-touch sequence tasks
             </p>
           </div>
-          <button
-            onClick={onBackToDashboard}
-            className="btn bg-gray-500 hover:bg-gray-600"
-          >
-            ← Back to Dashboard
-          </button>
+          <div className="flex gap-3">
+            {/* View Mode Toggle */}
+            <div className="flex bg-white rounded-lg border-2 border-gray-300 overflow-hidden">
+              <button
+                onClick={() => setViewMode('today')}
+                className={`px-4 py-2 font-semibold transition-colors ${
+                  viewMode === 'today'
+                    ? 'bg-r7-blue text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                📅 Today's Tasks
+              </button>
+              <button
+                onClick={() => setViewMode('all')}
+                className={`px-4 py-2 font-semibold transition-colors ${
+                  viewMode === 'all'
+                    ? 'bg-r7-blue text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                📆 All Tasks
+              </button>
+            </div>
+            <button
+              onClick={onBackToDashboard}
+              className="btn bg-gray-500 hover:bg-gray-600"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
         </div>
 
         {/* Stats Summary */}
@@ -269,123 +312,168 @@ function SequenceTasksPage({ onBackToDashboard }) {
                     <div className="space-y-4">
                       {groupedContacts[day].map(contact => {
                         const tasks = getContactTasks(contact);
-                        const completedTasks = tasks.filter(t => isTaskComplete(contact, t)).length;
+                        const completedTasks = tasks.filter(t => t.status === 'completed').length;
+                        const skippedTasks = tasks.filter(t => t.status === 'skipped').length;
+                        const pendingTasks = tasks.filter(t => t.status === 'pending').length;
                         const hasOverdue = hasOverdueTasks(contact, sequenceTasks);
                         const overdueCount = getOverdueTasks(contact, sequenceTasks).length;
 
                         return (
-                          <div key={contact.id} className={`rounded-lg p-4 ${hasOverdue ? 'bg-red-50 border-2 border-red-300' : 'bg-gray-50'}`}>
-                            {/* Contact Header */}
-                            <div className="flex items-center justify-between mb-3">
+                          <div key={contact.id} className={`rounded-lg p-3 ${hasOverdue ? 'bg-red-50 border-2 border-red-300' : 'bg-gray-50'}`}>
+                            {/* Contact Header - More Compact */}
+                            <div className="flex items-center justify-between mb-2">
                               <div
-                                className="cursor-pointer hover:bg-gray-100 p-2 rounded transition-colors flex-1"
+                                className="cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors flex-1"
                                 onClick={() => {
                                   setSelectedContact(contact);
                                   setShowContactDetails(true);
                                 }}
                               >
-                                <div className="flex items-center gap-3">
-                                  <h4 className="font-bold text-gray-800">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-bold text-gray-800 text-sm">
                                     {contact.companyName}
                                   </h4>
                                   {hasOverdue && (
-                                    <span className="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded-full animate-pulse">
-                                      🚨 {overdueCount} OVERDUE
+                                    <span className="px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded-full animate-pulse">
+                                      🚨 {overdueCount}
                                     </span>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                                <div className="flex items-center gap-2 text-xs text-gray-600">
                                   <span>📞 {contact.phone}</span>
                                   <span>•</span>
-                                  <span>
-                                    {completedTasks} of {tasks.length} tasks complete
-                                  </span>
+                                  <span>{completedTasks} done, {skippedTasks} skipped, {pendingTasks} pending</span>
                                   <span>•</span>
-                                  <span>{getTotalImpressions(contact)} total touches</span>
+                                  <span>{getTotalImpressions(contact)} touches</span>
                                 </div>
                               </div>
 
-                              {/* Action Buttons */}
-                              <div className="flex gap-2">
+                              {/* Action Buttons - Smaller */}
+                              <div className="flex gap-1">
                                 <button
                                   onClick={() => handlePause(contact)}
-                                  className="btn-sm bg-yellow-500 hover:bg-yellow-600"
+                                  className="px-2 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded"
                                   title="Pause sequence"
                                 >
-                                  ⏸️ Pause
+                                  ⏸️
                                 </button>
                                 <button
                                   onClick={() => handleConvert(contact)}
-                                  className="btn-sm bg-green-500 hover:bg-green-600"
+                                  className="px-2 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded"
                                   title="Mark as converted"
                                 >
-                                  🎉 Convert
+                                  🎉
                                 </button>
                                 <button
                                   onClick={() => {
                                     setSelectedContact(contact);
                                     setShowDeadModal(true);
                                   }}
-                                  className="btn-sm bg-red-500 hover:bg-red-600"
+                                  className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded"
                                   title="Mark as dead"
                                 >
-                                  ☠️ Dead
+                                  ☠️
                                 </button>
                               </div>
                             </div>
 
-                            {/* Task List */}
-                            <div className="space-y-2">
-                              {tasks.map(taskType => {
-                                const isComplete = isTaskComplete(contact, taskType);
-                                const task = sequenceTasks.find(
-                                  t => t.contact_id === contact.id && t.task_type === taskType && t.status === 'pending'
-                                );
-                                const isOverdue = task && getOverdueTasks(contact, sequenceTasks).some(t => t.task_type === taskType);
+                            {/* Compact Task List */}
+                            <div className="space-y-1">
+                              {tasks.map(task => {
+                                const today = new Date().toISOString().split('T')[0];
+                                const isOverdue = task.status === 'pending' && task.task_due_date < today;
+                                const isDueToday = task.status === 'pending' && task.task_due_date === today;
+                                const isFuture = task.status === 'pending' && task.task_due_date > today;
 
                                 return (
                                   <div
-                                    key={taskType}
-                                    className={`flex items-center gap-3 p-2 rounded ${
-                                      isComplete
+                                    key={task.id}
+                                    className={`flex items-center gap-2 px-2 py-1 rounded text-sm ${
+                                      task.status === 'completed'
                                         ? 'bg-green-100'
+                                        : task.status === 'skipped'
+                                        ? 'bg-gray-200'
                                         : isOverdue
-                                        ? 'bg-red-100 border-2 border-red-400'
-                                        : 'bg-white'
+                                        ? 'bg-red-100 border border-red-400'
+                                        : isDueToday
+                                        ? 'bg-yellow-50 border border-yellow-300'
+                                        : 'bg-white border border-gray-200'
                                     }`}
                                   >
-                                    <input
-                                      type="checkbox"
-                                      checked={isComplete}
-                                      onChange={() => !isComplete && handleCompleteTask(contact, taskType)}
-                                      className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500"
-                                      disabled={isComplete}
-                                    />
-                                    <span className={`flex-1 ${isComplete ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-                                      {getTaskDescription(taskType, contact.sequence_current_day)}
+                                    {/* Checkbox or Status Icon */}
+                                    {task.status === 'completed' ? (
+                                      <span className="text-green-600 text-lg">✓</span>
+                                    ) : task.status === 'skipped' ? (
+                                      <span className="text-gray-500 text-lg">⊘</span>
+                                    ) : (
+                                      <input
+                                        type="checkbox"
+                                        checked={false}
+                                        onChange={() => handleCompleteTask(contact, task.task_type)}
+                                        className="w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500"
+                                      />
+                                    )}
+
+                                    {/* Day Badge */}
+                                    <span className="text-xs font-semibold text-gray-500 min-w-[3rem]">
+                                      Day {task.sequence_day}
                                     </span>
-                                    {isOverdue && !isComplete && (
-                                      <span className="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded">
+
+                                    {/* Task Description */}
+                                    <span className={`flex-1 text-xs ${
+                                      task.status === 'completed' || task.status === 'skipped'
+                                        ? 'line-through text-gray-500'
+                                        : 'text-gray-800'
+                                    }`}>
+                                      {getTaskDescription(task.task_type, task.sequence_day)}
+                                    </span>
+
+                                    {/* Due Date (for 'all' view mode) */}
+                                    {viewMode === 'all' && (
+                                      <span className="text-xs text-gray-500">
+                                        {isOverdue ? '🚨' : isDueToday ? '📅' : isFuture ? '📆' : ''} {task.task_due_date}
+                                      </span>
+                                    )}
+
+                                    {/* Status Badge */}
+                                    {task.status === 'completed' && (
+                                      <span className="text-green-600 text-xs font-semibold">Done</span>
+                                    )}
+                                    {task.status === 'skipped' && (
+                                      <span className="text-gray-600 text-xs font-semibold">Skipped</span>
+                                    )}
+                                    {isOverdue && task.status === 'pending' && (
+                                      <span className="px-1.5 py-0.5 bg-red-600 text-white text-xs font-bold rounded">
                                         OVERDUE
                                       </span>
                                     )}
-                                    {isComplete && (
-                                      <span className="text-green-600 text-sm">✓ Complete</span>
+
+                                    {/* Skip Button (only for pending tasks) */}
+                                    {task.status === 'pending' && (
+                                      <button
+                                        onClick={() => handleSkipTask(contact, task.task_type, task.sequence_day, 'Skipped by user')}
+                                        className="px-2 py-0.5 text-xs bg-gray-400 hover:bg-gray-500 text-white rounded"
+                                        title="Skip this task"
+                                      >
+                                        Skip
+                                      </button>
                                     )}
                                   </div>
                                 );
                               })}
                             </div>
 
-                            {/* Progress Bar */}
-                            <div className="mt-3">
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                  className="bg-green-500 h-2 rounded-full transition-all"
-                                  style={{ width: `${(completedTasks / tasks.length) * 100}%` }}
-                                />
+                            {/* Compact Progress Bar */}
+                            {tasks.length > 0 && (
+                              <div className="mt-2">
+                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                  <div
+                                    className="bg-green-500 h-1.5 rounded-full transition-all"
+                                    style={{ width: `${((completedTasks + skippedTasks) / tasks.length) * 100}%` }}
+                                  />
+                                </div>
                               </div>
-                            </div>
+                            )}
                           </div>
                         );
                       })}

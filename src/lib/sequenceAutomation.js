@@ -201,19 +201,29 @@ export function getTodaysTasks(contact, allTasks) {
 
 /**
  * Get tasks that should be visible (due today or overdue, not future)
+ * Supports two view modes:
+ * - 'today': Only show tasks due today/overdue + completed tasks (default)
+ * - 'all': Show all tasks for the contact (entire 30-day sequence)
  *
  * @param {object} contact - Contact to check
  * @param {array} allTasks - All sequence tasks
+ * @param {string} viewMode - 'today' or 'all' (default: 'today')
  * @returns {array} Visible tasks
  */
-export function getVisibleTasks(contact, allTasks) {
+export function getVisibleTasks(contact, allTasks, viewMode = 'today') {
   const today = getToday();
 
   return allTasks.filter(task => {
     if (task.contact_id !== contact.id) return false;
 
-    // Show completed tasks
-    if (task.status === 'completed') return true;
+    // If viewMode is 'all', show all tasks for this contact
+    if (viewMode === 'all') {
+      return true;
+    }
+
+    // Otherwise, only show tasks due today or overdue (default 'today' mode)
+    // Show completed and skipped tasks
+    if (task.status === 'completed' || task.status === 'skipped') return true;
 
     // Show pending tasks that are today or overdue (not future)
     if (task.status === 'pending') {
@@ -222,6 +232,18 @@ export function getVisibleTasks(contact, allTasks) {
 
     return false;
   });
+}
+
+/**
+ * Get ALL tasks for a contact (entire sequence)
+ * Convenience wrapper for getVisibleTasks with 'all' mode
+ *
+ * @param {object} contact - Contact to check
+ * @param {array} allTasks - All sequence tasks
+ * @returns {array} All tasks for contact
+ */
+export function getAllTasks(contact, allTasks) {
+  return getVisibleTasks(contact, allTasks, 'all');
 }
 
 /**

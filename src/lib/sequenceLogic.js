@@ -177,6 +177,48 @@ export async function completeSequenceTask(contactId, sequenceDay, taskType, not
   console.log(`✅ Task completed: ${taskType} for contact ${contactId} on Day ${sequenceDay}`);
 }
 
+// Skip a sequence task (manual skip by user)
+export async function skipSequenceTask(contactId, sequenceDay, taskType, reason = '') {
+  const allTasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
+
+  console.log(`⏭️ Skipping task: contactId=${contactId}, sequenceDay=${sequenceDay}, taskType=${taskType}`);
+
+  const taskIndex = allTasks.findIndex(
+    task =>
+      task.contact_id === contactId &&
+      task.sequence_day === sequenceDay &&
+      task.task_type === taskType
+  );
+
+  if (taskIndex !== -1) {
+    // Update existing task
+    console.log(`✓ Found task to skip at index ${taskIndex}`);
+    allTasks[taskIndex].status = 'skipped';
+    allTasks[taskIndex].completed_at = new Date().toISOString();
+    allTasks[taskIndex].notes = reason ? `Skipped: ${reason}` : 'Skipped by user';
+  } else {
+    // Create new task record marked as skipped
+    console.log(`⚠️ Task not found in storage - creating skipped task record`);
+    const newTask = {
+      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      contact_id: contactId,
+      task_date: new Date().toISOString().split('T')[0],
+      task_due_date: new Date().toISOString().split('T')[0],
+      sequence_day: sequenceDay,
+      task_type: taskType,
+      task_description: taskType,
+      status: 'skipped',
+      completed_at: new Date().toISOString(),
+      notes: reason ? `Skipped: ${reason}` : 'Skipped by user'
+    };
+    console.log(`📝 Creating skipped task:`, newTask);
+    allTasks.push(newTask);
+  }
+
+  await storage.set(KEYS.SEQUENCE_TASKS, allTasks);
+  console.log(`⏭️ Task skipped: ${taskType} for contact ${contactId} on Day ${sequenceDay}`);
+}
+
 // Generate ALL sequence tasks for a contact (called when entering sequence)
 export async function generateSequenceTasks(contact) {
   const tasks = [];
