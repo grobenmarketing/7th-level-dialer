@@ -86,6 +86,7 @@ function DatabaseManager({ onBackToDashboard }) {
   const [contactToMarkDead, setContactToMarkDead] = useState(null);
   const [optimisticallyCompleted, setOptimisticallyCompleted] = useState(new Set());
   const [optimisticallySkipped, setOptimisticallySkipped] = useState(new Set());
+  const [expandedContacts, setExpandedContacts] = useState(new Set());
 
   const stats = getStats();
 
@@ -404,6 +405,16 @@ function DatabaseManager({ onBackToDashboard }) {
     setShowDeadModal(false);
     setDeadReason('');
     setContactToMarkDead(null);
+  };
+
+  const toggleContactExpanded = (contactId) => {
+    const newExpanded = new Set(expandedContacts);
+    if (newExpanded.has(contactId)) {
+      newExpanded.delete(contactId);
+    } else {
+      newExpanded.add(contactId);
+    }
+    setExpandedContacts(newExpanded);
   };
 
   const getContactTasks = (contact) => {
@@ -912,6 +923,8 @@ function DatabaseManager({ onBackToDashboard }) {
                   const pendingTasks = tasks.filter(t => t.status === 'pending').length;
                   const hasOverdue = hasOverdueTasks(contact, sequenceTasks);
                   const overdueCount = getOverdueTasks(contact, sequenceTasks).length;
+                  const isExpanded = expandedContacts.has(contact.id);
+                  const displayTasks = isExpanded ? tasks : tasks.slice(0, 3);
 
                   return (
                     <div key={contact.id} className={`card p-6 ${hasOverdue ? 'bg-red-50 border-2 border-red-300' : 'bg-white'}`}>
@@ -919,12 +932,12 @@ function DatabaseManager({ onBackToDashboard }) {
                       <div className="flex items-center justify-between mb-4">
                         <div
                           className="cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors flex-1"
-                          onClick={() => {
-                            setSelectedContact(contact);
-                            setShowContactDetails(true);
-                          }}
+                          onClick={() => toggleContactExpanded(contact.id)}
                         >
                           <div className="flex items-center gap-3">
+                            <span className="text-lg">
+                              {isExpanded ? '▼' : '▶'}
+                            </span>
                             <h4 className="text-lg font-bold text-gray-900">
                               {contact.companyName}
                             </h4>
@@ -934,7 +947,7 @@ function DatabaseManager({ onBackToDashboard }) {
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                          <div className="flex items-center gap-3 text-sm text-gray-600 mt-1 ml-8">
                             <span>📞 {contact.phone}</span>
                             <span>•</span>
                             <span>Day {contact.sequence_current_day} of 30</span>
@@ -948,7 +961,7 @@ function DatabaseManager({ onBackToDashboard }) {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex gap-2">
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => handlePauseSequence(contact)}
                             className="px-3 py-1.5 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded font-medium"
@@ -976,13 +989,14 @@ function DatabaseManager({ onBackToDashboard }) {
                         </div>
                       </div>
 
-                      {/* Task List */}
-                      <div className="space-y-2">
-                        {tasks.length === 0 ? (
-                          <div className="text-center py-4 text-gray-500 text-sm">
-                            No tasks for this filter
-                          </div>
-                        ) : (
+                      {/* Task List - Only show when expanded */}
+                      {isExpanded && (
+                        <div className="space-y-2 ml-8">
+                          {tasks.length === 0 ? (
+                            <div className="text-center py-4 text-gray-500 text-sm">
+                              No tasks for this filter
+                            </div>
+                          ) : (
                           tasks.map(task => {
                             const today = new Date().toISOString().split('T')[0];
                             const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
@@ -1068,16 +1082,51 @@ function DatabaseManager({ onBackToDashboard }) {
                             );
                           })
                         )}
-                      </div>
 
-                      {/* Progress Bar */}
-                      {tasks.length > 0 && (
-                        <div className="mt-4">
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div
-                              className="bg-green-500 h-3 rounded-full transition-all"
-                              style={{ width: `${((completedTasks + skippedTasks) / tasks.length) * 100}%` }}
-                            />
+                          {/* Progress Bar */}
+                          {tasks.length > 0 && (
+                            <div className="mt-4">
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div
+                                  className="bg-green-500 h-3 rounded-full transition-all"
+                                  style={{ width: `${((completedTasks + skippedTasks) / tasks.length) * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Collapsed Summary - Show 2-3 tasks preview when collapsed */}
+                      {!isExpanded && tasks.length > 0 && (
+                        <div className="ml-8 text-sm text-gray-600">
+                          <div className="space-y-1">
+                            {tasks.slice(0, 3).map(task => {
+                              const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+                              const isOptimisticallyCompleted = optimisticallyCompleted.has(taskId);
+                              const isOptimisticallySkipped = optimisticallySkipped.has(taskId);
+                              const effectiveStatus = isOptimisticallyCompleted ? 'completed' : isOptimisticallySkipped ? 'skipped' : task.status;
+
+                              return (
+                                <div key={task.id} className="flex items-center gap-2">
+                                  {effectiveStatus === 'completed' ? (
+                                    <span className="text-green-600">✓</span>
+                                  ) : effectiveStatus === 'skipped' ? (
+                                    <span className="text-gray-500">⊘</span>
+                                  ) : (
+                                    <span className="text-gray-400">○</span>
+                                  )}
+                                  <span className={effectiveStatus === 'pending' ? 'text-gray-900' : 'text-gray-500 line-through'}>
+                                    Day {task.sequence_day}: {getTaskDescription(task.task_type, task.sequence_day)}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                            {tasks.length > 3 && (
+                              <div className="text-xs text-gray-500 italic mt-2">
+                                ... and {tasks.length - 3} more tasks (click to expand)
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
