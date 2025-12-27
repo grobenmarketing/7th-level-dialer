@@ -42,6 +42,7 @@ export function createContact(data = {}) {
     needsEmail: data.needsEmail || false,
     status: data.status || 'active',
     createdAt: data.createdAt || new Date().toISOString(),
+    notes: data.notes || '',
 
     // Sequence Fields
     sequence_status: data.sequence_status || 'never_contacted',

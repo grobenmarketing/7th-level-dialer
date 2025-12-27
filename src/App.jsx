@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import DashboardLayout from './components/DashboardLayout'
 import Dashboard from './components/Dashboard'
 import CallingInterface from './components/CallingInterface'
-import ContactsPage from './components/ContactsPage'
 import Analytics from './components/Analytics'
 import HowToUse from './components/HowToUse'
 import Settings from './components/Settings'
@@ -138,9 +137,6 @@ function App() {
           onBackToDashboard={handleBackToDashboard}
           onNextContact={handleNextContact}
         />
-      )}
-      {currentView === 'contacts' && (
-        <ContactsPage onBackToDashboard={handleBackToDashboard} />
       )}
       {currentView === 'analytics' && (
         <Analytics onBackToDashboard={handleBackToDashboard} />

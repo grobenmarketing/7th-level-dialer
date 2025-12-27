@@ -1,8 +1,15 @@
+import { useState } from 'react';
 import { formatDuration } from '../lib/constants';
 import { getTaskDescription, getTotalImpressions } from '../lib/sequenceCalendar';
+import { useOkCodes } from '../hooks/useOkCodes';
 
-function ContactDetailsModal({ contact, onClose, onEdit, onDelete, sequenceTasks, sequenceDay, onCompleteTask }) {
+function ContactDetailsModal({ contact, onClose, onEdit, onDelete, onUpdate, sequenceTasks, sequenceDay, onCompleteTask }) {
   if (!contact) return null;
+
+  const { okCodes } = useOkCodes();
+  const [notes, setNotes] = useState(contact.notes || '');
+  const [currentOkCode, setCurrentOkCode] = useState(contact.currentOkCode || '');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const handleDelete = () => {
     const confirmed = window.confirm(
@@ -11,6 +18,26 @@ function ContactDetailsModal({ contact, onClose, onEdit, onDelete, sequenceTasks
     if (confirmed) {
       onDelete(contact.id);
       onClose();
+    }
+  };
+
+  const handleNotesChange = (e) => {
+    setNotes(e.target.value);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleOkCodeChange = (e) => {
+    setCurrentOkCode(e.target.value);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSave = async () => {
+    if (onUpdate) {
+      await onUpdate(contact.id, {
+        notes,
+        currentOkCode
+      });
+      setHasUnsavedChanges(false);
     }
   };
 
@@ -126,6 +153,70 @@ function ContactDetailsModal({ contact, onClose, onEdit, onDelete, sequenceTasks
                     </a>
                   </div>
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Notes and OK Code Section */}
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-gray-700 mb-3">
+              📝 Contact Notes & Status
+            </h3>
+            <div className="space-y-4">
+              {/* OK Code Dropdown */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  OK Code
+                </label>
+                <select
+                  value={currentOkCode}
+                  onChange={handleOkCodeChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-r7-blue focus:border-transparent"
+                >
+                  <option value="">-- Select OK Code --</option>
+                  {okCodes.map((code) => (
+                    <option key={code.id} value={`OK-${code.id}`}>
+                      OK-{code.id}: {code.label}
+                    </option>
+                  ))}
+                </select>
+                {currentOkCode && (
+                  <div className="mt-2">
+                    <span className="text-xs text-gray-500 mr-2">Current:</span>
+                    <span
+                      className="inline-block px-3 py-1 rounded-full text-sm font-semibold text-white"
+                      style={{
+                        backgroundColor: okCodes.find(c => `OK-${c.id}` === currentOkCode)?.color || '#808080'
+                      }}
+                    >
+                      {currentOkCode}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Notes Textarea */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Notes
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={handleNotesChange}
+                  placeholder="Add notes about this contact..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-r7-blue focus:border-transparent resize-none"
+                  rows="4"
+                />
+              </div>
+
+              {/* Save Button */}
+              {hasUnsavedChanges && (
+                <button
+                  onClick={handleSave}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                >
+                  💾 Save Changes
+                </button>
               )}
             </div>
           </div>

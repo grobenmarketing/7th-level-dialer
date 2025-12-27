@@ -1157,6 +1157,7 @@ function DatabaseManager({ onBackToDashboard }) {
             }}
             onEdit={handleEditClick}
             onDelete={() => handleDeleteContact(selectedContact.id)}
+            onUpdate={updateContact}
           />
         )}
 
