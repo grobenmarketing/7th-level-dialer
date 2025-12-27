@@ -139,23 +139,24 @@ export async function completeSequenceTask(contactId, sequenceDay, taskType, not
   const contactTasks = allTasks.filter(t => t.contact_id === contactId);
   console.log(`📋 Tasks for this contact: ${contactTasks.length}`);
 
-  const taskIndex = allTasks.findIndex(
-    task =>
-      task.contact_id === contactId &&
-      task.sequence_day === sequenceDay &&
-      task.task_type === taskType
-  );
-
-  if (taskIndex !== -1) {
-    // Update existing task
-    console.log(`✓ Found existing task at index ${taskIndex}:`, allTasks[taskIndex]);
-    allTasks[taskIndex].status = 'completed';
-    allTasks[taskIndex].completed_at = new Date().toISOString();
-    if (notes) {
-      allTasks[taskIndex].notes = notes;
+  // Find ALL matching tasks (in case of duplicates) and update them
+  let updatedCount = 0;
+  allTasks.forEach((task, index) => {
+    if (task.contact_id === contactId &&
+        task.sequence_day === sequenceDay &&
+        task.task_type === taskType) {
+      console.log(`✓ Found existing task at index ${index}:`, allTasks[index]);
+      allTasks[index].status = 'completed';
+      allTasks[index].completed_at = new Date().toISOString();
+      if (notes) {
+        allTasks[index].notes = notes;
+      }
+      updatedCount++;
     }
-  } else {
-    // Create new task record
+  });
+
+  if (updatedCount === 0) {
+    // No existing task - create new completed task record
     console.log(`⚠️ Task not found in storage - creating new task record`);
     const newTask = {
       id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -171,10 +172,11 @@ export async function completeSequenceTask(contactId, sequenceDay, taskType, not
     };
     console.log(`📝 Creating new task:`, newTask);
     allTasks.push(newTask);
+    updatedCount = 1;
   }
 
   await storage.set(KEYS.SEQUENCE_TASKS, allTasks);
-  console.log(`✅ Task completed: ${taskType} for contact ${contactId} on Day ${sequenceDay}`);
+  console.log(`✅ Task completed: ${taskType} for contact ${contactId} on Day ${sequenceDay} (${updatedCount} task(s) updated)`);
 }
 
 // Skip a sequence task (manual skip by user)
@@ -183,21 +185,22 @@ export async function skipSequenceTask(contactId, sequenceDay, taskType, reason 
 
   console.log(`⏭️ Skipping task: contactId=${contactId}, sequenceDay=${sequenceDay}, taskType=${taskType}`);
 
-  const taskIndex = allTasks.findIndex(
-    task =>
-      task.contact_id === contactId &&
-      task.sequence_day === sequenceDay &&
-      task.task_type === taskType
-  );
+  // Find ALL matching tasks (in case of duplicates) and update them
+  let updatedCount = 0;
+  allTasks.forEach((task, index) => {
+    if (task.contact_id === contactId &&
+        task.sequence_day === sequenceDay &&
+        task.task_type === taskType) {
+      console.log(`✓ Found task to skip at index ${index}`);
+      allTasks[index].status = 'skipped';
+      allTasks[index].completed_at = new Date().toISOString();
+      allTasks[index].notes = reason ? `Skipped: ${reason}` : 'Skipped by user';
+      updatedCount++;
+    }
+  });
 
-  if (taskIndex !== -1) {
-    // Update existing task
-    console.log(`✓ Found task to skip at index ${taskIndex}`);
-    allTasks[taskIndex].status = 'skipped';
-    allTasks[taskIndex].completed_at = new Date().toISOString();
-    allTasks[taskIndex].notes = reason ? `Skipped: ${reason}` : 'Skipped by user';
-  } else {
-    // Create new task record marked as skipped
+  if (updatedCount === 0) {
+    // No existing task - create new skipped task record
     console.log(`⚠️ Task not found in storage - creating skipped task record`);
     const newTask = {
       id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -213,10 +216,11 @@ export async function skipSequenceTask(contactId, sequenceDay, taskType, reason 
     };
     console.log(`📝 Creating skipped task:`, newTask);
     allTasks.push(newTask);
+    updatedCount = 1;
   }
 
   await storage.set(KEYS.SEQUENCE_TASKS, allTasks);
-  console.log(`⏭️ Task skipped: ${taskType} for contact ${contactId} on Day ${sequenceDay}`);
+  console.log(`⏭️ Task skipped: ${taskType} for contact ${contactId} on Day ${sequenceDay} (${updatedCount} task(s) updated)`);
 }
 
 // Generate ALL sequence tasks for a contact (called when entering sequence)
