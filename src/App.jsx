@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import DashboardLayout from './components/DashboardLayout'
 import Dashboard from './components/Dashboard'
 import CallingInterface from './components/CallingInterface'
-import Analytics from './components/Analytics'
 import HowToUse from './components/HowToUse'
 import Settings from './components/Settings'
 import FilteredSessionPage from './components/FilteredSessionPage'
@@ -111,7 +110,6 @@ function App() {
           onStartCalling={handleStartCalling}
           onStartFilteredSession={handleStartFilteredSession}
           onViewContacts={() => navigate('contacts')}
-          onViewAnalytics={() => navigate('analytics')}
           onViewHowToUse={() => navigate('howto')}
           onViewSettings={() => navigate('settings')}
           onViewSequenceTasks={() => navigate('database')}
@@ -137,9 +135,6 @@ function App() {
           onBackToDashboard={handleBackToDashboard}
           onNextContact={handleNextContact}
         />
-      )}
-      {currentView === 'analytics' && (
-        <Analytics onBackToDashboard={handleBackToDashboard} />
       )}
       {currentView === 'howto' && (
         <HowToUse onBackToDashboard={handleBackToDashboard} />

@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import { useKPI } from '../hooks/useKPI';
+import { useStats } from '../hooks/useStats';
 import { storage, KEYS } from '../lib/cloudStorage';
+import { formatDuration } from '../lib/constants';
 import SearchBar from './database/SearchBar';
 import FilterButtons from './database/FilterButtons';
 import TableWrapper from './database/TableWrapper';
@@ -60,9 +62,17 @@ function DatabaseManager({ onBackToDashboard }) {
     getObjectionFrequency,
     updateKPIForDate,
     weeklyTargets,
+    updateWeeklyTargets,
+    rebuildFromCallHistory,
+    kpiData,
     dailyDialGoal,
     getWeekStart
   } = useKPI();
+
+  const {
+    getActivityStats,
+    getOKCodeDistribution
+  } = useStats();
 
   // Contacts state
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,6 +86,10 @@ function DatabaseManager({ onBackToDashboard }) {
 
   // KPI state
   const [currentWeekStart, setCurrentWeekStart] = useState(getWeekStart());
+  const [kpiView, setKpiView] = useState('weekly'); // 'weekly' or 'overall'
+  const [editingTargets, setEditingTargets] = useState(false);
+  const [tempTargets, setTempTargets] = useState(weeklyTargets);
+  const [syncing, setSyncing] = useState(false);
 
   // Tasks state
   const [sequenceTasks, setSequenceTasks] = useState([]);
@@ -89,6 +103,8 @@ function DatabaseManager({ onBackToDashboard }) {
   const [expandedContacts, setExpandedContacts] = useState(new Set());
 
   const stats = getStats();
+  const activityStats = getActivityStats();
+  const okCodeDistribution = getOKCodeDistribution();
 
   // Load sequence tasks
   const loadSequenceTasks = useCallback(async () => {
@@ -304,6 +320,28 @@ function DatabaseManager({ onBackToDashboard }) {
 
   const handleThisWeek = () => {
     setCurrentWeekStart(getWeekStart());
+  };
+
+  const handleSaveTargets = async () => {
+    await updateWeeklyTargets(tempTargets);
+    setEditingTargets(false);
+  };
+
+  const handleSyncFromCallHistory = async () => {
+    if (!confirm('This will rebuild all KPI data from your contact call history. Continue?')) {
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      await rebuildFromCallHistory(contacts);
+      alert('KPI data successfully synced from call history!');
+    } catch (error) {
+      console.error('Error syncing KPI data:', error);
+      alert('Error syncing data. Please try again.');
+    } finally {
+      setSyncing(false);
+    }
   };
 
   // ==================== TASKS TAB ====================
@@ -698,202 +736,462 @@ function DatabaseManager({ onBackToDashboard }) {
         {/* KPI TAB */}
         {activeTab === 'kpi' && (
           <div className="space-y-6">
-            {/* Week Navigation */}
-            <div className="card bg-white p-4">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={handlePreviousWeek}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition-colors"
-                >
-                  ← Previous Week
-                </button>
-                <div className="text-center">
-                  <div className="text-xl font-bold text-gray-800">
-                    Week of {new Date(currentWeekStart).toLocaleDateString()}
-                  </div>
-                  <button
-                    onClick={handleThisWeek}
-                    className="text-sm text-r7-blue hover:underline"
-                  >
-                    Jump to This Week
-                  </button>
-                </div>
-                <button
-                  onClick={handleNextWeek}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition-colors"
-                >
-                  Next Week →
-                </button>
-              </div>
-            </div>
-
-            {/* Weekly Progress */}
-            <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 p-6">
-              <h3 className="text-xl font-bold text-gray-700 mb-4">
-                🎯 Weekly Progress
-              </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-semibold text-gray-700">📞 Dials</span>
-                  <span className="font-bold text-gray-800">
-                    {weeklyTotals.dials} / {weeklyTargets.dials}
-                  </span>
-                </div>
-                <div className="bg-gray-200 rounded-full h-8">
-                  <div
-                    className="bg-r7-red rounded-full h-8 flex items-center justify-center text-white font-bold text-sm transition-all"
-                    style={{ width: `${Math.min((weeklyTotals.dials / weeklyTargets.dials) * 100, 100)}%` }}
-                  >
-                    {((weeklyTotals.dials / weeklyTargets.dials) * 100).toFixed(0)}%
-                  </div>
+            {/* Syncing Overlay */}
+            {syncing && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-8 max-w-md text-center">
+                  <div className="text-6xl mb-4">⏳</div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">Syncing Data...</h2>
+                  <p className="text-gray-600">
+                    Building KPI metrics from your call history.
+                  </p>
                 </div>
               </div>
+            )}
+
+            {/* View Toggle & Actions */}
+            <div className="flex gap-2 flex-wrap items-center">
+              <button
+                onClick={() => setKpiView('weekly')}
+                className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                  kpiView === 'weekly'
+                    ? 'bg-r7-blue text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                📅 Weekly KPI Tracker
+              </button>
+              <button
+                onClick={() => setKpiView('overall')}
+                className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                  kpiView === 'overall'
+                    ? 'bg-r7-blue text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                📈 Overall Analytics
+              </button>
+              <button
+                onClick={handleSyncFromCallHistory}
+                disabled={syncing}
+                className="ml-auto px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+                title="Rebuild all KPI data from contact call history"
+              >
+                {syncing ? '⏳ Syncing...' : '🔄 Re-sync All Data'}
+              </button>
             </div>
 
-            {/* KPI Table */}
-            <TableWrapper
-              footer={
-                <div className="text-sm font-semibold text-gray-700">
-                  Weekly Total: {weeklyTotals.dials} Dials | Goal: {weeklyTargets.dials} | Avg: {dailyAverages.dials.toFixed(1)}/day | Days Worked: {dailyAverages.daysWorked}
-                </div>
-              }
-            >
-              <TableHeader
-                columns={kpiColumns}
-                sortBy={null}
-                sortDirection="asc"
-                onSort={null}
-              />
-              <tbody className="bg-white divide-y divide-gray-100">
-                {weekData.map((day) => (
-                  <tr key={day.date} className="hover:bg-blue-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-gray-800">{day.dayName}</span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(day.date).toLocaleDateString()}
-                        </span>
+            {kpiView === 'weekly' ? (
+              <>
+                {/* Week Navigation */}
+                <div className="card bg-white p-4">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handlePreviousWeek}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition-colors"
+                    >
+                      ← Previous Week
+                    </button>
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-gray-800">
+                        Week of {new Date(currentWeekStart).toLocaleDateString()}
                       </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="number"
-                        value={day.dials || 0}
-                        onChange={(e) => handleEditDay(day.date, 'dials', e.target.value)}
-                        className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
-                        min="0"
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="number"
-                        value={day.pickups || 0}
-                        onChange={(e) => handleEditDay(day.date, 'pickups', e.target.value)}
-                        className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
-                        min="0"
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="number"
-                        value={day.conversations || 0}
-                        onChange={(e) => handleEditDay(day.date, 'conversations', e.target.value)}
-                        className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
-                        min="0"
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="number"
-                        value={day.triage || 0}
-                        onChange={(e) => handleEditDay(day.date, 'triage', e.target.value)}
-                        className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
-                        min="0"
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="number"
-                        value={day.bookedMeetings || 0}
-                        onChange={(e) => handleEditDay(day.date, 'bookedMeetings', e.target.value)}
-                        className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
-                        min="0"
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="number"
-                        value={day.meetingsRan || 0}
-                        onChange={(e) => handleEditDay(day.date, 'meetingsRan', e.target.value)}
-                        className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
-                        min="0"
-                      />
-                    </td>
-                  </tr>
-                ))}
-                {/* Totals Row */}
-                <tr className="bg-blue-100 font-bold border-t-2 border-blue-300">
-                  <td className="px-4 py-3">TOTAL</td>
-                  <td className="px-4 py-3 text-center">{weeklyTotals.dials}</td>
-                  <td className="px-4 py-3 text-center">{weeklyTotals.pickups}</td>
-                  <td className="px-4 py-3 text-center">{weeklyTotals.conversations}</td>
-                  <td className="px-4 py-3 text-center">{weeklyTotals.triage}</td>
-                  <td className="px-4 py-3 text-center">{weeklyTotals.bookedMeetings}</td>
-                  <td className="px-4 py-3 text-center">{weeklyTotals.meetingsRan}</td>
-                </tr>
-                {/* Daily Average Row */}
-                <tr className="bg-green-50 font-semibold">
-                  <td className="px-4 py-3">
-                    Daily Avg
-                    <br />
-                    <span className="text-xs font-normal text-gray-600">
-                      ({dailyAverages.daysWorked} {dailyAverages.daysWorked === 1 ? 'day' : 'days'} worked)
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">{dailyAverages.dials.toFixed(1)}</td>
-                  <td className="px-4 py-3 text-center">{dailyAverages.pickups.toFixed(1)}</td>
-                  <td className="px-4 py-3 text-center">{dailyAverages.conversations.toFixed(1)}</td>
-                  <td className="px-4 py-3 text-center">{dailyAverages.triage.toFixed(1)}</td>
-                  <td className="px-4 py-3 text-center">{dailyAverages.bookedMeetings.toFixed(1)}</td>
-                  <td className="px-4 py-3 text-center">{dailyAverages.meetingsRan.toFixed(1)}</td>
-                </tr>
-              </tbody>
-            </TableWrapper>
+                      <button
+                        onClick={handleThisWeek}
+                        className="text-sm text-r7-blue hover:underline"
+                      >
+                        Jump to This Week
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleNextWeek}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition-colors"
+                    >
+                      Next Week →
+                    </button>
+                  </div>
+                </div>
 
-            {/* Performance Ratios */}
-            <div className="card bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 p-6">
-              <h3 className="text-xl font-bold text-gray-700 mb-4">📈 Performance Ratios</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                  <div className="text-3xl font-bold text-r7-red">
-                    {(performanceRatios.meetingsShowedRatio * 100).toFixed(0)}%
+                {/* Weekly Targets & Progress */}
+                <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold text-gray-700">
+                      🎯 Weekly Targets & Progress
+                    </h3>
+                    {!editingTargets ? (
+                      <button
+                        onClick={() => {
+                          setTempTargets(weeklyTargets);
+                          setEditingTargets(true);
+                        }}
+                        className="px-4 py-2 bg-r7-blue text-white rounded-lg hover:bg-r7-dark"
+                      >
+                        ⚙️ Edit Targets
+                      </button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditingTargets(false)}
+                          className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveTargets}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        >
+                          💾 Save
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-sm text-gray-700 mt-1 font-semibold">Meetings Showed</div>
-                  <div className="text-xs text-gray-500 mt-1">Ran / Booked</div>
-                </div>
-                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                  <div className="text-3xl font-bold text-r7-red">
-                    {(performanceRatios.conversationsToMeetings * 100).toFixed(0)}%
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold text-gray-700">📞 Dials</span>
+                      {editingTargets ? (
+                        <input
+                          type="number"
+                          value={tempTargets.dials}
+                          onChange={(e) => setTempTargets({ ...tempTargets, dials: parseInt(e.target.value) || 0 })}
+                          className="w-24 px-2 py-1 border border-gray-300 rounded"
+                        />
+                      ) : (
+                        <span className="font-bold text-gray-800">
+                          {weeklyTotals.dials} / {weeklyTargets.dials}
+                        </span>
+                      )}
+                    </div>
+                    <div className="bg-gray-200 rounded-full h-8">
+                      <div
+                        className="bg-r7-red rounded-full h-8 flex items-center justify-center text-white font-bold text-sm transition-all"
+                        style={{ width: `${Math.min((weeklyTotals.dials / weeklyTargets.dials) * 100, 100)}%` }}
+                      >
+                        {((weeklyTotals.dials / weeklyTargets.dials) * 100).toFixed(0)}%
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-700 mt-1 font-semibold">Convos to Meetings</div>
-                  <div className="text-xs text-gray-500 mt-1">Booked / Convos</div>
                 </div>
-                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                  <div className="text-3xl font-bold text-r7-red">
-                    {(performanceRatios.triageToConversations * 100).toFixed(0)}%
+
+                {/* KPI Table */}
+                <TableWrapper
+                  footer={
+                    <div className="text-sm font-semibold text-gray-700">
+                      Weekly Total: {weeklyTotals.dials} Dials | Goal: {weeklyTargets.dials} | Avg: {dailyAverages.dials.toFixed(1)}/day | Days Worked: {dailyAverages.daysWorked}
+                    </div>
+                  }
+                >
+                  <TableHeader
+                    columns={kpiColumns}
+                    sortBy={null}
+                    sortDirection="asc"
+                    onSort={null}
+                  />
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {weekData.map((day) => (
+                      <tr key={day.date} className="hover:bg-blue-50 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-gray-800">{day.dayName}</span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(day.date).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <input
+                            type="number"
+                            value={day.dials || 0}
+                            onChange={(e) => handleEditDay(day.date, 'dials', e.target.value)}
+                            className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
+                            min="0"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <input
+                            type="number"
+                            value={day.pickups || 0}
+                            onChange={(e) => handleEditDay(day.date, 'pickups', e.target.value)}
+                            className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
+                            min="0"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <input
+                            type="number"
+                            value={day.conversations || 0}
+                            onChange={(e) => handleEditDay(day.date, 'conversations', e.target.value)}
+                            className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
+                            min="0"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <input
+                            type="number"
+                            value={day.triage || 0}
+                            onChange={(e) => handleEditDay(day.date, 'triage', e.target.value)}
+                            className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
+                            min="0"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <input
+                            type="number"
+                            value={day.bookedMeetings || 0}
+                            onChange={(e) => handleEditDay(day.date, 'bookedMeetings', e.target.value)}
+                            className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
+                            min="0"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <input
+                            type="number"
+                            value={day.meetingsRan || 0}
+                            onChange={(e) => handleEditDay(day.date, 'meetingsRan', e.target.value)}
+                            className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-r7-blue focus:border-transparent"
+                            min="0"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                    {/* Totals Row */}
+                    <tr className="bg-blue-100 font-bold border-t-2 border-blue-300">
+                      <td className="px-4 py-3">TOTAL</td>
+                      <td className="px-4 py-3 text-center">{weeklyTotals.dials}</td>
+                      <td className="px-4 py-3 text-center">{weeklyTotals.pickups}</td>
+                      <td className="px-4 py-3 text-center">{weeklyTotals.conversations}</td>
+                      <td className="px-4 py-3 text-center">{weeklyTotals.triage}</td>
+                      <td className="px-4 py-3 text-center">{weeklyTotals.bookedMeetings}</td>
+                      <td className="px-4 py-3 text-center">{weeklyTotals.meetingsRan}</td>
+                    </tr>
+                    {/* Daily Average Row */}
+                    <tr className="bg-green-50 font-semibold">
+                      <td className="px-4 py-3">
+                        Daily Avg
+                        <br />
+                        <span className="text-xs font-normal text-gray-600">
+                          ({dailyAverages.daysWorked} {dailyAverages.daysWorked === 1 ? 'day' : 'days'} worked)
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">{dailyAverages.dials.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-center">{dailyAverages.pickups.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-center">{dailyAverages.conversations.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-center">{dailyAverages.triage.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-center">{dailyAverages.bookedMeetings.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-center">{dailyAverages.meetingsRan.toFixed(1)}</td>
+                    </tr>
+                  </tbody>
+                </TableWrapper>
+
+                {/* Performance Ratios */}
+                <div className="card bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 p-6">
+                  <h3 className="text-xl font-bold text-gray-700 mb-4">📈 Performance Ratios</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-r7-red">
+                        {(performanceRatios.meetingsShowedRatio * 100).toFixed(0)}%
+                      </div>
+                      <div className="text-sm text-gray-700 mt-1 font-semibold">Meetings Showed</div>
+                      <div className="text-xs text-gray-500 mt-1">Ran / Booked</div>
+                    </div>
+                    <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-r7-red">
+                        {(performanceRatios.conversationsToMeetings * 100).toFixed(0)}%
+                      </div>
+                      <div className="text-sm text-gray-700 mt-1 font-semibold">Convos to Meetings</div>
+                      <div className="text-xs text-gray-500 mt-1">Booked / Convos</div>
+                    </div>
+                    <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-r7-red">
+                        {(performanceRatios.triageToConversations * 100).toFixed(0)}%
+                      </div>
+                      <div className="text-sm text-gray-700 mt-1 font-semibold">Triage Rate</div>
+                      <div className="text-xs text-gray-500 mt-1">Triage / Convos</div>
+                    </div>
+                    <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-r7-red">
+                        {(performanceRatios.pickupsToConversations * 100).toFixed(0)}%
+                      </div>
+                      <div className="text-sm text-gray-700 mt-1 font-semibold">Pickup to Convo</div>
+                      <div className="text-xs text-gray-500 mt-1">Convos / Pickups</div>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-700 mt-1 font-semibold">Triage Rate</div>
-                  <div className="text-xs text-gray-500 mt-1">Triage / Convos</div>
                 </div>
-                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                  <div className="text-3xl font-bold text-r7-red">
-                    {(performanceRatios.pickupsToConversations * 100).toFixed(0)}%
+
+                {/* Objection Frequency */}
+                {objectionFrequency.length > 0 && (
+                  <div className="card bg-white p-6">
+                    <h3 className="text-xl font-bold text-gray-700 mb-4">⚠️ Most Common Objections This Week</h3>
+                    <div className="space-y-2">
+                      {objectionFrequency.slice(0, 10).map((item, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-red-100 text-red-700 rounded-full flex items-center justify-center font-bold">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 font-semibold text-gray-700 capitalize">
+                            {item.objection}
+                          </div>
+                          <div className="w-16 text-right font-bold text-gray-700">
+                            {item.count}x
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-700 mt-1 font-semibold">Pickup to Convo</div>
-                  <div className="text-xs text-gray-500 mt-1">Convos / Pickups</div>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Overall Analytics View */}
+                {/* Key Metrics Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                    <div className="text-sm font-semibold opacity-90">Total Contacts</div>
+                    <div className="text-4xl font-bold my-2">{activityStats.totalContacts}</div>
+                    <div className="text-sm opacity-80">{activityStats.activeContacts} active</div>
+                  </div>
+
+                  <div className="card bg-gradient-to-br from-green-500 to-green-600 text-white">
+                    <div className="text-sm font-semibold opacity-90">Total Dials</div>
+                    <div className="text-4xl font-bold my-2">{activityStats.totalDials}</div>
+                    <div className="text-sm opacity-80">{activityStats.dmCalls} reached DM</div>
+                  </div>
+
+                  <div className="card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+                    <div className="text-sm font-semibold opacity-90">Contact Rate</div>
+                    <div className="text-4xl font-bold my-2">{activityStats.contactRate}%</div>
+                    <div className="text-sm opacity-80">DM / Total Dials</div>
+                  </div>
+
+                  <div className="card bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+                    <div className="text-sm font-semibold opacity-90">Meeting Rate</div>
+                    <div className="text-4xl font-bold my-2">{activityStats.meetingRate}%</div>
+                    <div className="text-sm opacity-80">{activityStats.meetingsBooked} meetings booked</div>
+                  </div>
                 </div>
-              </div>
-            </div>
+
+                {/* Call Breakdown */}
+                <div className="card bg-white p-6">
+                  <h3 className="text-xl font-bold text-gray-700 mb-4">Call Outcome Breakdown</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="text-3xl mb-2">👤</div>
+                      <div className="text-2xl font-bold text-green-700">{activityStats.dmCalls}</div>
+                      <div className="text-sm text-gray-600">Decision Makers</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {activityStats.totalCalls > 0
+                          ? ((activityStats.dmCalls / activityStats.totalCalls) * 100).toFixed(1)
+                          : 0}% of calls
+                      </div>
+                      {activityStats.avgDmDuration > 0 && (
+                        <div className="text-xs text-purple-600 font-semibold mt-1">
+                          ⏱️ Avg: {formatDuration(activityStats.avgDmDuration)}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="text-3xl mb-2">🚪</div>
+                      <div className="text-2xl font-bold text-yellow-700">{activityStats.gkCalls}</div>
+                      <div className="text-sm text-gray-600">Gatekeepers</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {activityStats.totalCalls > 0
+                          ? ((activityStats.gkCalls / activityStats.totalCalls) * 100).toFixed(1)
+                          : 0}% of calls
+                      </div>
+                      {activityStats.avgGkDuration > 0 && (
+                        <div className="text-xs text-purple-600 font-semibold mt-1">
+                          ⏱️ Avg: {formatDuration(activityStats.avgGkDuration)}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                      <div className="text-3xl mb-2">📵</div>
+                      <div className="text-2xl font-bold text-gray-700">{activityStats.naCalls}</div>
+                      <div className="text-sm text-gray-600">No Answer</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {activityStats.totalCalls > 0
+                          ? ((activityStats.naCalls / activityStats.totalCalls) * 100).toFixed(1)
+                          : 0}% of calls
+                      </div>
+                      {activityStats.avgNaDuration > 0 && (
+                        <div className="text-xs text-purple-600 font-semibold mt-1">
+                          ⏱️ Avg: {formatDuration(activityStats.avgNaDuration)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Duration Statistics */}
+                {activityStats.totalDuration > 0 && (
+                  <div className="card bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 p-6">
+                    <h3 className="text-xl font-bold text-gray-700 mb-4">⏱️ Call Duration Analytics</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-700">
+                          {formatDuration(activityStats.totalDuration)}
+                        </div>
+                        <div className="text-xs text-gray-600">Total Talk Time</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-indigo-700">
+                          {formatDuration(activityStats.avgDuration)}
+                        </div>
+                        <div className="text-xs text-gray-600">Average per Call</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-700">
+                          {formatDuration(activityStats.avgDmDuration)}
+                        </div>
+                        <div className="text-xs text-gray-600">Avg DM Call</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-orange-700">
+                          {activityStats.avgDmDuration > 0 && activityStats.avgDuration > 0
+                            ? ((activityStats.avgDmDuration / activityStats.avgDuration) * 100).toFixed(0)
+                            : 0}%
+                        </div>
+                        <div className="text-xs text-gray-600">DM vs Avg</div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-purple-800">
+                      💡 <strong>Insight:</strong> Longer DM calls often indicate deeper problem discovery and higher engagement.
+                    </div>
+                  </div>
+                )}
+
+                {/* OK Code Distribution */}
+                {okCodeDistribution.length > 0 && (
+                  <div className="card bg-white p-6">
+                    <h3 className="text-xl font-bold text-gray-700 mb-4">OK Code Distribution</h3>
+                    <div className="space-y-2">
+                      {okCodeDistribution.map(item => (
+                        <div key={item.code} className="flex items-center gap-3">
+                          <div className="w-24 font-semibold text-gray-700">{item.code}</div>
+                          <div className="flex-1">
+                            <div className="bg-gray-200 rounded-full h-6 relative">
+                              <div
+                                className="bg-r7-blue rounded-full h-6 transition-all duration-500 flex items-center justify-end pr-2"
+                                style={{ width: `${item.percentage}%` }}
+                              >
+                                <span className="text-white text-xs font-semibold">
+                                  {item.percentage}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="w-12 text-right font-semibold text-gray-700">
+                            {item.count}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
