@@ -94,9 +94,6 @@ function DatabaseManager({ onBackToDashboard }) {
   const loadSequenceTasks = useCallback(async () => {
     const tasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
     setSequenceTasks(tasks);
-    // Clear optimistic state after reload
-    setOptimisticallyCompleted(new Set());
-    setOptimisticallySkipped(new Set());
   }, []);
 
   // Load tasks on mount and when switching to tasks tab
@@ -344,6 +341,10 @@ function DatabaseManager({ onBackToDashboard }) {
 
     await loadSequenceTasks();
 
+    // Clear optimistic state after reload completes
+    setOptimisticallyCompleted(new Set());
+    setOptimisticallySkipped(new Set());
+
     const allComplete = await checkAllDayTasksComplete({
       ...contact,
       ...updatedContactData
@@ -372,6 +373,10 @@ function DatabaseManager({ onBackToDashboard }) {
     );
 
     await loadSequenceTasks();
+
+    // Clear optimistic state after reload completes
+    setOptimisticallyCompleted(new Set());
+    setOptimisticallySkipped(new Set());
 
     const allComplete = await checkAllDayTasksComplete(contact);
 
