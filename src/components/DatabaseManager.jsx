@@ -22,6 +22,10 @@ import {
   skipSequenceTask,
   advanceContactToNextDay,
   checkAllDayTasksComplete,
+  pauseSequence,
+  resumeSequence,
+  markContactDead,
+  convertToClient,
   applyCounterUpdates,
   getCounterUpdates
 } from '../lib/sequenceLogic';
@@ -77,6 +81,9 @@ function DatabaseManager({ onBackToDashboard }) {
   const [sequenceTasks, setSequenceTasks] = useState([]);
   const [tasksFilter, setTasksFilter] = useState('all');
   const [selectedTasks, setSelectedTasks] = useState(new Set());
+  const [showDeadModal, setShowDeadModal] = useState(false);
+  const [deadReason, setDeadReason] = useState('');
+  const [contactToMarkDead, setContactToMarkDead] = useState(null);
 
   const stats = getStats();
 
@@ -356,6 +363,32 @@ function DatabaseManager({ onBackToDashboard }) {
       await advanceContactToNextDay(contact, updateContact);
       await loadSequenceTasks();
     }
+  };
+
+  // Sequence control handlers
+  const handlePauseSequence = async (contact) => {
+    await pauseSequence(contact.id, updateContact);
+  };
+
+  const handleResumeSequence = async (contact) => {
+    await resumeSequence(contact.id, updateContact);
+  };
+
+  const handleConvertToClient = async (contact) => {
+    if (confirm(`Mark ${contact.companyName} as converted to client?`)) {
+      await convertToClient(contact.id, updateContact);
+      await loadSequenceTasks();
+    }
+  };
+
+  const handleMarkDead = async () => {
+    if (!contactToMarkDead || !deadReason.trim()) return;
+
+    await markContactDead(contactToMarkDead.id, deadReason, updateContact);
+    await loadSequenceTasks();
+    setShowDeadModal(false);
+    setDeadReason('');
+    setContactToMarkDead(null);
   };
 
   const getContactTasks = (contact) => {
@@ -898,6 +931,34 @@ function DatabaseManager({ onBackToDashboard }) {
                             <span>{getTotalImpressions(contact)} total touches</span>
                           </div>
                         </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handlePauseSequence(contact)}
+                            className="px-3 py-1.5 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded font-medium"
+                            title="Pause sequence"
+                          >
+                            ⏸️ Pause
+                          </button>
+                          <button
+                            onClick={() => handleConvertToClient(contact)}
+                            className="px-3 py-1.5 text-xs bg-green-500 hover:bg-green-600 text-white rounded font-medium"
+                            title="Mark as converted"
+                          >
+                            🎉 Convert
+                          </button>
+                          <button
+                            onClick={() => {
+                              setContactToMarkDead(contact);
+                              setShowDeadModal(true);
+                            }}
+                            className="px-3 py-1.5 text-xs bg-red-500 hover:bg-red-600 text-white rounded font-medium"
+                            title="Mark as dead"
+                          >
+                            ☠️ Dead
+                          </button>
+                        </div>
                       </div>
 
                       {/* Task List */}
@@ -1035,6 +1096,45 @@ function DatabaseManager({ onBackToDashboard }) {
             onSave={handleEditContact}
             onClose={() => setEditingContact(null)}
           />
+        )}
+
+        {/* Mark Dead Modal */}
+        {showDeadModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">
+                Mark as Dead Lead
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Why is {contactToMarkDead?.companyName} not a good fit?
+              </p>
+              <textarea
+                value={deadReason}
+                onChange={(e) => setDeadReason(e.target.value)}
+                placeholder="e.g., No budget, wrong timing, not interested..."
+                className="w-full border border-gray-300 rounded-lg p-3 mb-4 h-24"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeadModal(false);
+                    setDeadReason('');
+                    setContactToMarkDead(null);
+                  }}
+                  className="btn flex-1 bg-gray-500 hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMarkDead}
+                  disabled={!deadReason.trim()}
+                  className="btn flex-1 bg-red-500 hover:bg-red-600 disabled:bg-gray-300"
+                >
+                  Mark as Dead
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
