@@ -341,9 +341,11 @@ function DatabaseManager({ onBackToDashboard }) {
 
     await loadSequenceTasks();
 
-    // Clear optimistic state after reload completes
-    setOptimisticallyCompleted(new Set());
-    setOptimisticallySkipped(new Set());
+    // Clear optimistic state after React renders the new data
+    setTimeout(() => {
+      setOptimisticallyCompleted(new Set());
+      setOptimisticallySkipped(new Set());
+    }, 100);
 
     const allComplete = await checkAllDayTasksComplete({
       ...contact,
@@ -374,9 +376,11 @@ function DatabaseManager({ onBackToDashboard }) {
 
     await loadSequenceTasks();
 
-    // Clear optimistic state after reload completes
-    setOptimisticallyCompleted(new Set());
-    setOptimisticallySkipped(new Set());
+    // Clear optimistic state after React renders the new data
+    setTimeout(() => {
+      setOptimisticallyCompleted(new Set());
+      setOptimisticallySkipped(new Set());
+    }, 100);
 
     const allComplete = await checkAllDayTasksComplete(contact);
 
