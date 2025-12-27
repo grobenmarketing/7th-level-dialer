@@ -24,6 +24,11 @@ import {
   applyCounterUpdates,
   getCounterUpdates
 } from '../lib/sequenceLogic';
+import {
+  getVisibleTasks,
+  getOverdueTasks,
+  hasOverdueTasks
+} from '../lib/sequenceAutomation';
 
 function DatabaseManager({ onBackToDashboard }) {
   // Tab state
@@ -334,8 +339,15 @@ function DatabaseManager({ onBackToDashboard }) {
   };
 
   const getContactTasks = (contact) => {
-    const dayTasks = getTasksForDay(contact.sequence_current_day);
-    return dayTasks.filter(taskType => !shouldSkipTask(contact, taskType));
+    // Get only visible tasks (due today or overdue, not future tasks)
+    const visibleTasks = getVisibleTasks(contact, sequenceTasks);
+
+    // Filter to only pending tasks and extract task types
+    const pendingTasks = visibleTasks.filter(t => t.status === 'pending');
+
+    // Return unique task types
+    const taskTypes = [...new Set(pendingTasks.map(t => t.task_type))];
+    return taskTypes;
   };
 
   const isTaskComplete = (contact, taskType) => {
@@ -814,9 +826,11 @@ function DatabaseManager({ onBackToDashboard }) {
                 {activeSequenceContacts.map((contact) => {
                   const tasks = getContactTasks(contact);
                   const completedTasks = tasks.filter(t => isTaskComplete(contact, t)).length;
+                  const hasOverdue = hasOverdueTasks(contact, sequenceTasks);
+                  const overdueCount = getOverdueTasks(contact, sequenceTasks).length;
 
                   return (
-                    <div key={contact.id} className="card bg-white p-6">
+                    <div key={contact.id} className={`card p-6 ${hasOverdue ? 'bg-red-50 border-2 border-red-300' : 'bg-white'}`}>
                       {/* Contact Header */}
                       <div className="flex items-center justify-between mb-4">
                         <div
@@ -826,9 +840,16 @@ function DatabaseManager({ onBackToDashboard }) {
                             setShowContactDetails(true);
                           }}
                         >
-                          <h4 className="text-lg font-bold text-gray-900">
-                            {contact.companyName}
-                          </h4>
+                          <div className="flex items-center gap-3">
+                            <h4 className="text-lg font-bold text-gray-900">
+                              {contact.companyName}
+                            </h4>
+                            {hasOverdue && (
+                              <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full animate-pulse">
+                                🚨 {overdueCount} OVERDUE
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
                             <span>📞 {contact.phone}</span>
                             <span>•</span>
@@ -847,6 +868,10 @@ function DatabaseManager({ onBackToDashboard }) {
                       <div className="space-y-2">
                         {tasks.map(taskType => {
                           const isComplete = isTaskComplete(contact, taskType);
+                          const task = sequenceTasks.find(
+                            t => t.contact_id === contact.id && t.task_type === taskType && t.status === 'pending'
+                          );
+                          const isOverdue = task && getOverdueTasks(contact, sequenceTasks).some(t => t.task_type === taskType);
 
                           return (
                             <div
@@ -854,6 +879,8 @@ function DatabaseManager({ onBackToDashboard }) {
                               className={`flex items-center gap-3 p-3 rounded-lg border ${
                                 isComplete
                                   ? 'bg-green-50 border-green-200'
+                                  : isOverdue
+                                  ? 'bg-red-100 border-red-400 border-2'
                                   : 'bg-gray-50 border-gray-200'
                               }`}
                             >
@@ -867,6 +894,11 @@ function DatabaseManager({ onBackToDashboard }) {
                               <span className={`flex-1 text-sm ${isComplete ? 'line-through text-gray-500' : 'text-gray-800 font-medium'}`}>
                                 {getTaskDescription(taskType, contact.sequence_current_day)}
                               </span>
+                              {isOverdue && !isComplete && (
+                                <span className="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded">
+                                  OVERDUE
+                                </span>
+                              )}
                               {isComplete && (
                                 <span className="text-green-600 text-sm font-semibold">✓ Complete</span>
                               )}

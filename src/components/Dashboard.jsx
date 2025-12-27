@@ -8,6 +8,7 @@ import SequencesPanel from './SequencesPanel';
 import { storage, KEYS } from '../lib/cloudStorage';
 import { useKPI } from '../hooks/useKPI';
 import { getNeverContactedLeads } from '../lib/taskScheduler';
+import { processAllSequenceAdvancement } from '../lib/sequenceAutomation';
 
 function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onViewAnalytics, onViewHowToUse, onViewSettings, onViewSequenceTasks }) {
   const {
@@ -40,10 +41,17 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
   useEffect(() => {
     const refreshData = async () => {
       console.log('🔄 Dashboard mounted - refreshing data...');
-      await Promise.all([
-        loadSequenceTasks(),
-        reloadContacts()
-      ]);
+
+      // First reload contacts to get latest data
+      await reloadContacts();
+
+      // Then run auto-advancement check for all active sequences
+      console.log('⏰ Running daily sequence auto-advancement check...');
+      await processAllSequenceAdvancement(contacts, updateContact);
+
+      // Finally reload tasks to reflect any changes
+      await loadSequenceTasks();
+
       console.log('✅ Dashboard data refreshed');
     };
     refreshData();
