@@ -84,6 +84,8 @@ function DatabaseManager({ onBackToDashboard }) {
   const [showDeadModal, setShowDeadModal] = useState(false);
   const [deadReason, setDeadReason] = useState('');
   const [contactToMarkDead, setContactToMarkDead] = useState(null);
+  const [optimisticallyCompleted, setOptimisticallyCompleted] = useState(new Set());
+  const [optimisticallySkipped, setOptimisticallySkipped] = useState(new Set());
 
   const stats = getStats();
 
@@ -91,6 +93,9 @@ function DatabaseManager({ onBackToDashboard }) {
   const loadSequenceTasks = useCallback(async () => {
     const tasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
     setSequenceTasks(tasks);
+    // Clear optimistic state after reload
+    setOptimisticallyCompleted(new Set());
+    setOptimisticallySkipped(new Set());
   }, []);
 
   // Load tasks on mount and when switching to tasks tab
@@ -315,15 +320,20 @@ function DatabaseManager({ onBackToDashboard }) {
     c => c.sequence_status === 'active'
   );
 
-  const handleCompleteTask = async (contact, taskType) => {
+  const handleCompleteTask = async (contact, task) => {
+    // Optimistically mark as completed immediately
+    const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+    setOptimisticallyCompleted(prev => new Set([...prev, taskId]));
+
+    // Perform async operations
     await completeSequenceTask(
       contact.id,
-      contact.sequence_current_day,
-      taskType,
+      task.sequence_day,
+      task.task_type,
       ''
     );
 
-    const counterUpdates = getCounterUpdates(taskType);
+    const counterUpdates = getCounterUpdates(task.task_type);
     const updatedContactData = applyCounterUpdates(contact, counterUpdates);
 
     await updateContact(contact.id, {
@@ -348,6 +358,11 @@ function DatabaseManager({ onBackToDashboard }) {
   };
 
   const handleSkipTask = async (contact, task) => {
+    // Optimistically mark as skipped immediately
+    const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+    setOptimisticallySkipped(prev => new Set([...prev, taskId]));
+
+    // Perform async operations
     await skipSequenceTask(
       contact.id,
       task.sequence_day,
@@ -970,17 +985,21 @@ function DatabaseManager({ onBackToDashboard }) {
                         ) : (
                           tasks.map(task => {
                             const today = new Date().toISOString().split('T')[0];
-                            const isOverdue = task.status === 'pending' && task.task_due_date < today;
-                            const isDueToday = task.status === 'pending' && task.task_due_date === today;
-                            const isFuture = task.status === 'pending' && task.task_due_date > today;
+                            const taskId = task.id || `${contact.id}-${task.sequence_day}-${task.task_type}`;
+                            const isOptimisticallyCompleted = optimisticallyCompleted.has(taskId);
+                            const isOptimisticallySkipped = optimisticallySkipped.has(taskId);
+                            const effectiveStatus = isOptimisticallyCompleted ? 'completed' : isOptimisticallySkipped ? 'skipped' : task.status;
+                            const isOverdue = effectiveStatus === 'pending' && task.task_due_date < today;
+                            const isDueToday = effectiveStatus === 'pending' && task.task_due_date === today;
+                            const isFuture = effectiveStatus === 'pending' && task.task_due_date > today;
 
                             return (
                               <div
                                 key={task.id}
                                 className={`flex items-center gap-3 p-3 rounded-lg border ${
-                                  task.status === 'completed'
+                                  effectiveStatus === 'completed'
                                     ? 'bg-green-50 border-green-200'
-                                    : task.status === 'skipped'
+                                    : effectiveStatus === 'skipped'
                                     ? 'bg-gray-100 border-gray-300'
                                     : isOverdue
                                     ? 'bg-red-100 border-red-400 border-2'
@@ -990,15 +1009,15 @@ function DatabaseManager({ onBackToDashboard }) {
                                 }`}
                               >
                                 {/* Checkbox or Status Icon */}
-                                {task.status === 'completed' ? (
+                                {effectiveStatus === 'completed' ? (
                                   <span className="text-green-600 text-xl">✓</span>
-                                ) : task.status === 'skipped' ? (
+                                ) : effectiveStatus === 'skipped' ? (
                                   <span className="text-gray-500 text-xl">⊘</span>
                                 ) : (
                                   <input
                                     type="checkbox"
                                     checked={false}
-                                    onChange={() => handleCompleteTask(contact, task.task_type)}
+                                    onChange={() => handleCompleteTask(contact, task)}
                                     className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 cursor-pointer accent-green-600"
                                   />
                                 )}
@@ -1010,7 +1029,7 @@ function DatabaseManager({ onBackToDashboard }) {
 
                                 {/* Task Description */}
                                 <span className={`flex-1 text-sm ${
-                                  task.status === 'completed' || task.status === 'skipped'
+                                  effectiveStatus === 'completed' || effectiveStatus === 'skipped'
                                     ? 'line-through text-gray-500'
                                     : 'text-gray-800 font-medium'
                                 }`}>
@@ -1023,20 +1042,20 @@ function DatabaseManager({ onBackToDashboard }) {
                                 </span>
 
                                 {/* Status Badges */}
-                                {task.status === 'completed' && (
+                                {effectiveStatus === 'completed' && (
                                   <span className="text-green-600 text-sm font-semibold">Done</span>
                                 )}
-                                {task.status === 'skipped' && (
+                                {effectiveStatus === 'skipped' && (
                                   <span className="text-gray-600 text-sm font-semibold">Skipped</span>
                                 )}
-                                {isOverdue && task.status === 'pending' && (
+                                {isOverdue && effectiveStatus === 'pending' && (
                                   <span className="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded">
                                     OVERDUE
                                   </span>
                                 )}
 
                                 {/* Skip Button */}
-                                {task.status === 'pending' && (
+                                {effectiveStatus === 'pending' && (
                                   <button
                                     onClick={() => handleSkipTask(contact, task)}
                                     className="px-3 py-1 text-xs bg-gray-400 hover:bg-gray-500 text-white rounded font-medium"
