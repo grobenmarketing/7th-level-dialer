@@ -527,7 +527,9 @@ function DatabaseManager({ onBackToDashboard }) {
                         </a>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <StatusBadge status={contact.totalDials || 0} />
+                        <span className="inline-flex px-3 py-1 text-sm font-semibold text-gray-700">
+                          {contact.totalDials || 0}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">
                         {contact.lastCall
