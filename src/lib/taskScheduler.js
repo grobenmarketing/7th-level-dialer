@@ -2,17 +2,77 @@
 // Handles due date calculations, overdue detection, and task filtering
 
 /**
+ * Check if a date falls on a business day (Monday-Friday)
+ * @param {Date} date - Date object to check
+ * @returns {boolean} True if Monday-Friday, false if Saturday-Sunday
+ */
+export function isBusinessDay(date) {
+  const dayOfWeek = date.getDay();
+  // 0 = Sunday, 6 = Saturday
+  return dayOfWeek !== 0 && dayOfWeek !== 6;
+}
+
+/**
+ * Get the next business day from a given date
+ * If the date is already a business day, returns it unchanged
+ * If it's Saturday, returns the following Monday
+ * If it's Sunday, returns the following Monday
+ * @param {Date} date - Date object to check
+ * @returns {Date} Next business day
+ */
+export function getNextBusinessDay(date) {
+  const resultDate = new Date(date);
+
+  while (!isBusinessDay(resultDate)) {
+    resultDate.setDate(resultDate.getDate() + 1);
+  }
+
+  return resultDate;
+}
+
+/**
+ * Add business days to a date (skips weekends)
+ * @param {Date} startDate - Starting date
+ * @param {number} businessDaysToAdd - Number of business days to add
+ * @returns {Date} Resulting date after adding business days
+ */
+export function addBusinessDays(startDate, businessDaysToAdd) {
+  const resultDate = new Date(startDate);
+  let daysAdded = 0;
+
+  while (daysAdded < businessDaysToAdd) {
+    resultDate.setDate(resultDate.getDate() + 1);
+    if (isBusinessDay(resultDate)) {
+      daysAdded++;
+    }
+  }
+
+  return resultDate;
+}
+
+/**
  * Calculate the due date for a task based on sequence start date and day number
+ * Tasks are scheduled on business days only (Monday-Friday)
+ * Weekend tasks are automatically moved to the following Monday
  * @param {string} sequenceStartDate - YYYY-MM-DD format
  * @param {number} sequenceDay - Day number in sequence (1-30)
  * @returns {string} Due date in YYYY-MM-DD format
  */
 export function calculateTaskDueDate(sequenceStartDate, sequenceDay) {
   const startDate = new Date(sequenceStartDate + 'T00:00:00');
-  const dueDate = new Date(startDate);
 
-  // Day 1 = start date, Day 2 = start date + 1, etc.
-  dueDate.setDate(startDate.getDate() + (sequenceDay - 1));
+  // Ensure the start date is a business day
+  // If sequence starts on a weekend, move to next Monday
+  const businessStartDate = getNextBusinessDay(startDate);
+
+  // For Day 1, use the business start date
+  if (sequenceDay === 1) {
+    return businessStartDate.toISOString().split('T')[0];
+  }
+
+  // For subsequent days, add business days only
+  // sequenceDay - 1 because Day 1 is the start date
+  const dueDate = addBusinessDays(businessStartDate, sequenceDay - 1);
 
   return dueDate.toISOString().split('T')[0];
 }
