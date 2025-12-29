@@ -64,7 +64,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
       if (e.key >= '1' && e.key <= '9' && okCodes.length > 0) {
         const index = parseInt(e.key) - 1;
         if (index < okCodes.length) {
-          updateField('okCode', okCodes[index].label);
+          updateField('okCode', `OK-${okCodes[index].id}`);
         }
       }
     };
@@ -631,7 +631,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
               >
                 <option value="">Select OK Code...</option>
                 {okCodes.map((code, index) => (
-                  <option key={code.id} value={code.label}>
+                  <option key={code.id} value={`OK-${code.id}`}>
                     [{index + 1}] {code.label}
                   </option>
                 ))}
@@ -642,10 +642,10 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                   <div className="flex items-center">
                     <span
                       className="w-3 h-3 rounded-full mr-2"
-                      style={{ backgroundColor: okCodes.find(c => c.label === okCode)?.color || '#808080' }}
+                      style={{ backgroundColor: okCodes.find(c => `OK-${c.id}` === okCode)?.color || '#808080' }}
                     ></span>
                     <span className="text-sm font-semibold text-gray-700">
-                      {okCode}
+                      {okCodes.find(c => `OK-${c.id}` === okCode)?.label || okCode}
                     </span>
                   </div>
                 </div>
