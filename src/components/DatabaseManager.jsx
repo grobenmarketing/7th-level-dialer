@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import { useKPI } from '../hooks/useKPI';
 import { useStats } from '../hooks/useStats';
+import { useOkCodes } from '../hooks/useOkCodes';
 import { storage, KEYS } from '../lib/cloudStorage';
 import { formatDuration } from '../lib/constants';
 import SearchBar from './database/SearchBar';
@@ -54,6 +55,8 @@ function DatabaseManager({ onBackToDashboard }) {
     getStats
   } = useContacts();
 
+  const { okCodes } = useOkCodes();
+
   const {
     getWeekData,
     getWeeklyTotals,
@@ -77,6 +80,7 @@ function DatabaseManager({ onBackToDashboard }) {
   // Contacts state
   const [searchTerm, setSearchTerm] = useState('');
   const [contactsFilter, setContactsFilter] = useState('all');
+  const [selectedOkCode, setSelectedOkCode] = useState('all');
   const [contactsSort, setContactsSort] = useState({ key: 'companyName', direction: 'asc' });
   const [selectedContacts, setSelectedContacts] = useState(new Set());
   const [selectedContact, setSelectedContact] = useState(null);
@@ -135,6 +139,11 @@ function DatabaseManager({ onBackToDashboard }) {
       filtered = filtered.filter(c => c.status === contactsFilter);
     }
 
+    // Apply OK code filter
+    if (selectedOkCode !== 'all') {
+      filtered = filtered.filter(c => c.currentOkCode === selectedOkCode);
+    }
+
     // Apply search
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
@@ -185,7 +194,7 @@ function DatabaseManager({ onBackToDashboard }) {
     });
 
     return filtered;
-  }, [contacts, searchTerm, contactsFilter, contactsSort]);
+  }, [contacts, searchTerm, contactsFilter, selectedOkCode, contactsSort]);
 
   const handleContactsSort = (key) => {
     setContactsSort(prev => ({
@@ -592,6 +601,24 @@ function DatabaseManager({ onBackToDashboard }) {
                 activeFilter={contactsFilter}
                 onFilterChange={setContactsFilter}
               />
+              <div className="flex items-center gap-2">
+                <label htmlFor="okCodeFilter" className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                  OK Code:
+                </label>
+                <select
+                  id="okCodeFilter"
+                  value={selectedOkCode}
+                  onChange={(e) => setSelectedOkCode(e.target.value)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 hover:border-r7-blue focus:outline-none focus:ring-2 focus:ring-r7-blue focus:border-transparent transition-all"
+                >
+                  <option value="all">All OK Codes</option>
+                  {okCodes.map(code => (
+                    <option key={code.id} value={code.label}>
+                      {code.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Action Buttons */}
