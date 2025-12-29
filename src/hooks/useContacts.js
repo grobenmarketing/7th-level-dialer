@@ -1,10 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { storage, KEYS, migrateToCloud, isCloudStorageAvailable } from '../lib/cloudStorage';
 import { createContact, migrateContact, createContactFromCSV } from '../lib/contactSchema';
+import { useAuditLog } from './useAuditLog';
+import { useDeletedContacts } from './useDeletedContacts';
 
 export function useContacts() {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // SECURITY: Audit logging and soft-delete
+  const { logAudit } = useAuditLog();
+  const { softDeleteContact, softDeleteBulk } = useDeletedContacts();
 
   // Extracted load function that can be called manually (useCallback to stabilize reference)
   const loadContacts = useCallback(async () => {
@@ -77,12 +83,77 @@ export function useContacts() {
   };
 
   const deleteContact = async (contactId) => {
+    // SECURITY: Find contact before deleting for audit log
+    const contactToDelete = contacts.find(c => c.id === contactId);
+
+    if (!contactToDelete) {
+      console.warn('Contact not found for deletion:', contactId);
+      return;
+    }
+
+    // SECURITY: Soft delete - move to trash instead of permanent deletion
+    await softDeleteContact(contactToDelete);
+
+    // SECURITY: Log the deletion for audit trail
+    await logAudit('DELETE_CONTACT', {
+      contactId: contactToDelete.id,
+      companyName: contactToDelete.companyName,
+      phone: contactToDelete.phone,
+      timestamp: new Date().toISOString()
+    });
+
+    // Remove from active contacts
     await saveContacts(prevContacts =>
       prevContacts.filter(contact => contact.id !== contactId)
     );
   };
 
+  /**
+   * SECURITY: Bulk delete with audit logging and soft-delete
+   * @param {Array<string>} contactIds - Array of contact IDs to delete
+   */
+  const deleteBulkContacts = async (contactIds) => {
+    // Find all contacts to delete
+    const contactsToDelete = contacts.filter(c => contactIds.includes(c.id));
+
+    if (contactsToDelete.length === 0) {
+      console.warn('No contacts found for bulk deletion');
+      return;
+    }
+
+    // SECURITY: Soft delete all contacts
+    await softDeleteBulk(contactsToDelete);
+
+    // SECURITY: Log bulk deletion for audit trail
+    await logAudit('BULK_DELETE_CONTACTS', {
+      count: contactsToDelete.length,
+      contactIds: contactIds,
+      contacts: contactsToDelete.map(c => ({
+        id: c.id,
+        companyName: c.companyName,
+        phone: c.phone
+      })),
+      timestamp: new Date().toISOString()
+    });
+
+    // Remove from active contacts
+    await saveContacts(prevContacts =>
+      prevContacts.filter(contact => !contactIds.includes(contact.id))
+    );
+  };
+
   const deleteAllContacts = async () => {
+    // SECURITY: Log deletion of all contacts
+    await logAudit('DELETE_ALL_CONTACTS', {
+      count: contacts.length,
+      timestamp: new Date().toISOString()
+    });
+
+    // SECURITY: Soft delete all contacts
+    if (contacts.length > 0) {
+      await softDeleteBulk(contacts);
+    }
+
     await saveContacts([]);
   };
 
@@ -214,6 +285,7 @@ export function useContacts() {
     addContact,
     updateContact,
     deleteContact,
+    deleteBulkContacts, // SECURITY: Bulk delete with audit logging
     deleteAllContacts,
     addCallToHistory,
     importFromCSV,

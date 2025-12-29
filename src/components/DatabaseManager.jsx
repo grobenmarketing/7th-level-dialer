@@ -49,6 +49,7 @@ function DatabaseManager({ onBackToDashboard }) {
     addContact,
     updateContact,
     deleteContact,
+    deleteBulkContacts, // SECURITY: Bulk delete with audit logging
     deleteAllContacts,
     exportToCSV,
     importFromCSV,
@@ -224,14 +225,22 @@ function DatabaseManager({ onBackToDashboard }) {
   const handleBulkDeleteContacts = async () => {
     if (selectedContacts.size === 0) return;
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${selectedContacts.size} selected contact(s)? This action cannot be undone.`
-    );
+    // SECURITY: Enhanced confirmation for bulk delete
+    const count = selectedContacts.size;
+    let confirmMessage = `Are you sure you want to delete ${count} selected contact(s)?`;
+
+    // Extra warning for large deletions
+    if (count > 10) {
+      confirmMessage += `\n\n⚠️ WARNING: You are about to delete ${count} contacts. This is a large deletion.`;
+    }
+
+    confirmMessage += '\n\nContacts will be moved to trash and can be recovered within 30 days.';
+
+    const confirmed = window.confirm(confirmMessage);
 
     if (confirmed) {
-      for (const contactId of selectedContacts) {
-        await deleteContact(contactId);
-      }
+      // SECURITY: Use bulk delete with audit logging
+      await deleteBulkContacts(Array.from(selectedContacts));
       setSelectedContacts(new Set());
     }
   };
@@ -291,7 +300,11 @@ function DatabaseManager({ onBackToDashboard }) {
   };
 
   const handleDeleteContact = async (contactId) => {
-    const confirmed = window.confirm('Are you sure you want to delete this contact?');
+    // SECURITY: Enhanced confirmation with trash recovery info
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this contact?\n\n' +
+      'The contact will be moved to trash and can be recovered within 30 days.'
+    );
     if (confirmed) {
       await deleteContact(contactId);
       setShowContactDetails(false);

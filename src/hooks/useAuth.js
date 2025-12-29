@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 
-// This is the password - you can change it to anything you want
-// Or set it via environment variable: import.meta.env.VITE_APP_PASSWORD
-const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD || '0208';
+// SECURITY: Password MUST be set via environment variable
+// Set VITE_APP_PASSWORD in your .env file
+const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
+
+if (!APP_PASSWORD) {
+  console.error('CRITICAL: VITE_APP_PASSWORD environment variable is not set!');
+}
 
 const AUTH_KEY = 'r7_auth_token';
 

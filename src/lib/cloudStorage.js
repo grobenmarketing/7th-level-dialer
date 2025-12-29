@@ -1,6 +1,18 @@
 // Cloud storage service with Netlify Blob integration and localStorage fallback
 // Automatically detects environment and uses appropriate storage method
 
+// SECURITY: Get API authentication token from environment
+const getAuthHeaders = () => {
+  const token = import.meta.env.VITE_API_AUTH_TOKEN;
+  if (!token && isCloudStorageAvailable()) {
+    console.error('CRITICAL: VITE_API_AUTH_TOKEN is not set! API calls will fail.');
+  }
+  return {
+    'Content-Type': 'application/json',
+    'x-api-token': token || ''
+  };
+};
+
 const KEYS = {
   CONTACTS: 'r7_contacts',
   AVATARS: 'r7_avatars',
@@ -74,7 +86,9 @@ const localStorageImpl = {
 const cloudStorageImpl = {
   get: async (key, defaultValue = null) => {
     try {
-      const response = await fetch(`/api/get-data?key=${encodeURIComponent(key)}`);
+      const response = await fetch(`/api/get-data?key=${encodeURIComponent(key)}`, {
+        headers: getAuthHeaders()
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -93,9 +107,7 @@ const cloudStorageImpl = {
     try {
       const response = await fetch('/api/set-data', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ key, data: value })
       });
 
@@ -118,9 +130,7 @@ const cloudStorageImpl = {
     try {
       const response = await fetch('/api/set-data', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ key, data: null })
       });
 
@@ -200,9 +210,7 @@ export const migrateToCloud = async () => {
     // Bulk upload to cloud storage
     const response = await fetch('/api/sync-all', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ items })
     });
 

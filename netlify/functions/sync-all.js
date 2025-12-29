@@ -1,17 +1,18 @@
 import { getStore } from '@netlify/blobs';
+import { getCorsHeaders, validateAuth, unauthorizedResponse } from './_shared/auth.js';
 
 export default async (req, context) => {
-  // Enable CORS
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Content-Type': 'application/json',
-  };
+  // Get CORS headers with origin validation
+  const headers = getCorsHeaders(req);
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers });
+  }
+
+  // SECURITY: Validate authentication token
+  if (!validateAuth(req)) {
+    return unauthorizedResponse(headers);
   }
 
   try {
