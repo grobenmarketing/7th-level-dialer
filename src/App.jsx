@@ -10,6 +10,7 @@ import Login from './components/Login'
 import OkCodesAdmin from './components/OkCodesAdmin'
 import DatabaseManager from './components/DatabaseManager'
 import { useAuth } from './hooks/useAuth'
+import { migrateContactOkCodes, needsOkCodeMigration } from './lib/migrateOkCodes'
 
 const VIEW_STATE_KEY = 'r7_current_view'
 const CONTACT_INDEX_KEY = 'r7_contact_index'
@@ -37,6 +38,23 @@ function App() {
   useEffect(() => {
     if (isAuthenticated) {
       setCurrentView('dashboard')
+    }
+  }, [isAuthenticated])
+
+  // Run OK code migration on app startup if needed
+  useEffect(() => {
+    if (isAuthenticated) {
+      const runMigration = async () => {
+        const needsMigration = await needsOkCodeMigration()
+        if (needsMigration) {
+          console.log('🔄 Detected old OK code format, running migration...')
+          const result = await migrateContactOkCodes()
+          if (result.success && result.migratedCount > 0) {
+            console.log(`✅ Successfully migrated ${result.migratedCount} contacts to new OK code format`)
+          }
+        }
+      }
+      runMigration()
     }
   }, [isAuthenticated])
 
