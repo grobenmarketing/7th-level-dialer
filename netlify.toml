@@ -2,6 +2,10 @@
   command = "npm run build"
   publish = "dist"
 
+[build.environment]
+  # Skip secrets scanning in dist (build output) and documentation files
+  SECRETS_SCAN_OMIT_PATHS = "dist/**,SECURITY_IMPROVEMENTS.md,README.md"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
