@@ -283,7 +283,8 @@ function DatabaseManager({ onBackToDashboard }) {
 
   const handleDownloadTemplate = () => {
     const headers = 'Company Name,Phone,Website,Address,LinkedIn,Industry';
-    const exampleRow = 'Acme Corp,(555) 123-4567,https://example.com,123 Main St,https://linkedin.com/company/acme,Technology';
+    // Example row showing that commas in company names are supported with quotes
+    const exampleRow = '"Atlas Butler Heating, Cooling & Plumbing",(614) 681-2167,https://atlasbutler.com,4849 Evanswood Dr,https://linkedin.com/company/atlas-butler,HVAC';
     const csvContent = `${headers}\n${exampleRow}`;
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
