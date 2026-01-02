@@ -69,7 +69,11 @@ function DatabaseManager({ onBackToDashboard }) {
     rebuildFromCallHistory,
     kpiData,
     dailyDialGoal,
-    getWeekStart
+    getWeekStart,
+    getMonthStart,
+    getWeeksInMonth,
+    getMonthData,
+    getMonthlyTotals
   } = useKPI();
 
   const {
@@ -90,7 +94,8 @@ function DatabaseManager({ onBackToDashboard }) {
 
   // KPI state
   const [currentWeekStart, setCurrentWeekStart] = useState(getWeekStart());
-  const [kpiView, setKpiView] = useState('weekly'); // 'weekly' or 'overall'
+  const [currentMonthStart, setCurrentMonthStart] = useState(getMonthStart());
+  const [kpiView, setKpiView] = useState('weekly'); // 'weekly', 'monthly', or 'overall'
   const [editingTargets, setEditingTargets] = useState(false);
   const [tempTargets, setTempTargets] = useState(weeklyTargets);
   const [syncing, setSyncing] = useState(false);
@@ -311,6 +316,10 @@ function DatabaseManager({ onBackToDashboard }) {
   const performanceRatios = getPerformanceRatios(currentWeekStart);
   const objectionFrequency = getObjectionFrequency(currentWeekStart);
 
+  // Monthly data
+  const monthData = getMonthData(currentMonthStart);
+  const monthlyTotals = getMonthlyTotals(currentMonthStart);
+
   const handleEditDay = async (date, field, value) => {
     await updateKPIForDate(date, { [field]: parseInt(value) || 0 });
   };
@@ -329,6 +338,22 @@ function DatabaseManager({ onBackToDashboard }) {
 
   const handleThisWeek = () => {
     setCurrentWeekStart(getWeekStart());
+  };
+
+  const handlePreviousMonth = () => {
+    const date = new Date(currentMonthStart);
+    date.setMonth(date.getMonth() - 1);
+    setCurrentMonthStart(getMonthStart(date));
+  };
+
+  const handleNextMonth = () => {
+    const date = new Date(currentMonthStart);
+    date.setMonth(date.getMonth() + 1);
+    setCurrentMonthStart(getMonthStart(date));
+  };
+
+  const handleThisMonth = () => {
+    setCurrentMonthStart(getMonthStart());
   };
 
   const handleSaveTargets = async () => {
@@ -786,7 +811,17 @@ function DatabaseManager({ onBackToDashboard }) {
                     : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                📅 Weekly KPI Tracker
+                📅 Weekly View
+              </button>
+              <button
+                onClick={() => setKpiView('monthly')}
+                className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                  kpiView === 'monthly'
+                    ? 'bg-r7-blue text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                📆 Monthly View
               </button>
               <button
                 onClick={() => setKpiView('overall')}
@@ -1066,6 +1101,135 @@ function DatabaseManager({ onBackToDashboard }) {
                     </div>
                   </div>
                 )}
+              </>
+            ) : kpiView === 'monthly' ? (
+              <>
+                {/* Month Navigation */}
+                <div className="card bg-white p-4">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handlePreviousMonth}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition-colors"
+                    >
+                      ← Previous Month
+                    </button>
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-gray-800">
+                        {new Date(currentMonthStart).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      </div>
+                      <button
+                        onClick={handleThisMonth}
+                        className="text-sm text-r7-blue hover:underline"
+                      >
+                        Jump to This Month
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleNextMonth}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition-colors"
+                    >
+                      Next Month →
+                    </button>
+                  </div>
+                </div>
+
+                {/* Monthly Summary Card */}
+                <div className="card bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 p-6">
+                  <h3 className="text-xl font-bold text-gray-700 mb-4">
+                    📊 Monthly Summary
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <div className="text-sm text-gray-600">Total Dials</div>
+                      <div className="text-3xl font-bold text-purple-700">{monthlyTotals.dials}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">Pickups (DM)</div>
+                      <div className="text-3xl font-bold text-green-700">{monthlyTotals.pickups}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">Conversations</div>
+                      <div className="text-3xl font-bold text-blue-700">{monthlyTotals.conversations}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">Meetings Booked</div>
+                      <div className="text-3xl font-bold text-orange-700">{monthlyTotals.bookedMeetings}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Week-by-Week Breakdown */}
+                <div className="card bg-white p-6">
+                  <h3 className="text-xl font-bold text-gray-700 mb-4">
+                    📅 Week-by-Week Breakdown
+                  </h3>
+                  <div className="space-y-4">
+                    {monthData.map((week, index) => (
+                      <div key={week.weekStart} className="border-2 border-gray-200 rounded-lg p-4 hover:border-r7-blue transition-colors">
+                        <div className="flex justify-between items-center mb-3">
+                          <div>
+                            <div className="font-bold text-lg text-gray-800">
+                              Week {index + 1} - {new Date(week.weekStart).toLocaleDateString()}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              Days Worked: {week.dailyAverages.daysWorked}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              setCurrentWeekStart(week.weekStart);
+                              setKpiView('weekly');
+                            }}
+                            className="px-3 py-1 bg-r7-blue text-white text-sm rounded hover:bg-r7-dark transition-colors"
+                          >
+                            View Details →
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
+                          <div className="bg-gray-50 p-2 rounded">
+                            <div className="text-gray-600">Dials</div>
+                            <div className="font-bold text-gray-800">{week.weeklyTotals.dials}</div>
+                          </div>
+                          <div className="bg-green-50 p-2 rounded">
+                            <div className="text-gray-600">Pickups</div>
+                            <div className="font-bold text-green-700">{week.weeklyTotals.pickups}</div>
+                          </div>
+                          <div className="bg-blue-50 p-2 rounded">
+                            <div className="text-gray-600">Conversations</div>
+                            <div className="font-bold text-blue-700">{week.weeklyTotals.conversations}</div>
+                          </div>
+                          <div className="bg-yellow-50 p-2 rounded">
+                            <div className="text-gray-600">Triage</div>
+                            <div className="font-bold text-yellow-700">{week.weeklyTotals.triage}</div>
+                          </div>
+                          <div className="bg-orange-50 p-2 rounded">
+                            <div className="text-gray-600">Meetings</div>
+                            <div className="font-bold text-orange-700">{week.weeklyTotals.bookedMeetings}</div>
+                          </div>
+                          <div className="bg-purple-50 p-2 rounded">
+                            <div className="text-gray-600">Showed</div>
+                            <div className="font-bold text-purple-700">{week.weeklyTotals.meetingsRan}</div>
+                          </div>
+                        </div>
+
+                        {week.dailyAverages.daysWorked > 0 && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <div className="text-xs text-gray-600 mb-1">Daily Averages:</div>
+                            <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs">
+                              <div>Dials: <span className="font-semibold">{week.dailyAverages.dials.toFixed(1)}</span></div>
+                              <div>Pickups: <span className="font-semibold">{week.dailyAverages.pickups.toFixed(1)}</span></div>
+                              <div>Convos: <span className="font-semibold">{week.dailyAverages.conversations.toFixed(1)}</span></div>
+                              <div>Triage: <span className="font-semibold">{week.dailyAverages.triage.toFixed(1)}</span></div>
+                              <div>Meetings: <span className="font-semibold">{week.dailyAverages.bookedMeetings.toFixed(1)}</span></div>
+                              <div>Showed: <span className="font-semibold">{week.dailyAverages.meetingsRan.toFixed(1)}</span></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </>
             ) : (
               <>
