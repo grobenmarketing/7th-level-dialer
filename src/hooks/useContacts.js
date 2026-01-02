@@ -82,6 +82,13 @@ export function useContacts() {
     );
   };
 
+  const deleteBulkContacts = async (contactIds) => {
+    const idsToDelete = new Set(contactIds);
+    await saveContacts(prevContacts =>
+      prevContacts.filter(contact => !idsToDelete.has(contact.id))
+    );
+  };
+
   const deleteAllContacts = async () => {
     await saveContacts([]);
   };
@@ -214,6 +221,7 @@ export function useContacts() {
     addContact,
     updateContact,
     deleteContact,
+    deleteBulkContacts,
     deleteAllContacts,
     addCallToHistory,
     importFromCSV,
