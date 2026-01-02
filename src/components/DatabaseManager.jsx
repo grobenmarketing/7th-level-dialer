@@ -49,6 +49,7 @@ function DatabaseManager({ onBackToDashboard }) {
     addContact,
     updateContact,
     deleteContact,
+    deleteBulkContacts,
     deleteAllContacts,
     exportToCSV,
     importFromCSV,
@@ -234,9 +235,7 @@ function DatabaseManager({ onBackToDashboard }) {
     );
 
     if (confirmed) {
-      for (const contactId of selectedContacts) {
-        await deleteContact(contactId);
-      }
+      await deleteBulkContacts(selectedContacts);
       setSelectedContacts(new Set());
     }
   };
