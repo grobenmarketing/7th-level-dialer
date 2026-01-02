@@ -69,20 +69,9 @@ function Dashboard({ onStartCalling, onStartFilteredSession, onViewContacts, onV
       }
     };
 
-    // Poll every 2 seconds to catch updates from calling interface
-    const pollInterval = setInterval(async () => {
-      if (!document.hidden) {
-        await Promise.all([
-          loadSequenceTasks(),
-          reloadContacts()
-        ]);
-      }
-    }, 2000);
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      clearInterval(pollInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [reloadContacts]); // eslint-disable-line react-hooks/exhaustive-deps

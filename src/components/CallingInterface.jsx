@@ -24,7 +24,10 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
   } = useCallForm(contactIndex);
 
   // Use filtered contacts if provided, otherwise use ONLY never-contacted leads for cold calling
-  const activeContacts = filteredContacts || getNeverContactedLeads(contacts);
+  const activeContacts = useMemo(() => {
+    return filteredContacts || getNeverContactedLeads(contacts);
+  }, [filteredContacts, contacts]);
+
   const currentContact = activeContacts[contactIndex];
 
   // Daily goal state

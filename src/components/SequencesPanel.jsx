@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { isTaskOverdue, isTaskDueToday, getDaysOverdue } from '../lib/taskScheduler';
 import { getTaskDescription } from '../lib/sequenceCalendar';
 import { completeSequenceTask, skipSequenceTask, getCounterUpdates, applyCounterUpdates, checkAllDayTasksComplete, advanceContactToNextDay } from '../lib/sequenceLogic';
@@ -8,41 +8,47 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
   const [optimisticallyCompleted, setOptimisticallyCompleted] = useState(new Set());
   const [optimisticallySkipped, setOptimisticallySkipped] = useState(new Set());
 
-  // Get active contacts
-  const activeContacts = contacts.filter(c => c.sequence_status === 'active');
+  // Get active contacts and group tasks by contact (memoized for performance)
+  const contactsWithTasks = useMemo(() => {
+    const activeContacts = contacts.filter(c => c.sequence_status === 'active');
 
-  // Group tasks by contact
-  const contactsWithTasks = activeContacts.map(contact => {
-    const contactTasks = tasks.filter(t => t.contact_id === contact.id);
+    // Group tasks by contact
+    const grouped = activeContacts.map(contact => {
+      const contactTasks = tasks.filter(t => t.contact_id === contact.id);
 
-    // Get pending tasks (overdue or due today)
-    const pendingTasks = contactTasks.filter(t =>
-      t.status === 'pending' && (isTaskOverdue(t) || isTaskDueToday(t))
+      // Get pending tasks (overdue or due today)
+      const pendingTasks = contactTasks.filter(t =>
+        t.status === 'pending' && (isTaskOverdue(t) || isTaskDueToday(t))
+      );
+
+      const overdueTasks = pendingTasks.filter(isTaskOverdue);
+      const dueTodayTasks = pendingTasks.filter(isTaskDueToday);
+
+      return {
+        contact,
+        pendingTasks,
+        overdueTasks,
+        dueTodayTasks,
+        hasOverdue: overdueTasks.length > 0
+      };
+    }).filter(item => item.pendingTasks.length > 0); // Only show contacts with pending tasks
+
+    // Sort: contacts with overdue tasks first
+    grouped.sort((a, b) => {
+      if (a.hasOverdue && !b.hasOverdue) return -1;
+      if (!a.hasOverdue && b.hasOverdue) return 1;
+      return 0;
+    });
+
+    return grouped;
+  }, [contacts, tasks, optimisticallyCompleted, optimisticallySkipped]);
+
+  const totalPendingTasks = useMemo(() => {
+    return contactsWithTasks.reduce(
+      (sum, item) => sum + item.pendingTasks.length,
+      0
     );
-
-    const overdueTasks = pendingTasks.filter(isTaskOverdue);
-    const dueTodayTasks = pendingTasks.filter(isTaskDueToday);
-
-    return {
-      contact,
-      pendingTasks,
-      overdueTasks,
-      dueTodayTasks,
-      hasOverdue: overdueTasks.length > 0
-    };
-  }).filter(item => item.pendingTasks.length > 0); // Only show contacts with pending tasks
-
-  // Sort: contacts with overdue tasks first
-  contactsWithTasks.sort((a, b) => {
-    if (a.hasOverdue && !b.hasOverdue) return -1;
-    if (!a.hasOverdue && b.hasOverdue) return 1;
-    return 0;
-  });
-
-  const totalPendingTasks = contactsWithTasks.reduce(
-    (sum, item) => sum + item.pendingTasks.length,
-    0
-  );
+  }, [contactsWithTasks]);
 
   // Handle task completion
   const handleCompleteTask = async (task, contact) => {
