@@ -18,7 +18,7 @@ export default async (req, context) => {
     const store = getStore({
       name: 'r7-dialer-data',
       siteID: context.site.id,
-      token: process.env.NETLIFY_BLOBS_TOKEN || Netlify.env.get('NETLIFY_BLOBS_TOKEN'),
+      token: process.env.NETLIFY_BLOBS_TOKEN,
     });
 
     if (req.method === 'POST') {
