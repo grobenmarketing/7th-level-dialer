@@ -120,6 +120,40 @@ export function useContacts() {
     );
   };
 
+  // Parse a CSV row handling quoted fields properly (RFC 4180 compliant)
+  const parseCSVRow = (row) => {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < row.length; i++) {
+      const char = row[i];
+      const nextChar = row[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          // Escaped quote (two quotes in a row = one quote character)
+          current += '"';
+          i++; // Skip next quote
+        } else {
+          // Toggle quote mode
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        // End of field
+        values.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+
+    // Add the last field
+    values.push(current.trim());
+
+    return values;
+  };
+
   const importFromCSV = async (csvText) => {
     try {
       // Handle different line endings (Windows \r\n, Unix \n, old Mac \r)
@@ -129,12 +163,12 @@ export function useContacts() {
         return { success: false, error: 'CSV file must have at least a header and one data row' };
       }
 
-      const headers = lines[0].split(',').map(h => h.trim());
+      const headers = parseCSVRow(lines[0]);
       const newContactsData = [];
 
       // Parse all contacts first
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
+        const values = parseCSVRow(lines[i]);
 
         if (values.length < 2 || !values[0]) {
           continue; // Skip invalid rows
@@ -151,6 +185,19 @@ export function useContacts() {
       console.error('CSV import error:', error);
       return { success: false, error: error.message };
     }
+  };
+
+  // Escape and quote a CSV field if it contains special characters (RFC 4180 compliant)
+  const escapeCSVField = (field) => {
+    const stringField = String(field);
+
+    // Check if field needs quoting (contains comma, quote, or newline)
+    if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+      // Escape quotes by doubling them, then wrap in quotes
+      return `"${stringField.replace(/"/g, '""')}"`;
+    }
+
+    return stringField;
   };
 
   const exportToCSV = () => {
@@ -174,8 +221,8 @@ export function useContacts() {
     ]);
 
     const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
+      headers.map(escapeCSVField).join(','),
+      ...rows.map(row => row.map(escapeCSVField).join(','))
     ].join('\n');
 
     return csvContent;
