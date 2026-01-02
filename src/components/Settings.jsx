@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { useContacts } from '../hooks/useContacts';
 import { useKPI } from '../hooks/useKPI';
-import { resetContactsToFresh } from '../lib/resetContacts';
 
 function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
   const { resetAllStats, getStats } = useContacts();
   const { resetAllKPI } = useKPI();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showResetContactsDialog, setShowResetContactsDialog] = useState(false);
   const [showResetKPIDialog, setShowResetKPIDialog] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [isResettingContacts, setIsResettingContacts] = useState(false);
   const [isResettingKPI, setIsResettingKPI] = useState(false);
   const stats = getStats();
 
@@ -25,26 +22,6 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
       alert('Failed to reset stats. Please try again.');
     } finally {
       setIsResetting(false);
-    }
-  };
-
-  const handleResetContacts = async () => {
-    setIsResettingContacts(true);
-    try {
-      const result = await resetContactsToFresh(30);
-      if (result.success) {
-        alert(`✅ Successfully created ${result.count} fresh contacts!\n\nAll contacts are now in "never_contacted" status and ready for cold calling.`);
-        setShowResetContactsDialog(false);
-        // Reload page to refresh all data
-        window.location.reload();
-      } else {
-        alert(`❌ Failed to reset contacts: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Error resetting contacts:', error);
-      alert('Failed to reset contacts. Please try again.');
-    } finally {
-      setIsResettingContacts(false);
     }
   };
 
@@ -136,59 +113,6 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
             >
               Manage OK Codes →
             </button>
-          </div>
-
-          {/* Reset to Fresh Contacts Section */}
-          <div className="border-2 border-teal-200 rounded-lg p-6 bg-teal-50 mb-6">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-teal-800 mb-2">
-                  Reset to Fresh Contacts (Testing)
-                </h3>
-                <p className="text-sm text-teal-700 mb-4">
-                  Delete all existing contacts and create 30 fresh test contacts
-                  with "never_contacted" status. Perfect for testing the cold calling
-                  and sequence workflow.
-                </p>
-                <ul className="text-sm text-teal-700 space-y-1 mb-4">
-                  <li>✓ Deletes all existing contacts</li>
-                  <li>✓ Deletes all sequence tasks</li>
-                  <li>✓ Creates 30 fresh contacts</li>
-                  <li>✓ All contacts ready for cold calling</li>
-                </ul>
-              </div>
-            </div>
-
-            {!showResetContactsDialog ? (
-              <button
-                onClick={() => setShowResetContactsDialog(true)}
-                className="w-full px-6 py-3 bg-r7-red-dark hover:bg-red-900 text-white font-bold rounded-lg transition-all"
-              >
-                Reset to Fresh Contacts
-              </button>
-            ) : (
-              <div className="bg-white border-2 border-red-300 rounded-lg p-4">
-                <p className="text-center font-bold text-red-800 mb-4">
-                  This will delete all existing contacts and tasks. Continue?
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setShowResetContactsDialog(false)}
-                    disabled={isResettingContacts}
-                    className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition-all disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleResetContacts}
-                    disabled={isResettingContacts}
-                    className="px-4 py-2 bg-r7-red-dark hover:bg-red-900 text-white font-bold rounded-lg transition-all disabled:opacity-50"
-                  >
-                    {isResettingContacts ? 'Resetting...' : 'Yes, Create Fresh Contacts'}
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Reset KPI Data Section */}

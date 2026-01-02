@@ -10,6 +10,12 @@ const getWeekStart = (date = new Date()) => {
   return new Date(d.setDate(diff)).toISOString().split('T')[0];
 };
 
+// Get start of current month (first day)
+const getMonthStart = (date = new Date()) => {
+  const d = new Date(date);
+  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+};
+
 export function useKPI() {
   const [kpiData, setKpiData] = useState({});
   const [weeklyTargets, setWeeklyTargets] = useState({
@@ -259,6 +265,77 @@ export function useKPI() {
       .sort((a, b) => b.count - a.count);
   };
 
+  // Get all weeks in a month (returns array of week start dates)
+  const getWeeksInMonth = (monthStart = getMonthStart()) => {
+    const weeks = [];
+    const month = new Date(monthStart);
+    const monthNumber = month.getMonth();
+
+    // Find the Monday on or before the 1st of the month
+    let current = new Date(month);
+    const day = current.getDay();
+    const diff = current.getDate() - day + (day === 0 ? -6 : 1);
+    current.setDate(diff);
+
+    // Get all weeks that contain days from this month
+    while (true) {
+      const weekStart = current.toISOString().split('T')[0];
+      weeks.push(weekStart);
+
+      // Move to next Monday
+      current.setDate(current.getDate() + 7);
+
+      // Stop if we've moved past this month entirely
+      // (i.e., the Friday of this week is in the next month)
+      const friday = new Date(current);
+      friday.setDate(friday.getDate() + 4); // Friday of current week
+      if (friday.getMonth() !== monthNumber) {
+        break;
+      }
+    }
+
+    return weeks;
+  };
+
+  // Get all week data for a month
+  const getMonthData = (monthStart = getMonthStart()) => {
+    const weeks = getWeeksInMonth(monthStart);
+    return weeks.map(weekStart => ({
+      weekStart,
+      weekData: getWeekData(weekStart),
+      weeklyTotals: getWeeklyTotals(weekStart),
+      dailyAverages: getDailyAverages(weekStart),
+      performanceRatios: getPerformanceRatios(weekStart)
+    }));
+  };
+
+  // Get monthly totals
+  const getMonthlyTotals = (monthStart = getMonthStart()) => {
+    const weeks = getWeeksInMonth(monthStart);
+    const totals = {
+      dials: 0,
+      pickups: 0,
+      conversations: 0,
+      triage: 0,
+      bookedMeetings: 0,
+      meetingsRan: 0,
+      objections: []
+    };
+
+    weeks.forEach(weekStart => {
+      const weekTotals = getWeeklyTotals(weekStart);
+      totals.dials += weekTotals.dials || 0;
+      totals.pickups += weekTotals.pickups || 0;
+      totals.conversations += weekTotals.conversations || 0;
+      totals.triage += weekTotals.triage || 0;
+      totals.bookedMeetings += weekTotals.bookedMeetings || 0;
+      totals.meetingsRan += weekTotals.meetingsRan || 0;
+      totals.objections = [...totals.objections, ...(weekTotals.objections || [])];
+    });
+
+    return totals;
+  };
+
   // Update weekly targets
   const updateWeeklyTargets = async (targets) => {
     await saveTargets({ ...weeklyTargets, ...targets });
@@ -339,11 +416,15 @@ export function useKPI() {
     getDailyAverages,
     getPerformanceRatios,
     getObjectionFrequency,
+    getWeeksInMonth,
+    getMonthData,
+    getMonthlyTotals,
     updateWeeklyTargets,
     saveDailyDialGoal,
     getTodayDials,
     resetAllKPI,
     rebuildFromCallHistory,
-    getWeekStart
+    getWeekStart,
+    getMonthStart
   };
 }
