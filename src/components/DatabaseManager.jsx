@@ -281,6 +281,20 @@ function DatabaseManager({ onBackToDashboard }) {
     input.click();
   };
 
+  const handleDownloadTemplate = () => {
+    const headers = 'Company Name,Phone,Website,Address,LinkedIn,Industry';
+    const exampleRow = 'Acme Corp,(555) 123-4567,https://example.com,123 Main St,https://linkedin.com/company/acme,Technology';
+    const csvContent = `${headers}\n${exampleRow}`;
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'contacts-import-template.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const handleAddContact = async (formData) => {
     await addContact(formData);
     setShowAddForm(false);
@@ -646,13 +660,21 @@ function DatabaseManager({ onBackToDashboard }) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 justify-end flex-wrap">
-              <button
-                onClick={handleImportContacts}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm shadow-sm"
-              >
-                📥 Import CSV
-              </button>
+            <div className="flex gap-3 justify-end flex-wrap items-start">
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={handleImportContacts}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm shadow-sm"
+                >
+                  📥 Import CSV
+                </button>
+                <button
+                  onClick={handleDownloadTemplate}
+                  className="text-xs text-green-600 hover:text-green-700 hover:underline transition-colors"
+                >
+                  📄 Download Template
+                </button>
+              </div>
               <button
                 onClick={handleExportContacts}
                 disabled={contacts.length === 0}
