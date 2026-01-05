@@ -2,11 +2,14 @@ import { useState, useMemo } from 'react';
 import { isTaskOverdue, isTaskDueToday, getDaysOverdue } from '../lib/taskScheduler';
 import { getTaskDescription } from '../lib/sequenceCalendar';
 import { completeSequenceTask, skipSequenceTask, getCounterUpdates, applyCounterUpdates, checkAllDayTasksComplete, advanceContactToNextDay } from '../lib/sequenceLogic';
+import ContactDetailsModal from './ContactDetailsModal';
 
 function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, reloadTasks }) {
   const [expandedContact, setExpandedContact] = useState(null);
   const [optimisticallyCompleted, setOptimisticallyCompleted] = useState(new Set());
   const [optimisticallySkipped, setOptimisticallySkipped] = useState(new Set());
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [showContactDetails, setShowContactDetails] = useState(false);
 
   // Get active contacts and group tasks by contact (memoized for performance)
   const contactsWithTasks = useMemo(() => {
@@ -173,7 +176,14 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
                   {/* Contact Header */}
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-gray-900 truncate">
+                      <div
+                        className="font-bold text-gray-900 truncate cursor-pointer hover:text-purple-600 transition-colors"
+                        onClick={() => {
+                          setSelectedContact(contact);
+                          setShowContactDetails(true);
+                        }}
+                        title="Click to view contact details"
+                      >
                         {contact.companyName}
                       </div>
                       <div className="text-xs text-gray-600 mt-1">
@@ -282,6 +292,29 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
             </div>
           </div>
         </>
+      )}
+
+      {/* Contact Details Modal */}
+      {showContactDetails && selectedContact && (
+        <ContactDetailsModal
+          contact={selectedContact}
+          onClose={() => {
+            setShowContactDetails(false);
+            setSelectedContact(null);
+          }}
+          onEdit={() => {
+            // Close modal when edit is clicked - user can edit in the full database view
+            setShowContactDetails(false);
+            setSelectedContact(null);
+          }}
+          onDelete={async (contactId) => {
+            // This would need to be passed down from parent component
+            // For now, just close the modal
+            setShowContactDetails(false);
+            setSelectedContact(null);
+          }}
+          onUpdate={updateContact}
+        />
       )}
     </div>
   );

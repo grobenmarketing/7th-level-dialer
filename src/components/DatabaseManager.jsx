@@ -1470,33 +1470,40 @@ function DatabaseManager({ onBackToDashboard }) {
                     <div key={contact.id} className={`card p-6 ${hasOverdue ? 'bg-red-50 border-2 border-red-300' : 'bg-white'}`}>
                       {/* Contact Header */}
                       <div className="flex items-center justify-between mb-4">
-                        <div
-                          className="cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors flex-1"
-                          onClick={() => toggleContactExpanded(contact.id)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-lg">
-                              {isExpanded ? '▼' : '▶'}
-                            </span>
-                            <h4 className="text-lg font-bold text-gray-900">
+                        <div className="flex-1 flex items-center gap-3 p-2">
+                          <span
+                            className="text-lg cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                            onClick={() => toggleContactExpanded(contact.id)}
+                          >
+                            {isExpanded ? '▼' : '▶'}
+                          </span>
+                          <div className="flex-1">
+                            <h4
+                              className="text-lg font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors inline-block"
+                              onClick={() => {
+                                setSelectedContact(contact);
+                                setShowContactDetails(true);
+                              }}
+                              title="Click to view contact details"
+                            >
                               {contact.companyName}
                             </h4>
                             {hasOverdue && (
-                              <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full animate-pulse">
+                              <span className="ml-3 px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full animate-pulse">
                                 🚨 {overdueCount} OVERDUE
                               </span>
                             )}
-                          </div>
-                          <div className="flex items-center gap-3 text-sm text-gray-600 mt-1 ml-8">
-                            <span>📞 {contact.phone}</span>
-                            <span>•</span>
-                            <span>Day {contact.sequence_current_day} of 30</span>
-                            <span>•</span>
-                            <span>
-                              {completedTasks} done, {skippedTasks} skipped, {pendingTasks} pending
-                            </span>
-                            <span>•</span>
-                            <span>{getTotalImpressions(contact)} total touches</span>
+                            <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                              <span>📞 {contact.phone}</span>
+                              <span>•</span>
+                              <span>Day {contact.sequence_current_day} of 30</span>
+                              <span>•</span>
+                              <span>
+                                {completedTasks} done, {skippedTasks} skipped, {pendingTasks} pending
+                              </span>
+                              <span>•</span>
+                              <span>{getTotalImpressions(contact)} total touches</span>
+                            </div>
                           </div>
                         </div>
 
