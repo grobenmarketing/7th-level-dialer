@@ -86,10 +86,7 @@ export function getNextDayWithTasks(currentDay) {
 
 // Check if contact should skip a task based on available channels
 export function shouldSkipTask(contact, taskType) {
-  // Skip email tasks if no email
-  if (taskType.includes('email') && !contact.has_email) {
-    return true;
-  }
+  // Email tasks are always included - user can skip manually if no email
 
   // Skip LinkedIn tasks if no LinkedIn
   if (taskType.includes('linkedin') && !contact.has_linkedin) {
