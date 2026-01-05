@@ -175,8 +175,8 @@ function ContactDetailsModal({ contact, onClose, onEdit, onDelete, onUpdate, seq
                 >
                   <option value="">-- Select OK Code --</option>
                   {okCodes.map((code) => (
-                    <option key={code.id} value={`OK-${code.id}`}>
-                      OK-{code.id}: {code.label}
+                    <option key={code.id} value={code.label}>
+                      {code.label}
                     </option>
                   ))}
                 </select>
@@ -186,7 +186,7 @@ function ContactDetailsModal({ contact, onClose, onEdit, onDelete, onUpdate, seq
                     <span
                       className="inline-block px-3 py-1 rounded-full text-sm font-semibold text-white"
                       style={{
-                        backgroundColor: okCodes.find(c => `OK-${c.id}` === currentOkCode)?.color || '#808080'
+                        backgroundColor: okCodes.find(c => c.label === currentOkCode)?.color || '#808080'
                       }}
                     >
                       {currentOkCode}

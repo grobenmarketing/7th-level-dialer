@@ -652,7 +652,7 @@ function DatabaseManager({ onBackToDashboard }) {
                 >
                   <option value="all">All OK Codes</option>
                   {okCodes.map(code => (
-                    <option key={code.id} value={`OK-${code.id}`}>
+                    <option key={code.id} value={code.label}>
                       {code.label}
                     </option>
                   ))}

@@ -1,6 +1,26 @@
 import { useState } from 'react';
 import { useOkCodes } from '../hooks/useOkCodes';
 
+// Predefined color palette for OK codes
+const COLOR_PALETTE = [
+  { name: 'Red', value: '#DC143C' },
+  { name: 'Dark Red', value: '#8B0000' },
+  { name: 'Tomato', value: '#FF6347' },
+  { name: 'Orange', value: '#FF8C00' },
+  { name: 'Gold', value: '#FFD700' },
+  { name: 'Yellow', value: '#FFA500' },
+  { name: 'Green', value: '#32CD32' },
+  { name: 'Dark Green', value: '#00AA00' },
+  { name: 'Teal', value: '#20B2AA' },
+  { name: 'Cyan', value: '#5F9EA0' },
+  { name: 'Blue', value: '#4682B4' },
+  { name: 'Sky Blue', value: '#87CEEB' },
+  { name: 'Purple', value: '#9370DB' },
+  { name: 'Pink', value: '#FF69B4' },
+  { name: 'Gray', value: '#A9A9A9' },
+  { name: 'Dark Gray', value: '#808080' },
+];
+
 function OkCodesAdmin({ onBack }) {
   const { okCodes, addOkCode, updateOkCode, deleteOkCode, reorderOkCodes, resetToDefaults } = useOkCodes();
   const [editingId, setEditingId] = useState(null);
@@ -118,20 +138,28 @@ function OkCodesAdmin({ onBack }) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Color
                 </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-20 h-10 border border-gray-300 rounded cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="#808080"
-                  />
+                <div className="grid grid-cols-8 gap-2 mb-3">
+                  {COLOR_PALETTE.map((colorOption) => (
+                    <button
+                      key={colorOption.value}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, color: colorOption.value })}
+                      className={`w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 ${
+                        formData.color === colorOption.value
+                          ? 'border-blue-600 ring-2 ring-blue-300 scale-110'
+                          : 'border-gray-300'
+                      }`}
+                      style={{ backgroundColor: colorOption.value }}
+                      title={colorOption.name}
+                    />
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span
+                    className="w-6 h-6 rounded border border-gray-300"
+                    style={{ backgroundColor: formData.color }}
+                  ></span>
+                  <span className="font-semibold">{formData.color}</span>
                 </div>
               </div>
 

@@ -125,9 +125,12 @@ export const getEmailNeededContacts = (contacts) => {
  * Get contacts that need callback
  */
 export const getCallbackContacts = (contacts) => {
-  return contacts.filter(c =>
-    c.currentOkCode?.includes('OK-1') && // Callback OK codes
-    c.status !== 'client' &&
-    c.status !== 'inactive'
-  );
+  return contacts.filter(c => {
+    const okCode = c.currentOkCode?.toLowerCase() || '';
+    return (
+      (okCode.includes('call back') || okCode.includes('callback') || okCode.includes('follow up')) &&
+      c.status !== 'client' &&
+      c.status !== 'inactive'
+    );
+  });
 };
