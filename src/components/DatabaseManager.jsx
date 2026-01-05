@@ -38,6 +38,7 @@ import {
   getTodaysTasks,
   hasOverdueTasks
 } from '../lib/sequenceAutomation';
+import { backfillEmailTasks } from '../lib/backfillEmailTasks';
 
 function DatabaseManager({ onBackToDashboard }) {
   // Tab state
@@ -111,6 +112,7 @@ function DatabaseManager({ onBackToDashboard }) {
   const [optimisticallyCompleted, setOptimisticallyCompleted] = useState(new Set());
   const [optimisticallySkipped, setOptimisticallySkipped] = useState(new Set());
   const [expandedContacts, setExpandedContacts] = useState(new Set());
+  const [backfilling, setBackfilling] = useState(false);
 
   const stats = getStats();
   const activityStats = getActivityStats();
@@ -500,6 +502,24 @@ function DatabaseManager({ onBackToDashboard }) {
     setShowDeadModal(false);
     setDeadReason('');
     setContactToMarkDead(null);
+  };
+
+  const handleBackfillEmailTasks = async () => {
+    if (!confirm('This will add missing email tasks to all active contacts in sequences. Continue?')) {
+      return;
+    }
+
+    setBackfilling(true);
+    try {
+      const result = await backfillEmailTasks();
+      await loadSequenceTasks();
+      alert(`✅ Backfill complete!\n\nAdded ${result.added} email tasks for ${result.checked} active contacts.`);
+    } catch (error) {
+      console.error('Backfill error:', error);
+      alert('❌ Error during backfill. Check console for details.');
+    } finally {
+      setBackfilling(false);
+    }
   };
 
   const toggleContactExpanded = (contactId) => {
@@ -1418,8 +1438,18 @@ function DatabaseManager({ onBackToDashboard }) {
                 activeFilter={tasksFilter}
                 onFilterChange={setTasksFilter}
               />
-              <div className="text-sm text-gray-600">
-                <span className="font-semibold">{activeSequenceContacts.length}</span> active sequences
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleBackfillEmailTasks}
+                  disabled={backfilling || activeSequenceContacts.length === 0}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  title="Add missing email tasks to all active contacts in sequences"
+                >
+                  {backfilling ? '⏳ Adding Email Tasks...' : '📧 Add Email Tasks'}
+                </button>
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold">{activeSequenceContacts.length}</span> active sequences
+                </div>
               </div>
             </div>
 

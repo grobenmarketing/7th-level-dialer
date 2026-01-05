@@ -32,12 +32,12 @@ export const MAX_SOCIAL_ENGAGEMENTS = 4;
 
 // Task descriptions for each task type
 export const TASK_DESCRIPTIONS = {
-  'email_1': 'Email #1: "Quick Question"',
-  'email_2': 'Email #2: "Value Bomb"',
-  'email_3': 'Email #3: "Social Proof"',
-  'email_4': 'Email #4: "Breakup Email"',
-  'email_5': 'Email #5: "Competitive Angle"',
-  'email_6': 'Email #6: "Free Resource"',
+  'email_1': 'Email #1',
+  'email_2': 'Email #2',
+  'email_3': 'Email #3',
+  'email_4': 'Email #4',
+  'email_5': 'Email #5',
+  'email_6': 'Email #6',
   'linkedin_dm_1': 'Send LinkedIn DM #1',
   'linkedin_dm_2': 'Send LinkedIn DM #2',
   'linkedin_comment_1': 'Comment on LinkedIn post #1',
@@ -86,10 +86,7 @@ export function getNextDayWithTasks(currentDay) {
 
 // Check if contact should skip a task based on available channels
 export function shouldSkipTask(contact, taskType) {
-  // Skip email tasks if no email
-  if (taskType.includes('email') && !contact.has_email) {
-    return true;
-  }
+  // Email tasks are always included - user can skip manually if no email
 
   // Skip LinkedIn tasks if no LinkedIn
   if (taskType.includes('linkedin') && !contact.has_linkedin) {
