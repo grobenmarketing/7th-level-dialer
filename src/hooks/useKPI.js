@@ -386,8 +386,8 @@ export function useKPI() {
           newKPIData[dateStr].triage += 1;
         }
 
-        // Count booked meetings (OK-10)
-        if (call.okCode === 'OK-10') {
+        // Count booked meetings
+        if (call.okCode === 'Meeting Scheduled' || call.okCode?.toLowerCase().includes('meeting')) {
           newKPIData[dateStr].bookedMeetings += 1;
         }
 

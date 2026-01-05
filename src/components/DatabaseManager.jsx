@@ -651,9 +651,9 @@ function DatabaseManager({ onBackToDashboard }) {
                   className="px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 hover:border-r7-blue focus:outline-none focus:ring-2 focus:ring-r7-blue focus:border-transparent transition-all"
                 >
                   <option value="all">All OK Codes</option>
-                  {okCodes.map(code => (
-                    <option key={code.id} value={`OK-${code.id}`}>
-                      {code.label}
+                  {okCodes.map((code, index) => (
+                    <option key={code.id} value={code.label}>
+                      OK Code {index + 1}: {code.label}
                     </option>
                   ))}
                 </select>

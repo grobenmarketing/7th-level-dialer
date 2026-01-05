@@ -67,7 +67,7 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
       if (e.key >= '1' && e.key <= '9' && okCodes.length > 0) {
         const index = parseInt(e.key) - 1;
         if (index < okCodes.length) {
-          updateField('okCode', `OK-${okCodes[index].id}`);
+          updateField('okCode', okCodes[index].label);
         }
       }
     };
@@ -633,11 +633,24 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                 disabled={!outcome}
               >
                 <option value="">Select OK Code...</option>
-                {okCodes.map((code, index) => (
-                  <option key={code.id} value={`OK-${code.id}`}>
-                    [{index + 1}] {code.label}
-                  </option>
-                ))}
+                {okCodes
+                  .filter(code => {
+                    // Filter out meeting/interested codes when Gatekeeper is selected
+                    if (outcome === 'GK') {
+                      const label = code.label.toLowerCase();
+                      return !label.includes('meeting') && !label.includes('interested');
+                    }
+                    return true;
+                  })
+                  .map((code) => {
+                    // Get the original index for display
+                    const originalIndex = okCodes.findIndex(c => c.id === code.id) + 1;
+                    return (
+                      <option key={code.id} value={code.label}>
+                        OK Code {originalIndex}: {code.label}
+                      </option>
+                    );
+                  })}
               </select>
 
               {okCode && (
@@ -645,10 +658,10 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                   <div className="flex items-center">
                     <span
                       className="w-3 h-3 rounded-full mr-2"
-                      style={{ backgroundColor: okCodes.find(c => `OK-${c.id}` === okCode)?.color || '#808080' }}
+                      style={{ backgroundColor: okCodes.find(c => c.label === okCode)?.color || '#808080' }}
                     ></span>
                     <span className="text-sm font-semibold text-gray-700">
-                      {okCodes.find(c => `OK-${c.id}` === okCode)?.label || okCode}
+                      {okCode}
                     </span>
                   </div>
                 </div>

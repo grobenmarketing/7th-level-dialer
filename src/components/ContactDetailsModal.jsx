@@ -174,9 +174,9 @@ function ContactDetailsModal({ contact, onClose, onEdit, onDelete, onUpdate, seq
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-r7-blue focus:border-transparent"
                 >
                   <option value="">-- Select OK Code --</option>
-                  {okCodes.map((code) => (
-                    <option key={code.id} value={`OK-${code.id}`}>
-                      OK-{code.id}: {code.label}
+                  {okCodes.map((code, index) => (
+                    <option key={code.id} value={code.label}>
+                      OK Code {index + 1}: {code.label}
                     </option>
                   ))}
                 </select>
@@ -186,7 +186,7 @@ function ContactDetailsModal({ contact, onClose, onEdit, onDelete, onUpdate, seq
                     <span
                       className="inline-block px-3 py-1 rounded-full text-sm font-semibold text-white"
                       style={{
-                        backgroundColor: okCodes.find(c => `OK-${c.id}` === currentOkCode)?.color || '#808080'
+                        backgroundColor: okCodes.find(c => c.label === currentOkCode)?.color || '#808080'
                       }}
                     >
                       {currentOkCode}
