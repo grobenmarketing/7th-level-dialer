@@ -1438,18 +1438,8 @@ function DatabaseManager({ onBackToDashboard }) {
                 activeFilter={tasksFilter}
                 onFilterChange={setTasksFilter}
               />
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={handleBackfillEmailTasks}
-                  disabled={backfilling || activeSequenceContacts.length === 0}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  title="Add missing email tasks to all active contacts in sequences"
-                >
-                  {backfilling ? '⏳ Adding Email Tasks...' : '📧 Add Email Tasks'}
-                </button>
-                <div className="text-sm text-gray-600">
-                  <span className="font-semibold">{activeSequenceContacts.length}</span> active sequences
-                </div>
+              <div className="text-sm text-gray-600">
+                <span className="font-semibold">{activeSequenceContacts.length}</span> active sequences
               </div>
             </div>
 
