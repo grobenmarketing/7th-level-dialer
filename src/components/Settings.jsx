@@ -1,25 +1,8 @@
-import { useState } from 'react';
 import { useContacts } from '../hooks/useContacts';
 
 function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
-  const { resetAllStats, getStats } = useContacts();
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
+  const { getStats } = useContacts();
   const stats = getStats();
-
-  const handleResetStats = async () => {
-    setIsResetting(true);
-    try {
-      await resetAllStats();
-      alert('All stats have been reset successfully!');
-      setShowConfirmDialog(false);
-    } catch (error) {
-      console.error('Error resetting stats:', error);
-      alert('Failed to reset stats. Please try again.');
-    } finally {
-      setIsResetting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-r7-light to-gray-100">
@@ -93,60 +76,6 @@ function Settings({ onBackToDashboard, onLogout, onManageOkCodes }) {
             >
               Manage OK Codes →
             </button>
-          </div>
-
-          {/* Reset Stats Section */}
-          <div className="border-2 border-red-200 rounded-lg p-6 bg-red-50">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-red-800 mb-2">
-                  Reset All Statistics
-                </h3>
-                <p className="text-sm text-red-700 mb-4">
-                  This will permanently delete all call history, dial counts,
-                  and OK codes for all contacts. This action cannot be undone.
-                  Contact information (company names, phone numbers, etc.) will
-                  be preserved.
-                </p>
-                <ul className="text-sm text-red-700 space-y-1 mb-4">
-                  <li>✓ Clears all call history</li>
-                  <li>✓ Resets total dials to 0</li>
-                  <li>✓ Removes all OK codes</li>
-                  <li>✓ Preserves contact details</li>
-                </ul>
-              </div>
-            </div>
-
-            {!showConfirmDialog ? (
-              <button
-                onClick={() => setShowConfirmDialog(true)}
-                className="w-full px-6 py-3 bg-r7-red-dark hover:bg-red-900 text-white font-bold rounded-lg transition-all"
-              >
-                Reset All Stats
-              </button>
-            ) : (
-              <div className="bg-white border-2 border-red-300 rounded-lg p-4">
-                <p className="text-center font-bold text-red-800 mb-4">
-                  Are you absolutely sure? This cannot be undone!
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setShowConfirmDialog(false)}
-                    disabled={isResetting}
-                    className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition-all disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleResetStats}
-                    disabled={isResetting}
-                    className="px-4 py-2 bg-r7-red-dark hover:bg-red-900 text-white font-bold rounded-lg transition-all disabled:opacity-50"
-                  >
-                    {isResetting ? 'Resetting...' : 'Yes, Reset Everything'}
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Logout Section */}
