@@ -174,9 +174,9 @@ function ContactDetailsModal({ contact, onClose, onEdit, onDelete, onUpdate, seq
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-r7-blue focus:border-transparent"
                 >
                   <option value="">-- Select OK Code --</option>
-                  {okCodes.map((code) => (
+                  {okCodes.map((code, index) => (
                     <option key={code.id} value={code.label}>
-                      {code.label}
+                      OK Code {index + 1}: {code.label}
                     </option>
                   ))}
                 </select>

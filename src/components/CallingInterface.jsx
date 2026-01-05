@@ -630,11 +630,9 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                 value={okCode}
                 onChange={(e) => updateField('okCode', e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-r7-navy focus:ring-2 focus:ring-r7-navy focus:ring-opacity-50 text-gray-700 font-semibold"
-                disabled={!outcome || outcome === 'GK'}
+                disabled={!outcome}
               >
-                <option value="">
-                  {outcome === 'GK' ? 'N/A - Cannot select OK codes for Gatekeeper' : 'Select OK Code...'}
-                </option>
+                <option value="">Select OK Code...</option>
                 {okCodes
                   .filter(code => {
                     // Filter out meeting/interested codes when Gatekeeper is selected
@@ -644,11 +642,15 @@ function CallingInterface({ contactIndex, filteredContacts, onBackToDashboard, o
                     }
                     return true;
                   })
-                  .map((code, index) => (
-                    <option key={code.id} value={code.label}>
-                      [{index + 1}] {code.label}
-                    </option>
-                  ))}
+                  .map((code) => {
+                    // Get the original index for display
+                    const originalIndex = okCodes.findIndex(c => c.id === code.id) + 1;
+                    return (
+                      <option key={code.id} value={code.label}>
+                        OK Code {originalIndex}: {code.label}
+                      </option>
+                    );
+                  })}
               </select>
 
               {okCode && (
