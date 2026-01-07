@@ -4,7 +4,7 @@
 import { storage, KEYS } from './cloudStorage';
 import { generateSequenceTasks } from './sequenceLogic';
 
-const MIGRATION_KEY = 'sequence_tasks_regeneration_2026';
+const MIGRATION_KEY = 'sequence_tasks_regeneration_2026_v2';
 
 /**
  * Check if this migration has already been run
