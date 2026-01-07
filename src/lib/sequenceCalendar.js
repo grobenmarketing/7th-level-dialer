@@ -3,7 +3,8 @@
 
 export const SEQUENCE_CALENDAR = {
   1: ['call'],
-  2: ['email_1', 'linkedin_dm_1', 'social_follow', 'social_engagement'],
+  2: ['email_1'],
+  3: ['linkedin_dm_1', 'social_follow', 'social_engagement'],
   4: ['email_2'],
   5: ['linkedin_comment_1'],
   6: ['social_engagement'],

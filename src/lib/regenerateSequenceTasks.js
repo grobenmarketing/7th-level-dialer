@@ -4,7 +4,7 @@
 import { storage, KEYS } from './cloudStorage';
 import { generateSequenceTasks } from './sequenceLogic';
 
-const MIGRATION_KEY = 'sequence_tasks_regeneration_2026';
+const MIGRATION_KEY = 'sequence_tasks_regeneration_2026_v3';
 
 /**
  * Check if this migration has already been run
@@ -120,8 +120,62 @@ export async function regenerateAllSequenceTasks() {
 }
 
 /**
- * Expose function to browser console for manual execution
+ * Regenerate tasks for a specific contact by company name
+ */
+export async function regenerateTasksForContact(companyName) {
+  console.log(`🔄 Regenerating tasks for: ${companyName}`);
+
+  try {
+    const allContacts = await storage.get(KEYS.CONTACTS, []);
+    const contact = allContacts.find(c =>
+      c.company_name && c.company_name.toLowerCase().includes(companyName.toLowerCase())
+    );
+
+    if (!contact) {
+      console.log(`❌ Contact not found: ${companyName}`);
+      return { success: false, error: 'Contact not found' };
+    }
+
+    console.log(`✅ Found contact: ${contact.company_name}`);
+    console.log(`   Sequence status: ${contact.sequence_status}`);
+    console.log(`   Sequence day: ${contact.sequence_current_day}`);
+
+    if (contact.sequence_status !== 'active') {
+      console.log(`⚠️ Contact is not in active sequence (status: ${contact.sequence_status})`);
+      return { success: false, error: 'Contact not in active sequence' };
+    }
+
+    // Delete existing tasks
+    const allTasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
+    const existingTasks = allTasks.filter(t => t.contact_id === contact.id);
+    console.log(`   Removing ${existingTasks.length} existing tasks...`);
+
+    const remainingTasks = allTasks.filter(t => t.contact_id !== contact.id);
+    await storage.set(KEYS.SEQUENCE_TASKS, remainingTasks);
+
+    // Regenerate tasks
+    await generateSequenceTasks(contact);
+
+    const updatedTasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
+    const newTasks = updatedTasks.filter(t => t.contact_id === contact.id);
+    console.log(`✅ Generated ${newTasks.length} new tasks`);
+
+    return {
+      success: true,
+      contact: contact.company_name,
+      tasksCreated: newTasks.length
+    };
+
+  } catch (error) {
+    console.error('❌ Error regenerating tasks:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Expose functions to browser console for manual execution
  */
 if (typeof window !== 'undefined') {
   window.regenerateAllSequenceTasks = regenerateAllSequenceTasks;
+  window.regenerateTasksForContact = regenerateTasksForContact;
 }
