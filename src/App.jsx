@@ -11,6 +11,7 @@ import OkCodesAdmin from './components/OkCodesAdmin'
 import DatabaseManager from './components/DatabaseManager'
 import { useAuth } from './hooks/useAuth'
 import { migrateContactOkCodes, needsOkCodeMigration } from './lib/migrateOkCodes'
+import { regenerateAllSequenceTasks, needsTaskRegeneration } from './lib/regenerateSequenceTasks'
 
 const VIEW_STATE_KEY = 'r7_current_view'
 const CONTACT_INDEX_KEY = 'r7_contact_index'
@@ -55,6 +56,24 @@ function App() {
         }
       }
       runMigration()
+    }
+  }, [isAuthenticated])
+
+  // Run sequence task regeneration migration on app startup if needed
+  useEffect(() => {
+    if (isAuthenticated) {
+      const runTaskRegeneration = async () => {
+        const needsRegeneration = await needsTaskRegeneration()
+        if (needsRegeneration) {
+          console.log('🔄 Regenerating sequence tasks to include LinkedIn and social touchpoints...')
+          const result = await regenerateAllSequenceTasks()
+          if (result.success && result.regeneratedCount > 0) {
+            console.log(`✅ Successfully regenerated tasks for ${result.regeneratedCount} contacts`)
+            console.log(`   Added ${result.netTasksAdded} new tasks (LinkedIn & social touchpoints)`)
+          }
+        }
+      }
+      runTaskRegeneration()
     }
   }, [isAuthenticated])
 
