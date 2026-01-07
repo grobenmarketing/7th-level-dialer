@@ -230,11 +230,6 @@ export async function generateSequenceTasks(contact) {
     const dayTasks = SEQUENCE_CALENDAR[day];
 
     dayTasks.forEach(taskType => {
-      // Skip if contact doesn't have the required channel
-      if (shouldSkipTask(contact, taskType)) {
-        return;
-      }
-
       // Skip Day 1 call task - the cold call on Day 0 counts as completing this
       if (dayNumber === 1 && taskType === 'call') {
         return;
