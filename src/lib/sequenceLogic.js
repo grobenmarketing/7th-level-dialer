@@ -154,27 +154,23 @@ export async function completeSequenceTask(contactId, sequenceDay, taskType, not
     if (notes) {
       allTasks[taskIndex].notes = notes;
     }
-  } else {
-    // Create new task record
-    console.log(`⚠️ Task not found in storage - creating new task record`);
-    const newTask = {
-      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      contact_id: contactId,
-      task_date: new Date().toISOString().split('T')[0],
-      task_due_date: new Date().toISOString().split('T')[0], // Set due date to today
-      sequence_day: sequenceDay,
-      task_type: taskType,
-      task_description: taskType,
-      status: 'completed',
-      completed_at: new Date().toISOString(),
-      notes: notes || ''
-    };
-    console.log(`📝 Creating new task:`, newTask);
-    allTasks.push(newTask);
-  }
 
-  await storage.set(KEYS.SEQUENCE_TASKS, allTasks);
-  console.log(`✅ Task completed: ${taskType} for contact ${contactId} on Day ${sequenceDay}`);
+    await storage.set(KEYS.SEQUENCE_TASKS, allTasks);
+    console.log(`✅ Task completed: ${taskType} for contact ${contactId} on Day ${sequenceDay}`);
+  } else {
+    // Task not found - this should not happen in normal operation
+    console.error(`❌ ERROR: Task not found in storage!`);
+    console.error(`   Contact ID: ${contactId}`);
+    console.error(`   Sequence Day: ${sequenceDay}`);
+    console.error(`   Task Type: ${taskType}`);
+    console.error(`   This indicates tasks were not properly generated for this contact.`);
+    console.error(`   Available tasks for contact:`, contactTasks.map(t => ({
+      day: t.sequence_day,
+      type: t.task_type,
+      status: t.status
+    })));
+    throw new Error(`Task not found: ${taskType} on Day ${sequenceDay} for contact ${contactId}`);
+  }
 }
 
 // Skip a sequence task (manual skip by user)
@@ -182,6 +178,8 @@ export async function skipSequenceTask(contactId, sequenceDay, taskType, reason 
   const allTasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
 
   console.log(`⏭️ Skipping task: contactId=${contactId}, sequenceDay=${sequenceDay}, taskType=${taskType}`);
+
+  const contactTasks = allTasks.filter(t => t.contact_id === contactId);
 
   const taskIndex = allTasks.findIndex(
     task =>
@@ -196,31 +194,36 @@ export async function skipSequenceTask(contactId, sequenceDay, taskType, reason 
     allTasks[taskIndex].status = 'skipped';
     allTasks[taskIndex].completed_at = new Date().toISOString();
     allTasks[taskIndex].notes = reason ? `Skipped: ${reason}` : 'Skipped by user';
-  } else {
-    // Create new task record marked as skipped
-    console.log(`⚠️ Task not found in storage - creating skipped task record`);
-    const newTask = {
-      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      contact_id: contactId,
-      task_date: new Date().toISOString().split('T')[0],
-      task_due_date: new Date().toISOString().split('T')[0],
-      sequence_day: sequenceDay,
-      task_type: taskType,
-      task_description: taskType,
-      status: 'skipped',
-      completed_at: new Date().toISOString(),
-      notes: reason ? `Skipped: ${reason}` : 'Skipped by user'
-    };
-    console.log(`📝 Creating skipped task:`, newTask);
-    allTasks.push(newTask);
-  }
 
-  await storage.set(KEYS.SEQUENCE_TASKS, allTasks);
-  console.log(`⏭️ Task skipped: ${taskType} for contact ${contactId} on Day ${sequenceDay}`);
+    await storage.set(KEYS.SEQUENCE_TASKS, allTasks);
+    console.log(`⏭️ Task skipped: ${taskType} for contact ${contactId} on Day ${sequenceDay}`);
+  } else {
+    // Task not found - this should not happen in normal operation
+    console.error(`❌ ERROR: Task not found in storage!`);
+    console.error(`   Contact ID: ${contactId}`);
+    console.error(`   Sequence Day: ${sequenceDay}`);
+    console.error(`   Task Type: ${taskType}`);
+    console.error(`   This indicates tasks were not properly generated for this contact.`);
+    console.error(`   Available tasks for contact:`, contactTasks.map(t => ({
+      day: t.sequence_day,
+      type: t.task_type,
+      status: t.status
+    })));
+    throw new Error(`Task not found: ${taskType} on Day ${sequenceDay} for contact ${contactId}`);
+  }
 }
 
 // Generate ALL sequence tasks for a contact (called when entering sequence)
 export async function generateSequenceTasks(contact) {
+  // Check if tasks already exist for this contact (idempotency check)
+  const allTasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
+  const existingContactTasks = allTasks.filter(t => t.contact_id === contact.id);
+
+  if (existingContactTasks.length > 0) {
+    console.log(`⚠️ Tasks already exist for contact ${contact.id} (${existingContactTasks.length} tasks) - skipping generation to prevent duplicates`);
+    return;
+  }
+
   const tasks = [];
   const sequenceStartDate = contact.sequence_start_date;
 
@@ -252,8 +255,7 @@ export async function generateSequenceTasks(contact) {
     });
   });
 
-  // Save tasks
-  const allTasks = await storage.get(KEYS.SEQUENCE_TASKS, []);
+  // Save tasks (we already have allTasks loaded above)
   await storage.set(KEYS.SEQUENCE_TASKS, [...allTasks, ...tasks]);
 
   console.log(`📋 Generated ${tasks.length} tasks for contact ${contact.id} for full 30-day sequence`);

@@ -59,41 +59,59 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
     const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallyCompleted(prev => new Set([...prev, taskId]));
 
-    // Mark task as complete
-    await completeSequenceTask(
-      contact.id,
-      task.sequence_day,
-      task.task_type,
-      ''
-    );
-
-    // Update contact counters
-    const counterUpdates = getCounterUpdates(task.task_type);
-    const updatedContactData = applyCounterUpdates(contact, counterUpdates);
-
-    await updateContact(contact.id, {
-      ...updatedContactData,
-      last_contact_date: new Date().toISOString().split('T')[0]
-    });
-
-    // Reload tasks and clear optimistic state
-    await reloadTasks();
-    setOptimisticallyCompleted(new Set());
-    setOptimisticallySkipped(new Set());
-
-    // Check if all tasks for this day are complete
-    const allComplete = await checkAllDayTasksComplete({
-      ...contact,
-      ...updatedContactData
-    });
-
-    if (allComplete) {
-      // Advance to next day
-      await advanceContactToNextDay(
-        { ...contact, ...updatedContactData },
-        updateContact
+    try {
+      // Mark task as complete
+      await completeSequenceTask(
+        contact.id,
+        task.sequence_day,
+        task.task_type,
+        ''
       );
+
+      // Update contact counters
+      const counterUpdates = getCounterUpdates(task.task_type);
+      const updatedContactData = applyCounterUpdates(contact, counterUpdates);
+
+      await updateContact(contact.id, {
+        ...updatedContactData,
+        last_contact_date: new Date().toISOString().split('T')[0]
+      });
+
+      // Reload tasks - wait for state to settle before clearing optimistic state
       await reloadTasks();
+
+      // Use setTimeout to ensure React has re-rendered with new data before clearing
+      setTimeout(() => {
+        setOptimisticallyCompleted(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(taskId);
+          return newSet;
+        });
+      }, 250);
+
+      // Check if all tasks for this day are complete
+      const allComplete = await checkAllDayTasksComplete({
+        ...contact,
+        ...updatedContactData
+      });
+
+      if (allComplete) {
+        // Advance to next day
+        await advanceContactToNextDay(
+          { ...contact, ...updatedContactData },
+          updateContact
+        );
+        await reloadTasks();
+      }
+    } catch (error) {
+      // On error, remove optimistic state immediately
+      console.error('Error completing task:', error);
+      setOptimisticallyCompleted(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+      alert('Error completing task. Please try again.');
     }
   };
 
@@ -103,26 +121,44 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
     const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallySkipped(prev => new Set([...prev, taskId]));
 
-    // Mark task as skipped
-    await skipSequenceTask(
-      contact.id,
-      task.sequence_day,
-      task.task_type,
-      'Skipped by user'
-    );
+    try {
+      // Mark task as skipped
+      await skipSequenceTask(
+        contact.id,
+        task.sequence_day,
+        task.task_type,
+        'Skipped by user'
+      );
 
-    // Reload tasks and clear optimistic state
-    await reloadTasks();
-    setOptimisticallyCompleted(new Set());
-    setOptimisticallySkipped(new Set());
-
-    // Check if all tasks for this day are complete (including skipped)
-    const allComplete = await checkAllDayTasksComplete(contact);
-
-    if (allComplete) {
-      // Advance to next day
-      await advanceContactToNextDay(contact, updateContact);
+      // Reload tasks - wait for state to settle before clearing optimistic state
       await reloadTasks();
+
+      // Use setTimeout to ensure React has re-rendered with new data before clearing
+      setTimeout(() => {
+        setOptimisticallySkipped(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(taskId);
+          return newSet;
+        });
+      }, 250);
+
+      // Check if all tasks for this day are complete (including skipped)
+      const allComplete = await checkAllDayTasksComplete(contact);
+
+      if (allComplete) {
+        // Advance to next day
+        await advanceContactToNextDay(contact, updateContact);
+        await reloadTasks();
+      }
+    } catch (error) {
+      // On error, remove optimistic state immediately
+      console.error('Error skipping task:', error);
+      setOptimisticallySkipped(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+      alert('Error skipping task. Please try again.');
     }
   };
 

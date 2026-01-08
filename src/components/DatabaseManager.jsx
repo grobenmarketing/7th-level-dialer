@@ -411,41 +411,55 @@ function DatabaseManager({ onBackToDashboard }) {
     const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallyCompleted(prev => new Set([...prev, taskId]));
 
-    // Perform async operations
-    await completeSequenceTask(
-      contact.id,
-      task.sequence_day,
-      task.task_type,
-      ''
-    );
-
-    const counterUpdates = getCounterUpdates(task.task_type);
-    const updatedContactData = applyCounterUpdates(contact, counterUpdates);
-
-    await updateContact(contact.id, {
-      ...updatedContactData,
-      last_contact_date: new Date().toISOString().split('T')[0]
-    });
-
-    await loadSequenceTasks();
-
-    // Clear optimistic state after React renders the new data
-    setTimeout(() => {
-      setOptimisticallyCompleted(new Set());
-      setOptimisticallySkipped(new Set());
-    }, 100);
-
-    const allComplete = await checkAllDayTasksComplete({
-      ...contact,
-      ...updatedContactData
-    });
-
-    if (allComplete) {
-      await advanceContactToNextDay(
-        { ...contact, ...updatedContactData },
-        updateContact
+    try {
+      // Perform async operations
+      await completeSequenceTask(
+        contact.id,
+        task.sequence_day,
+        task.task_type,
+        ''
       );
+
+      const counterUpdates = getCounterUpdates(task.task_type);
+      const updatedContactData = applyCounterUpdates(contact, counterUpdates);
+
+      await updateContact(contact.id, {
+        ...updatedContactData,
+        last_contact_date: new Date().toISOString().split('T')[0]
+      });
+
       await loadSequenceTasks();
+
+      // Clear optimistic state after React renders the new data
+      setTimeout(() => {
+        setOptimisticallyCompleted(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(taskId);
+          return newSet;
+        });
+      }, 250);
+
+      const allComplete = await checkAllDayTasksComplete({
+        ...contact,
+        ...updatedContactData
+      });
+
+      if (allComplete) {
+        await advanceContactToNextDay(
+          { ...contact, ...updatedContactData },
+          updateContact
+        );
+        await loadSequenceTasks();
+      }
+    } catch (error) {
+      // On error, remove optimistic state immediately
+      console.error('Error completing task:', error);
+      setOptimisticallyCompleted(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+      alert('Error completing task. Please try again.');
     }
   };
 
@@ -454,27 +468,41 @@ function DatabaseManager({ onBackToDashboard }) {
     const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallySkipped(prev => new Set([...prev, taskId]));
 
-    // Perform async operations
-    await skipSequenceTask(
-      contact.id,
-      task.sequence_day,
-      task.task_type,
-      'Skipped by user'
-    );
+    try {
+      // Perform async operations
+      await skipSequenceTask(
+        contact.id,
+        task.sequence_day,
+        task.task_type,
+        'Skipped by user'
+      );
 
-    await loadSequenceTasks();
-
-    // Clear optimistic state after React renders the new data
-    setTimeout(() => {
-      setOptimisticallyCompleted(new Set());
-      setOptimisticallySkipped(new Set());
-    }, 100);
-
-    const allComplete = await checkAllDayTasksComplete(contact);
-
-    if (allComplete) {
-      await advanceContactToNextDay(contact, updateContact);
       await loadSequenceTasks();
+
+      // Clear optimistic state after React renders the new data
+      setTimeout(() => {
+        setOptimisticallySkipped(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(taskId);
+          return newSet;
+        });
+      }, 250);
+
+      const allComplete = await checkAllDayTasksComplete(contact);
+
+      if (allComplete) {
+        await advanceContactToNextDay(contact, updateContact);
+        await loadSequenceTasks();
+      }
+    } catch (error) {
+      // On error, remove optimistic state immediately
+      console.error('Error skipping task:', error);
+      setOptimisticallySkipped(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+      alert('Error skipping task. Please try again.');
     }
   };
 
