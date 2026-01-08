@@ -39,6 +39,7 @@ import {
   hasOverdueTasks
 } from '../lib/sequenceAutomation';
 import { backfillEmailTasks } from '../lib/backfillEmailTasks';
+import { cleanupDuplicateTasks, getDuplicateStats } from '../lib/cleanupDuplicateTasks';
 
 function DatabaseManager({ onBackToDashboard }) {
   // Tab state
@@ -113,6 +114,7 @@ function DatabaseManager({ onBackToDashboard }) {
   const [optimisticallySkipped, setOptimisticallySkipped] = useState(new Set());
   const [expandedContacts, setExpandedContacts] = useState(new Set());
   const [backfilling, setBackfilling] = useState(false);
+  const [cleaningDuplicates, setCleaningDuplicates] = useState(false);
 
   const stats = getStats();
   const activityStats = getActivityStats();
@@ -547,6 +549,38 @@ function DatabaseManager({ onBackToDashboard }) {
       alert('❌ Error during backfill. Check console for details.');
     } finally {
       setBackfilling(false);
+    }
+  };
+
+  const handleCleanupDuplicates = async () => {
+    // First, get stats
+    setCleaningDuplicates(true);
+    try {
+      const stats = await getDuplicateStats();
+
+      if (stats.totalDuplicates === 0) {
+        alert('✅ No duplicate tasks found!\n\nYour storage is clean.');
+        setCleaningDuplicates(false);
+        return;
+      }
+
+      const message = `Found ${stats.totalDuplicates} duplicate tasks in ${stats.duplicateGroups} task groups.\n\nOriginal tasks: ${stats.totalTasks}\nUnique tasks: ${stats.uniqueTasks}\nDuplicates to remove: ${stats.totalDuplicates}\n\nDo you want to clean up these duplicates?`;
+
+      if (!confirm(message)) {
+        setCleaningDuplicates(false);
+        return;
+      }
+
+      // Run cleanup
+      const result = await cleanupDuplicateTasks();
+      await loadSequenceTasks();
+
+      alert(`✅ Cleanup complete!\n\nRemoved ${result.removedCount} duplicate tasks.\nRemaining unique tasks: ${result.remainingCount}`);
+    } catch (error) {
+      console.error('Cleanup error:', error);
+      alert('❌ Error during cleanup. Check console for details.');
+    } finally {
+      setCleaningDuplicates(false);
     }
   };
 
@@ -1466,8 +1500,22 @@ function DatabaseManager({ onBackToDashboard }) {
                 activeFilter={tasksFilter}
                 onFilterChange={setTasksFilter}
               />
-              <div className="text-sm text-gray-600">
-                <span className="font-semibold">{activeSequenceContacts.length}</span> active sequences
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleCleanupDuplicates}
+                  disabled={cleaningDuplicates}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                    cleaningDuplicates
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg'
+                  }`}
+                  title="Remove duplicate sequence tasks"
+                >
+                  {cleaningDuplicates ? '🔄 Cleaning...' : '🧹 Clean Duplicates'}
+                </button>
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold">{activeSequenceContacts.length}</span> active sequences
+                </div>
               </div>
             </div>
 
