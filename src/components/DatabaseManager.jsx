@@ -133,6 +133,45 @@ function DatabaseManager({ onBackToDashboard }) {
     }
   }, [activeTab, loadSequenceTasks]);
 
+  // Auto-clear optimistic state when tasks are actually completed/skipped in real data
+  useEffect(() => {
+    // Get IDs of tasks that are actually completed
+    const actuallyCompletedIds = new Set(
+      sequenceTasks
+        .filter(t => t.status === 'completed')
+        .map(t => `${t.contact_id}-${t.sequence_day}-${t.task_type}`)
+    );
+
+    // Remove from optimistic set if actually completed
+    setOptimisticallyCompleted(prev => {
+      const newSet = new Set();
+      prev.forEach(id => {
+        if (!actuallyCompletedIds.has(id)) {
+          newSet.add(id); // Keep in optimistic set only if NOT actually completed yet
+        }
+      });
+      return newSet.size === prev.size ? prev : newSet; // Only update if changed
+    });
+
+    // Get IDs of tasks that are actually skipped
+    const actuallySkippedIds = new Set(
+      sequenceTasks
+        .filter(t => t.status === 'skipped')
+        .map(t => `${t.contact_id}-${t.sequence_day}-${t.task_type}`)
+    );
+
+    // Remove from optimistic set if actually skipped
+    setOptimisticallySkipped(prev => {
+      const newSet = new Set();
+      prev.forEach(id => {
+        if (!actuallySkippedIds.has(id)) {
+          newSet.add(id); // Keep in optimistic set only if NOT actually skipped yet
+        }
+      });
+      return newSet.size === prev.size ? prev : newSet; // Only update if changed
+    });
+  }, [sequenceTasks]);
+
   // ==================== CONTACTS TAB ====================
   const contactFilters = [
     { label: 'All', value: 'all' },
@@ -430,16 +469,8 @@ function DatabaseManager({ onBackToDashboard }) {
         last_contact_date: new Date().toISOString().split('T')[0]
       });
 
+      // Reload tasks - the useEffect will auto-clear optimistic state when new data arrives
       await loadSequenceTasks();
-
-      // Clear optimistic state after React renders the new data
-      setTimeout(() => {
-        setOptimisticallyCompleted(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(taskId);
-          return newSet;
-        });
-      }, 250);
 
       const allComplete = await checkAllDayTasksComplete({
         ...contact,
@@ -479,16 +510,8 @@ function DatabaseManager({ onBackToDashboard }) {
         'Skipped by user'
       );
 
+      // Reload tasks - the useEffect will auto-clear optimistic state when new data arrives
       await loadSequenceTasks();
-
-      // Clear optimistic state after React renders the new data
-      setTimeout(() => {
-        setOptimisticallySkipped(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(taskId);
-          return newSet;
-        });
-      }, 250);
 
       const allComplete = await checkAllDayTasksComplete(contact);
 

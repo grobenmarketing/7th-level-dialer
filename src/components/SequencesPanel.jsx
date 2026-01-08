@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { isTaskOverdue, isTaskDueToday, getDaysOverdue } from '../lib/taskScheduler';
 import { getTaskDescription } from '../lib/sequenceCalendar';
 import { completeSequenceTask, skipSequenceTask, getCounterUpdates, applyCounterUpdates, checkAllDayTasksComplete, advanceContactToNextDay } from '../lib/sequenceLogic';
@@ -10,6 +10,45 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
   const [optimisticallySkipped, setOptimisticallySkipped] = useState(new Set());
   const [selectedContact, setSelectedContact] = useState(null);
   const [showContactDetails, setShowContactDetails] = useState(false);
+
+  // Auto-clear optimistic state when tasks are actually completed/skipped in real data
+  useEffect(() => {
+    // Get IDs of tasks that are actually completed
+    const actuallyCompletedIds = new Set(
+      tasks
+        .filter(t => t.status === 'completed')
+        .map(t => `${t.contact_id}-${t.sequence_day}-${t.task_type}`)
+    );
+
+    // Remove from optimistic set if actually completed
+    setOptimisticallyCompleted(prev => {
+      const newSet = new Set();
+      prev.forEach(id => {
+        if (!actuallyCompletedIds.has(id)) {
+          newSet.add(id); // Keep in optimistic set only if NOT actually completed yet
+        }
+      });
+      return newSet.size === prev.size ? prev : newSet; // Only update if changed
+    });
+
+    // Get IDs of tasks that are actually skipped
+    const actuallySkippedIds = new Set(
+      tasks
+        .filter(t => t.status === 'skipped')
+        .map(t => `${t.contact_id}-${t.sequence_day}-${t.task_type}`)
+    );
+
+    // Remove from optimistic set if actually skipped
+    setOptimisticallySkipped(prev => {
+      const newSet = new Set();
+      prev.forEach(id => {
+        if (!actuallySkippedIds.has(id)) {
+          newSet.add(id); // Keep in optimistic set only if NOT actually skipped yet
+        }
+      });
+      return newSet.size === prev.size ? prev : newSet; // Only update if changed
+    });
+  }, [tasks]);
 
   // Get active contacts and group tasks by contact (memoized for performance)
   const contactsWithTasks = useMemo(() => {
@@ -77,17 +116,8 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
         last_contact_date: new Date().toISOString().split('T')[0]
       });
 
-      // Reload tasks - wait for state to settle before clearing optimistic state
+      // Reload tasks - the useEffect will auto-clear optimistic state when new data arrives
       await reloadTasks();
-
-      // Use setTimeout to ensure React has re-rendered with new data before clearing
-      setTimeout(() => {
-        setOptimisticallyCompleted(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(taskId);
-          return newSet;
-        });
-      }, 250);
 
       // Check if all tasks for this day are complete
       const allComplete = await checkAllDayTasksComplete({
@@ -130,17 +160,8 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
         'Skipped by user'
       );
 
-      // Reload tasks - wait for state to settle before clearing optimistic state
+      // Reload tasks - the useEffect will auto-clear optimistic state when new data arrives
       await reloadTasks();
-
-      // Use setTimeout to ensure React has re-rendered with new data before clearing
-      setTimeout(() => {
-        setOptimisticallySkipped(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(taskId);
-          return newSet;
-        });
-      }, 250);
 
       // Check if all tasks for this day are complete (including skipped)
       const allComplete = await checkAllDayTasksComplete(contact);
