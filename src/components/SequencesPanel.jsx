@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { isTaskOverdue, isTaskDueToday, getDaysOverdue } from '../lib/taskScheduler';
 import { getTaskDescription } from '../lib/sequenceCalendar';
 import { completeSequenceTask, skipSequenceTask, getCounterUpdates, applyCounterUpdates, checkAllDayTasksComplete, advanceContactToNextDay } from '../lib/sequenceLogic';
@@ -10,6 +10,45 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
   const [optimisticallySkipped, setOptimisticallySkipped] = useState(new Set());
   const [selectedContact, setSelectedContact] = useState(null);
   const [showContactDetails, setShowContactDetails] = useState(false);
+
+  // Auto-clear optimistic state when tasks are actually completed/skipped in real data
+  useEffect(() => {
+    // Get IDs of tasks that are actually completed
+    const actuallyCompletedIds = new Set(
+      tasks
+        .filter(t => t.status === 'completed')
+        .map(t => `${t.contact_id}-${t.sequence_day}-${t.task_type}`)
+    );
+
+    // Remove from optimistic set if actually completed
+    setOptimisticallyCompleted(prev => {
+      const newSet = new Set();
+      prev.forEach(id => {
+        if (!actuallyCompletedIds.has(id)) {
+          newSet.add(id); // Keep in optimistic set only if NOT actually completed yet
+        }
+      });
+      return newSet.size === prev.size ? prev : newSet; // Only update if changed
+    });
+
+    // Get IDs of tasks that are actually skipped
+    const actuallySkippedIds = new Set(
+      tasks
+        .filter(t => t.status === 'skipped')
+        .map(t => `${t.contact_id}-${t.sequence_day}-${t.task_type}`)
+    );
+
+    // Remove from optimistic set if actually skipped
+    setOptimisticallySkipped(prev => {
+      const newSet = new Set();
+      prev.forEach(id => {
+        if (!actuallySkippedIds.has(id)) {
+          newSet.add(id); // Keep in optimistic set only if NOT actually skipped yet
+        }
+      });
+      return newSet.size === prev.size ? prev : newSet; // Only update if changed
+    });
+  }, [tasks]);
 
   // Get active contacts and group tasks by contact (memoized for performance)
   const contactsWithTasks = useMemo(() => {
@@ -59,41 +98,50 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
     const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallyCompleted(prev => new Set([...prev, taskId]));
 
-    // Mark task as complete
-    await completeSequenceTask(
-      contact.id,
-      task.sequence_day,
-      task.task_type,
-      ''
-    );
-
-    // Update contact counters
-    const counterUpdates = getCounterUpdates(task.task_type);
-    const updatedContactData = applyCounterUpdates(contact, counterUpdates);
-
-    await updateContact(contact.id, {
-      ...updatedContactData,
-      last_contact_date: new Date().toISOString().split('T')[0]
-    });
-
-    // Reload tasks and clear optimistic state
-    await reloadTasks();
-    setOptimisticallyCompleted(new Set());
-    setOptimisticallySkipped(new Set());
-
-    // Check if all tasks for this day are complete
-    const allComplete = await checkAllDayTasksComplete({
-      ...contact,
-      ...updatedContactData
-    });
-
-    if (allComplete) {
-      // Advance to next day
-      await advanceContactToNextDay(
-        { ...contact, ...updatedContactData },
-        updateContact
+    try {
+      // Mark task as complete
+      await completeSequenceTask(
+        contact.id,
+        task.sequence_day,
+        task.task_type,
+        ''
       );
+
+      // Update contact counters
+      const counterUpdates = getCounterUpdates(task.task_type);
+      const updatedContactData = applyCounterUpdates(contact, counterUpdates);
+
+      await updateContact(contact.id, {
+        ...updatedContactData,
+        last_contact_date: new Date().toISOString().split('T')[0]
+      });
+
+      // Reload tasks - the useEffect will auto-clear optimistic state when new data arrives
       await reloadTasks();
+
+      // Check if all tasks for this day are complete
+      const allComplete = await checkAllDayTasksComplete({
+        ...contact,
+        ...updatedContactData
+      });
+
+      if (allComplete) {
+        // Advance to next day
+        await advanceContactToNextDay(
+          { ...contact, ...updatedContactData },
+          updateContact
+        );
+        await reloadTasks();
+      }
+    } catch (error) {
+      // On error, remove optimistic state immediately
+      console.error('Error completing task:', error);
+      setOptimisticallyCompleted(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+      alert('Error completing task. Please try again.');
     }
   };
 
@@ -103,26 +151,35 @@ function SequencesPanel({ contacts, tasks, updateContact, onViewAllSequences, re
     const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallySkipped(prev => new Set([...prev, taskId]));
 
-    // Mark task as skipped
-    await skipSequenceTask(
-      contact.id,
-      task.sequence_day,
-      task.task_type,
-      'Skipped by user'
-    );
+    try {
+      // Mark task as skipped
+      await skipSequenceTask(
+        contact.id,
+        task.sequence_day,
+        task.task_type,
+        'Skipped by user'
+      );
 
-    // Reload tasks and clear optimistic state
-    await reloadTasks();
-    setOptimisticallyCompleted(new Set());
-    setOptimisticallySkipped(new Set());
-
-    // Check if all tasks for this day are complete (including skipped)
-    const allComplete = await checkAllDayTasksComplete(contact);
-
-    if (allComplete) {
-      // Advance to next day
-      await advanceContactToNextDay(contact, updateContact);
+      // Reload tasks - the useEffect will auto-clear optimistic state when new data arrives
       await reloadTasks();
+
+      // Check if all tasks for this day are complete (including skipped)
+      const allComplete = await checkAllDayTasksComplete(contact);
+
+      if (allComplete) {
+        // Advance to next day
+        await advanceContactToNextDay(contact, updateContact);
+        await reloadTasks();
+      }
+    } catch (error) {
+      // On error, remove optimistic state immediately
+      console.error('Error skipping task:', error);
+      setOptimisticallySkipped(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+      alert('Error skipping task. Please try again.');
     }
   };
 

@@ -39,6 +39,7 @@ import {
   hasOverdueTasks
 } from '../lib/sequenceAutomation';
 import { backfillEmailTasks } from '../lib/backfillEmailTasks';
+import { cleanupDuplicateTasks, getDuplicateStats } from '../lib/cleanupDuplicateTasks';
 
 function DatabaseManager({ onBackToDashboard }) {
   // Tab state
@@ -113,6 +114,7 @@ function DatabaseManager({ onBackToDashboard }) {
   const [optimisticallySkipped, setOptimisticallySkipped] = useState(new Set());
   const [expandedContacts, setExpandedContacts] = useState(new Set());
   const [backfilling, setBackfilling] = useState(false);
+  const [cleaningDuplicates, setCleaningDuplicates] = useState(false);
 
   const stats = getStats();
   const activityStats = getActivityStats();
@@ -130,6 +132,45 @@ function DatabaseManager({ onBackToDashboard }) {
       loadSequenceTasks();
     }
   }, [activeTab, loadSequenceTasks]);
+
+  // Auto-clear optimistic state when tasks are actually completed/skipped in real data
+  useEffect(() => {
+    // Get IDs of tasks that are actually completed
+    const actuallyCompletedIds = new Set(
+      sequenceTasks
+        .filter(t => t.status === 'completed')
+        .map(t => `${t.contact_id}-${t.sequence_day}-${t.task_type}`)
+    );
+
+    // Remove from optimistic set if actually completed
+    setOptimisticallyCompleted(prev => {
+      const newSet = new Set();
+      prev.forEach(id => {
+        if (!actuallyCompletedIds.has(id)) {
+          newSet.add(id); // Keep in optimistic set only if NOT actually completed yet
+        }
+      });
+      return newSet.size === prev.size ? prev : newSet; // Only update if changed
+    });
+
+    // Get IDs of tasks that are actually skipped
+    const actuallySkippedIds = new Set(
+      sequenceTasks
+        .filter(t => t.status === 'skipped')
+        .map(t => `${t.contact_id}-${t.sequence_day}-${t.task_type}`)
+    );
+
+    // Remove from optimistic set if actually skipped
+    setOptimisticallySkipped(prev => {
+      const newSet = new Set();
+      prev.forEach(id => {
+        if (!actuallySkippedIds.has(id)) {
+          newSet.add(id); // Keep in optimistic set only if NOT actually skipped yet
+        }
+      });
+      return newSet.size === prev.size ? prev : newSet; // Only update if changed
+    });
+  }, [sequenceTasks]);
 
   // ==================== CONTACTS TAB ====================
   const contactFilters = [
@@ -411,41 +452,47 @@ function DatabaseManager({ onBackToDashboard }) {
     const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallyCompleted(prev => new Set([...prev, taskId]));
 
-    // Perform async operations
-    await completeSequenceTask(
-      contact.id,
-      task.sequence_day,
-      task.task_type,
-      ''
-    );
-
-    const counterUpdates = getCounterUpdates(task.task_type);
-    const updatedContactData = applyCounterUpdates(contact, counterUpdates);
-
-    await updateContact(contact.id, {
-      ...updatedContactData,
-      last_contact_date: new Date().toISOString().split('T')[0]
-    });
-
-    await loadSequenceTasks();
-
-    // Clear optimistic state after React renders the new data
-    setTimeout(() => {
-      setOptimisticallyCompleted(new Set());
-      setOptimisticallySkipped(new Set());
-    }, 100);
-
-    const allComplete = await checkAllDayTasksComplete({
-      ...contact,
-      ...updatedContactData
-    });
-
-    if (allComplete) {
-      await advanceContactToNextDay(
-        { ...contact, ...updatedContactData },
-        updateContact
+    try {
+      // Perform async operations
+      await completeSequenceTask(
+        contact.id,
+        task.sequence_day,
+        task.task_type,
+        ''
       );
+
+      const counterUpdates = getCounterUpdates(task.task_type);
+      const updatedContactData = applyCounterUpdates(contact, counterUpdates);
+
+      await updateContact(contact.id, {
+        ...updatedContactData,
+        last_contact_date: new Date().toISOString().split('T')[0]
+      });
+
+      // Reload tasks - the useEffect will auto-clear optimistic state when new data arrives
       await loadSequenceTasks();
+
+      const allComplete = await checkAllDayTasksComplete({
+        ...contact,
+        ...updatedContactData
+      });
+
+      if (allComplete) {
+        await advanceContactToNextDay(
+          { ...contact, ...updatedContactData },
+          updateContact
+        );
+        await loadSequenceTasks();
+      }
+    } catch (error) {
+      // On error, remove optimistic state immediately
+      console.error('Error completing task:', error);
+      setOptimisticallyCompleted(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+      alert('Error completing task. Please try again.');
     }
   };
 
@@ -454,27 +501,33 @@ function DatabaseManager({ onBackToDashboard }) {
     const taskId = `${contact.id}-${task.sequence_day}-${task.task_type}`;
     setOptimisticallySkipped(prev => new Set([...prev, taskId]));
 
-    // Perform async operations
-    await skipSequenceTask(
-      contact.id,
-      task.sequence_day,
-      task.task_type,
-      'Skipped by user'
-    );
+    try {
+      // Perform async operations
+      await skipSequenceTask(
+        contact.id,
+        task.sequence_day,
+        task.task_type,
+        'Skipped by user'
+      );
 
-    await loadSequenceTasks();
-
-    // Clear optimistic state after React renders the new data
-    setTimeout(() => {
-      setOptimisticallyCompleted(new Set());
-      setOptimisticallySkipped(new Set());
-    }, 100);
-
-    const allComplete = await checkAllDayTasksComplete(contact);
-
-    if (allComplete) {
-      await advanceContactToNextDay(contact, updateContact);
+      // Reload tasks - the useEffect will auto-clear optimistic state when new data arrives
       await loadSequenceTasks();
+
+      const allComplete = await checkAllDayTasksComplete(contact);
+
+      if (allComplete) {
+        await advanceContactToNextDay(contact, updateContact);
+        await loadSequenceTasks();
+      }
+    } catch (error) {
+      // On error, remove optimistic state immediately
+      console.error('Error skipping task:', error);
+      setOptimisticallySkipped(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+      alert('Error skipping task. Please try again.');
     }
   };
 
@@ -519,6 +572,38 @@ function DatabaseManager({ onBackToDashboard }) {
       alert('❌ Error during backfill. Check console for details.');
     } finally {
       setBackfilling(false);
+    }
+  };
+
+  const handleCleanupDuplicates = async () => {
+    // First, get stats
+    setCleaningDuplicates(true);
+    try {
+      const stats = await getDuplicateStats();
+
+      if (stats.totalDuplicates === 0) {
+        alert('✅ No duplicate tasks found!\n\nYour storage is clean.');
+        setCleaningDuplicates(false);
+        return;
+      }
+
+      const message = `Found ${stats.totalDuplicates} duplicate tasks in ${stats.duplicateGroups} task groups.\n\nOriginal tasks: ${stats.totalTasks}\nUnique tasks: ${stats.uniqueTasks}\nDuplicates to remove: ${stats.totalDuplicates}\n\nDo you want to clean up these duplicates?`;
+
+      if (!confirm(message)) {
+        setCleaningDuplicates(false);
+        return;
+      }
+
+      // Run cleanup
+      const result = await cleanupDuplicateTasks();
+      await loadSequenceTasks();
+
+      alert(`✅ Cleanup complete!\n\nRemoved ${result.removedCount} duplicate tasks.\nRemaining unique tasks: ${result.remainingCount}`);
+    } catch (error) {
+      console.error('Cleanup error:', error);
+      alert('❌ Error during cleanup. Check console for details.');
+    } finally {
+      setCleaningDuplicates(false);
     }
   };
 
@@ -1438,8 +1523,22 @@ function DatabaseManager({ onBackToDashboard }) {
                 activeFilter={tasksFilter}
                 onFilterChange={setTasksFilter}
               />
-              <div className="text-sm text-gray-600">
-                <span className="font-semibold">{activeSequenceContacts.length}</span> active sequences
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleCleanupDuplicates}
+                  disabled={cleaningDuplicates}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                    cleaningDuplicates
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg'
+                  }`}
+                  title="Remove duplicate sequence tasks"
+                >
+                  {cleaningDuplicates ? '🔄 Cleaning...' : '🧹 Clean Duplicates'}
+                </button>
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold">{activeSequenceContacts.length}</span> active sequences
+                </div>
               </div>
             </div>
 
